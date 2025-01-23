@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Accordion from 'react-bootstrap/Accordion';
+import { Form, Button, InputGroup } from 'react-bootstrap';
 import './styles.css';  // Подключаем CSS стили
 
 function App() {
@@ -47,18 +48,20 @@ function App() {
           <h1>Поиск товаров S.Point в Wildberries</h1>
         </header>
         <div className="container">
-          <div className="search">
-            <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Введите запрос"
-                required
-            />
-            <button onClick={fetchProducts}>Поиск</button>
-            <button onClick={clearInput} id="clearButton">X</button>
-          </div>
+          <Form className="search" onSubmit={(e) => e.preventDefault()}>
+            <InputGroup>
+              <Form.Control
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Введите запрос"
+                  required
+              />
+              <Button variant="primary" onClick={fetchProducts}>Поиск</Button>
+              <Button variant="secondary" onClick={clearInput} id="clearButton">X</Button>
+            </InputGroup>
+          </Form>
           <div id="loadingMessage" style={{ display: loadingMessage ? 'block' : 'none' }}>{loadingMessage}</div>
           <div id="errorMessage" style={{ display: errorMessage ? 'block' : 'none', color: 'red' }}>{errorMessage}</div>
 
@@ -70,7 +73,7 @@ function App() {
 
               return (
                   <Accordion.Item eventKey={index.toString()} key={index}>
-                    <Accordion.Header>{`${headerText} - ${date} ${formattedTime}`}</Accordion.Header>
+                    <Accordion.Header>{`${headerText} -  Дата: ${date}, Время: ${formattedTime}`}</Accordion.Header>
                     <Accordion.Body>
                       <table id="productsTable">
                         <thead>

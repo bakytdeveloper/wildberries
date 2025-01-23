@@ -30,6 +30,7 @@ header {
 
 .search {
     display: flex;
+    width: 33%;
 }
 
 #queryInput {
@@ -67,7 +68,7 @@ table {
 }
 
 th, td {
-    border: 1px solid #353434!important;
+    border: 1px solid #c3bfbf !important;
     padding: 8px;
     text-align: left;
 }
