@@ -15,11 +15,15 @@ header {
 
 .container {
     max-width: 90%;
-    margin: 50px auto 0;
+    margin: 22px auto 0;
     padding: 20px;
     background-color: white;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
+}
+
+.accordion {
+    margin-top: 20px;
 }
 
 .search {
@@ -57,11 +61,11 @@ button:hover {
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 20px;
+    margin-top: 5px;
 }
 
 th, td {
-    border: 1px solid #ddd;
+    border: 1px solid #353434!important;
     padding: 8px;
     text-align: left;
 }
@@ -70,6 +74,7 @@ th {
     background-color: #b662e9;
     text-align: center;
     color: white;
+    border: 1px solid #353434;
 }
 
 .td_Center {

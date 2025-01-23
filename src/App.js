@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import Accordion from 'react-bootstrap/Accordion';
+import './styles.css';  // Подключаем CSS стили
 
 function App() {
   const [query, setQuery] = useState('');
   const [loadingMessage, setLoadingMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const [products, setProducts] = useState([]);
+  const [allQueries, setAllQueries] = useState([]);
 
   const fetchProducts = async () => {
     let searchQuery = query || '0';
@@ -19,10 +21,12 @@ function App() {
 
       setLoadingMessage('');
 
-      if (productsData.length === 0) {
+      if (!Array.isArray(productsData)) {
+        setErrorMessage('Ошибка получения данных');
+      } else if (productsData.length === 0) {
         setErrorMessage('Товары не найдены');
       } else {
-        setProducts(productsData);
+        setAllQueries([{ query: searchQuery, products: productsData, queryTime: new Date().toISOString() }, ...allQueries]);
       }
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -57,38 +61,54 @@ function App() {
           </div>
           <div id="loadingMessage" style={{ display: loadingMessage ? 'block' : 'none' }}>{loadingMessage}</div>
           <div id="errorMessage" style={{ display: errorMessage ? 'block' : 'none', color: 'red' }}>{errorMessage}</div>
-          <table id="productsTable">
-            <thead>
-            <tr>
-              <th>№</th>
-              <th>Артикул</th>
-              <th>Страница</th>
-              <th>Позиция</th>
-              <th>Бренд</th>
-              <th>Наименование</th>
-              <th>Дата запроса</th>  {/* Новая колонка */}
-              <th>Время запроса</th>  {/* Новая колонка */}
-            </tr>
-            </thead>
-            <tbody>
-            {products.map((product, i) => {
-              const [date, time] = product.queryTime.split('T');
+
+          <Accordion defaultActiveKey="0">
+            {allQueries.map((queryData, index) => {
+              const [date, time] = queryData.queryTime.split('T');
               const formattedTime = time.split('.')[0];
+              const headerText = queryData.query === '0' ? 'Товары с главной страницы' : queryData.query;
+
               return (
-                  <tr key={i}>
-                    <td className="td_Center">{i + 1}</td>
-                    <td className="td_Center">{product.id}</td>
-                    <td className="td_Center">{product.page}</td>
-                    <td className="td_Center">{product.position}</td>
-                    <td>{product.brand}</td>
-                    <td>{product.name}</td>
-                    <td className="td_Center">{date}</td>  {/* Дата */}
-                    <td className="td_Center">{formattedTime}</td>  {/* Время */}
-                  </tr>
+                  <Accordion.Item eventKey={index.toString()} key={index}>
+                    <Accordion.Header>{`${headerText} - ${date} ${formattedTime}`}</Accordion.Header>
+                    <Accordion.Body>
+                      <table id="productsTable">
+                        <thead>
+                        <tr>
+                          <th>№</th>
+                          <th>Артикул</th>
+                          <th>Страница</th>
+                          <th>Позиция</th>
+                          <th>Бренд</th>
+                          <th>Наименование</th>
+                          <th>Дата запроса</th>
+                          <th>Время запроса</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {Array.isArray(queryData.products) && queryData.products.map((product, i) => {
+                          const [prodDate, prodTime] = product.queryTime.split('T');
+                          const formattedProdTime = prodTime.split('.')[0];
+                          return (
+                              <tr key={i}>
+                                <td>{i + 1}</td>
+                                <td>{product.id}</td>
+                                <td>{product.page}</td>
+                                <td>{product.position}</td>
+                                <td>{product.brand}</td>
+                                <td>{product.name}</td>
+                                <td>{prodDate}</td>
+                                <td>{formattedProdTime}</td>
+                              </tr>
+                          );
+                        })}
+                        </tbody>
+                      </table>
+                    </Accordion.Body>
+                  </Accordion.Item>
               );
             })}
-            </tbody>
-          </table>
+          </Accordion>
         </div>
       </div>
   );
