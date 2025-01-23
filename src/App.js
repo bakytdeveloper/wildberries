@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Accordion from 'react-bootstrap/Accordion';
-import { Form, Button, InputGroup } from 'react-bootstrap';
+import { Form, Button, InputGroup, Alert } from 'react-bootstrap';
 import './styles.css';  // Подключаем CSS стили
 
 function App() {
@@ -8,13 +8,20 @@ function App() {
   const [loadingMessage, setLoadingMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [allQueries, setAllQueries] = useState([]);
+  const [activeKey, setActiveKey] = useState(null);
+  const [isRequesting, setIsRequesting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const fetchProducts = async () => {
-    let searchQuery = query || 'Одежда S.Point';
-    if (searchQuery.toLowerCase() === 'все') searchQuery = 'Одежда S.Point';
+    if (isRequesting) return; // Если запрос уже выполняется, выходим
 
+    setIsRequesting(true); // Устанавливаем флаг выполнения запроса
     setLoadingMessage('Загрузка...');
     setErrorMessage('');
+    setSuccessMessage('');
+
+    let searchQuery = query || 'Одежда S.Point';
+    if (searchQuery.toLowerCase() === 'все') searchQuery = 'Одежда S.Point';
 
     try {
       const response = await fetch(`http://localhost:4000/api/products?query=${searchQuery}`);
@@ -27,13 +34,19 @@ function App() {
       } else if (productsData.length === 0) {
         setErrorMessage('Товары не найдены');
       } else {
-        setAllQueries([{ query: searchQuery, products: productsData, queryTime: new Date().toISOString() }, ...allQueries]);
+        const newQueries = [{ query: searchQuery, products: productsData, queryTime: new Date().toISOString() }, ...allQueries];
+        setAllQueries(newQueries);
+        setActiveKey('0'); // Устанавливаем активный аккордеон
+        setSuccessMessage('Запрос выполнен успешно!');
+        clearInput(); // Очищаем инпут после успешного запроса
       }
     } catch (error) {
       console.error('Error fetching products:', error);
       setLoadingMessage('');
       setErrorMessage('Ошибка получения данных');
     }
+
+    setIsRequesting(false); // Снимаем флаг выполнения запроса
   };
 
   const clearInput = () => setQuery('');
@@ -57,15 +70,17 @@ function App() {
                   onKeyPress={handleKeyPress}
                   placeholder="Введите запрос"
                   required
+                  disabled={isRequesting} // Делаем инпут неактивным во время запроса
               />
-              <Button variant="primary" onClick={fetchProducts}>Поиск</Button>
-              <Button variant="secondary" onClick={clearInput} id="clearButton">X</Button>
+              <Button variant="primary" onClick={fetchProducts} disabled={isRequesting}>Поиск</Button>
+              <Button variant="secondary" onClick={clearInput} id="clearButton" disabled={isRequesting}>X</Button>
             </InputGroup>
           </Form>
-          <div id="loadingMessage" style={{ display: loadingMessage ? 'block' : 'none' }}>{loadingMessage}</div>
-          <div id="errorMessage" style={{ display: errorMessage ? 'block' : 'none', color: 'red' }}>{errorMessage}</div>
+          {loadingMessage && <div id="loadingMessage" className="message">{loadingMessage}</div>}
+          {errorMessage && <div id="errorMessage" className="message error">{errorMessage}</div>}
+          {successMessage && <Alert id="successMessage" variant="success">{successMessage}</Alert>}
 
-          <Accordion defaultActiveKey="0">
+          <Accordion activeKey={activeKey} onSelect={(key) => setActiveKey(key)}>
             {allQueries.map((queryData, index) => {
               const [date, time] = queryData.queryTime.split('T');
               const formattedTime = time.split('.')[0];
@@ -73,19 +88,24 @@ function App() {
 
               return (
                   <Accordion.Item eventKey={index.toString()} key={index}>
-                    <Accordion.Header>{`${headerText} - Дата: ${date}, Время: ${formattedTime}`}</Accordion.Header>
+                    <Accordion.Header>
+                      <div className="flex-grow-1">{headerText}</div>
+                      <div className="date-time">
+                        Дата: {date}, Время: {formattedTime}
+                      </div>
+                    </Accordion.Header>
                     <Accordion.Body>
                       <table id="productsTable">
                         <thead>
                         <tr>
-                          <th>№</th>
-                          <th>Артикул</th>
-                          <th>Страница</th>
-                          <th>Позиция</th>
-                          <th>Бренд</th>
-                          <th>Наименование</th>
-                          <th>Дата запроса</th>
-                          <th>Время запроса</th>
+                          <th className="th_table">№</th>
+                          <th className="th_table">Артикул</th>
+                          <th className="th_table">Страница</th>
+                          <th className="th_table">Позиция</th>
+                          <th className="th_table">Бренд</th>
+                          <th className="th_table">Наименование</th>
+                          <th className="th_table">Дата запроса</th>
+                          <th className="th_table">Время запроса</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -94,14 +114,14 @@ function App() {
                           const formattedProdTime = prodTime.split('.')[0];
                           return (
                               <tr key={i}>
-                                <td>{i + 1}</td>
-                                <td>{product.id}</td>
-                                <td>{product.page}</td>
-                                <td>{product.position}</td>
-                                <td>{product.brand}</td>
-                                <td>{product.name}</td>
-                                <td>{prodDate}</td>
-                                <td>{formattedProdTime}</td>
+                                <td className="td_table">{i + 1}</td>
+                                <td className="td_table">{product.id}</td>
+                                <td className="td_table">{product.page}</td>
+                                <td className="td_table">{product.position}</td>
+                                <td className="td_table">{product.brand}</td>
+                                <td className="td_table">{product.name}</td>
+                                <td className="td_table">{prodDate}</td>
+                                <td className="td_table">{formattedProdTime}</td>
                               </tr>
                           );
                         })}

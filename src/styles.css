@@ -42,12 +42,24 @@ header {
     font-size: 16px;
 }
 
-#loadingMessage {
+.message {
     color: #093aee;
 }
 
+.message.error {
+    color: red;
+}
+
+#successMessage {
+    display: inline-block!important;
+    margin-top: 11px;
+    padding: 0 10px;
+    margin-bottom: -10px;
+
+}
+
 button {
-    padding: 12px 20px;
+    padding: 8px 10px;
     height: 45px;
     border: none;
     background-color: #093aee;
@@ -57,7 +69,17 @@ button {
     cursor: pointer;
 }
 
-button:hover {
+.collapsed {
+    padding: 0 10px!important;
+    font-size: 14px!important;
+}
+
+button[disabled] {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+button:hover:enabled {
     background-color: #2451aa;
 }
 
@@ -90,4 +112,24 @@ tr:nth-child(even) {
 
 tr:hover {
     background-color: #eee;
+}
+
+.td_table {
+    text-align: center;
+    padding: 2px;
+}
+
+.th_table {
+    text-align: center;
+    font-size: 13px;
+}
+
+.flex-grow-1 {
+    flex-grow: 1;
+}
+
+.date-time {
+    margin-left: auto;
+    margin-right: 20px;
+    text-align: right;
 }
