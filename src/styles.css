@@ -81,6 +81,7 @@ button[disabled] {
 
 button:hover:enabled {
     background-color: #2451aa;
+    color: white;
 }
 
 table {
