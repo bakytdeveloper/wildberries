@@ -5,4 +5,5 @@ export interface Product {
     name: string;
     position: number;
     page: number;
+    queryTime: string;
 }

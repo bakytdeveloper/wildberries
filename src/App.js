@@ -66,19 +66,27 @@ function App() {
               <th>Позиция</th>
               <th>Бренд</th>
               <th>Наименование</th>
+              <th>Дата запроса</th>  {/* Новая колонка */}
+              <th>Время запроса</th>  {/* Новая колонка */}
             </tr>
             </thead>
             <tbody>
-            {products.map((product, i) => (
-                <tr key={i}>
-                  <td>{i + 1}</td>
-                  <td>{product.id}</td>
-                  <td>{product.page}</td>
-                  <td>{product.position}</td>
-                  <td>{product.brand}</td>
-                  <td>{product.name}</td>
-                </tr>
-            ))}
+            {products.map((product, i) => {
+              const [date, time] = product.queryTime.split('T');
+              const formattedTime = time.split('.')[0];
+              return (
+                  <tr key={i}>
+                    <td className="td_Center">{i + 1}</td>
+                    <td className="td_Center">{product.id}</td>
+                    <td className="td_Center">{product.page}</td>
+                    <td className="td_Center">{product.position}</td>
+                    <td>{product.brand}</td>
+                    <td>{product.name}</td>
+                    <td className="td_Center">{date}</td>  {/* Дата */}
+                    <td className="td_Center">{formattedTime}</td>  {/* Время */}
+                  </tr>
+              );
+            })}
             </tbody>
           </table>
         </div>

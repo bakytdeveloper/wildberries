@@ -2,12 +2,15 @@ import { getProducts } from '../api/wildberriesApiUrl';
 import { Product } from '../models/product';
 
 // Функция для получения всех продуктов S.Point
-export const fetchAndParseProducts = async (query: string): Promise<(Product & { position: number, page: number })[]> => {
+export const fetchAndParseProducts = async (query: string): Promise<(Product & { position: number, page: number, queryTime: string })[]> => {
     try {
-        const products: (Product & { position: number, page: number })[] = [];
+        const products: (Product & { position: number, page: number, queryTime: string })[] = [];
         const maxConcurrentPages = 18; // Количество параллельных запросов
         let page = 1;
         let hasMoreData = true;
+
+        // Получаем текущее время для добавления к продуктам
+        const queryTime = new Date().toISOString();
 
         // Проверяем, если запрос 'все'
         const searchQuery = query.toLowerCase() === 'все' ? 'одежда S.Point' : query;
@@ -30,6 +33,7 @@ export const fetchAndParseProducts = async (query: string): Promise<(Product & {
                     brand: product.brand,
                     name: product.name,
                     page: page,
+                    queryTime: queryTime,  // Добавляем время запроса к продукту
                 }));
         };
 
