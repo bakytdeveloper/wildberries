@@ -1,7 +1,15 @@
 import axios from 'axios';
+import axiosRetry from 'axios-retry';
 
 const apiUrl = 'https://search.wb.ru/exactmatch/sng/common/v9/search';
 const fallbackApiUrl = 'https://recom.wb.ru/personal/sng/common/v5/search';
+
+// Настраиваем axios для повторных попыток в случае ошибки
+axiosRetry(axios, {
+    retries: 3, // Количество попыток
+    retryDelay: (retryCount) => retryCount * 100, // Задержка между попытками
+    retryCondition: (error) => axiosRetry.isNetworkOrIdempotentRequestError(error)
+});
 
 export const getProducts = async (query: string, page: number = 1): Promise<any> => {
     try {
@@ -21,14 +29,14 @@ export const getProducts = async (query: string, page: number = 1): Promise<any>
             'suppressSpellcheck': 'false'
         };
 
-        if (!query || query === '0') {
-            url = fallbackApiUrl; // Если запрос пустой, используем другой URL
+        if (query === '1') {
+            url = fallbackApiUrl; // Если запрос пустой или равен '1', используем другой URL
             Object.assign(params, {
                 'ab_compl_lightfm_v2': 'ab_rank_concat',
                 'ab_rec_testid': 'rec_action_promo1',
                 'resultset': 'catalog'
             });
-            params.query = '0';
+            params.query = '1';
         }
 
         const response = await axios.get(url, {
@@ -58,9 +66,3 @@ export const getProducts = async (query: string, page: number = 1): Promise<any>
         throw error;
     }
 };
-
-
-
-
-
-

@@ -10,8 +10,8 @@ function App() {
   const [allQueries, setAllQueries] = useState([]);
 
   const fetchProducts = async () => {
-    let searchQuery = query || '0';
-    if (searchQuery.toLowerCase() === 'все') searchQuery = 'все';
+    let searchQuery = query || 'Одежда S.Point';
+    if (searchQuery.toLowerCase() === 'все') searchQuery = 'Одежда S.Point';
 
     setLoadingMessage('Загрузка...');
     setErrorMessage('');
@@ -69,11 +69,11 @@ function App() {
             {allQueries.map((queryData, index) => {
               const [date, time] = queryData.queryTime.split('T');
               const formattedTime = time.split('.')[0];
-              const headerText = queryData.query === '0' ? 'Товары с главной страницы' : queryData.query;
+              const headerText = queryData.query === '1' ? 'Товары с главной страницы' : queryData.query;
 
               return (
                   <Accordion.Item eventKey={index.toString()} key={index}>
-                    <Accordion.Header>{`${headerText} -  Дата: ${date}, Время: ${formattedTime}`}</Accordion.Header>
+                    <Accordion.Header>{`${headerText} - Дата: ${date}, Время: ${formattedTime}`}</Accordion.Header>
                     <Accordion.Body>
                       <table id="productsTable">
                         <thead>

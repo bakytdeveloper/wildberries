@@ -12,8 +12,8 @@ export const fetchAndParseProducts = async (query: string): Promise<(Product & {
         // Получаем текущее время для добавления к продуктам
         const queryTime = new Date().toISOString();
 
-        // Проверяем, если запрос 'все'
-        const searchQuery = query.toLowerCase() === 'все' ? 'одежда S.Point' : query;
+        // Проверяем, если запрос пустой или равен 'все'
+        const searchQuery = query.toLowerCase() === '' ? 'Одежда S.Point' : query;
 
         // Функция для обработки одной страницы
         const processPage = async (page: number) => {
