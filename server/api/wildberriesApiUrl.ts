@@ -18,7 +18,7 @@ export const getProducts = async (query: string, page: number = 1): Promise<any>
             'ab_testid': 'promo_mask_high_rel_release',
             'appType': '1',
             'curr': 'rub',
-            'dest': '286',
+            'dest': '123589350',
             'hide_dtype': '10',
             'lang': 'ru',
             'page': page.toString(),
