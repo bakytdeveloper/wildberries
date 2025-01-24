@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Accordion from 'react-bootstrap/Accordion';
 import { Form, Button, InputGroup, Alert } from 'react-bootstrap';
 import './styles.css';  // Подключаем CSS стили
@@ -21,7 +21,7 @@ function App() {
     setSuccessMessage('');
 
     let searchQuery = query || 'Одежда S.Point';
-    if (searchQuery.toLowerCase() === 'все') searchQuery = 'Одежда S.Point';
+    // if (searchQuery.toLowerCase() === 'все') searchQuery = 'Одежда S.Point';
 
     try {
       const response = await fetch(`http://localhost:4000/api/products?query=${searchQuery}`);
@@ -33,12 +33,21 @@ function App() {
         setErrorMessage('Ошибка получения данных');
       } else if (productsData.length === 0) {
         setErrorMessage('Товары не найдены');
+        setTimeout(() => {
+          setErrorMessage('');
+        }, 3000);
+
       } else {
         const newQueries = [{ query: searchQuery, products: productsData, queryTime: new Date().toISOString() }, ...allQueries];
         setAllQueries(newQueries);
         setActiveKey('0'); // Устанавливаем активный аккордеон
         setSuccessMessage('Запрос выполнен успешно!');
         clearInput(); // Очищаем инпут после успешного запроса
+
+        // Удаляем сообщение об успехе через 3 секунды
+        setTimeout(() => {
+          setSuccessMessage('');
+        }, 3000);
       }
     } catch (error) {
       console.error('Error fetching products:', error);

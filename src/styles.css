@@ -43,11 +43,22 @@ header {
 }
 
 .message {
+    display: inline-block!important;
+    background: #43d9e7;
     color: #093aee;
+    margin-top: 11px;
+    padding: 0 10px;
+    border-radius: 5px;
 }
 
 .message.error {
+    display: inline-block!important;
+    background: #efb0b0;
     color: red;
+    margin-top: 11px;
+    padding: 0 10px;
+    border-radius: 5px;
+
 }
 
 #successMessage {
@@ -97,7 +108,7 @@ th, td {
 }
 
 th {
-    background-color: #b662e9;
+    background-color: #bf70ef;
     text-align: center;
     color: white;
     border: 1px solid #353434;
