@@ -119,8 +119,8 @@ function App() {
                         </thead>
                         <tbody>
                         {Array.isArray(queryData.products) && queryData.products.map((product, i) => {
-                          const [prodDate, prodTime] = product.queryTime.split('T');
-                          const formattedProdTime = prodTime.split('.')[0];
+                          // const [prodDate, prodTime] = product.queryTime.split('T');
+                          // const formattedProdTime = prodTime.split('.')[0];
                           return (
                               <tr key={i}>
                                 <td className="td_table">{i + 1}</td>
@@ -129,8 +129,8 @@ function App() {
                                 <td className="td_table">{product.position}</td>
                                 <td className="td_table">{product.brand}</td>
                                 <td className="td_table">{product.name}</td>
-                                <td className="td_table">{prodDate}</td>
-                                <td className="td_table">{formattedProdTime}</td>
+                                <td className="td_table">{date}</td>
+                                <td className="td_table">{formattedTime}</td>
                               </tr>
                           );
                         })}
