@@ -38,7 +38,15 @@ function App() {
         }, 3000);
 
       } else {
-        const newQueries = [{ query: searchQuery, products: productsData, queryTime: new Date().toISOString() }, ...allQueries];
+        // Получаем текущее время в UTC
+        const now = new Date();
+
+        // Устанавливаем смещение +3 часа для Москвы
+        now.setHours(now.getHours() + 3);
+
+        // Преобразуем в ISO-формат
+        const queryTime = now.toISOString();
+        const newQueries = [{ query: searchQuery, products: productsData, queryTime }, ...allQueries];
         setAllQueries(newQueries);
         setActiveKey('0'); // Устанавливаем активный аккордеон
         setSuccessMessage('Запрос выполнен успешно!');
