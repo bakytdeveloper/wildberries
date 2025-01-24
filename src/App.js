@@ -79,7 +79,7 @@ function App() {
         </header>
         <div className="container">
           <Form className="search" onSubmit={(e) => e.preventDefault()}>
-            <InputGroup>
+            <InputGroup className="InputGroupForm">
               <Form.Control
                   type="text"
                   value={query}

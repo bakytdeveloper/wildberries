@@ -31,6 +31,7 @@ header {
 .search {
     display: flex;
     width: 33%;
+
 }
 
 #queryInput {
@@ -144,4 +145,48 @@ tr:hover {
     margin-left: auto;
     margin-right: 20px;
     text-align: right;
+}
+
+.search {
+    display: flex;
+    align-items: center; /* Центрируем элементы по вертикали */
+    /*gap: 8px; !* Промежуток между элементами *!*/
+    width: 33%;
+    margin-bottom: 15px; /* Добавим отступ снизу */
+}
+
+.InputGroupForm {
+    display: flex;
+    width: 100%;
+    /*gap: 8px; !* Расстояние между инпутом и кнопками *!*/
+}
+
+.search input {
+    padding: 6px 10px; /* Уменьшаем отступы */
+    font-size: 14px; /* Уменьшаем размер текста */
+    height: 38px; /* Снижаем высоту */
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    flex-grow: 1; /* Инпут растягивается на свободное пространство */
+}
+
+button {
+    padding: 6px 10px; /* Уменьшаем внутренние отступы */
+    height: 38px; /* Снижаем высоту кнопок */
+    border: none;
+    background-color: #093aee;
+    color: white;
+    font-size: 14px; /* Уменьшаем шрифт */
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button[disabled] {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+button:hover:enabled {
+    background-color: #2451aa;
+    color: white;
 }
