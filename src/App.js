@@ -20,8 +20,8 @@ function App() {
   const [activeKey, setActiveKey] = useState(null);
   const [isRequesting, setIsRequesting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
-  const [selectedCity, setSelectedCity] = useState('Дмитров'); // По умолчанию Дмитров
-  const [dest, setDest] = useState(cityDestinations['Дмитров']); // По умолчанию значение для Дмитрова
+  const [selectedCity, setSelectedCity] = useState('г.Дмитров'); // По умолчанию Дмитров
+  const [dest, setDest] = useState(cityDestinations['г.Дмитров']); // По умолчанию значение для Дмитрова
 
   useEffect(() => {
     setDest(cityDestinations[selectedCity]);
@@ -35,9 +35,10 @@ function App() {
     setErrorMessage('');
     setSuccessMessage('');
 
-    let searchQuery = query || 'Одежда S.Point'; // if (searchQuery.toLowerCase() === 'все') searchQuery = 'Одежда S.Point';
+    let searchQuery = query || 'Одежда S.Point';
+
     try {
-      const response = await fetch(`http://localhost:4000/api/products?query=${searchQuery}&dest=${dest}`);
+      const response = await fetch(`http://localhost:5500/api/products?query=${encodeURIComponent(searchQuery)}&dest=${encodeURIComponent(dest)}`);
       const productsData = await response.json();
       setLoadingMessage('');
 
@@ -45,23 +46,21 @@ function App() {
         setErrorMessage('Ошибка получения данных');
       } else if (productsData.length === 0) {
         setErrorMessage('Товары не найдены');
-        setTimeout(() => { setErrorMessage(''); }, 3000);
+        setTimeout(() => {
+          setErrorMessage('');
+        }, 3000);
       } else {
-        // Получаем текущее время в UTC
         const now = new Date();
-        // Устанавливаем смещение +3 часа для Москвы
         now.setHours(now.getHours() + 3);
-        // Преобразуем в ISO-формат
         const queryTime = now.toISOString();
         const newQueries = [{ query: searchQuery, products: productsData, queryTime }, ...allQueries];
-
         setAllQueries(newQueries);
-        setActiveKey('0'); // Устанавливаем активный аккордеон
+        setActiveKey('0');
         setSuccessMessage('Запрос выполнен успешно!');
-        clearInput(); // Очищаем инпут после успешного запроса
-
-        // Удаляем сообщение об успехе через 3 секунды
-        setTimeout(() => { setSuccessMessage(''); }, 3000);
+        clearInput();
+        setTimeout(() => {
+          setSuccessMessage('');
+        }, 3000);
       }
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -73,7 +72,9 @@ function App() {
   };
 
   const clearInput = () => setQuery('');
-  const handleKeyPress = (e) => { if (e.key === 'Enter') fetchProducts(); };
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') fetchProducts();
+  };
 
   return (
       <div>
@@ -83,7 +84,15 @@ function App() {
         <div className="container">
           <Form className="search" onSubmit={(e) => e.preventDefault()}>
             <InputGroup className="InputGroupForm">
-              <Form.Control type="text" value={query} onChange={(e) => setQuery(e.target.value)} onKeyPress={handleKeyPress} placeholder="Введите запрос" required disabled={isRequesting} />
+              <Form.Control
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Введите запрос"
+                  required
+                  disabled={isRequesting}
+              />
               <DropdownButton id="dropdown-basic-button" title={selectedCity}>
                 {Object.keys(cityDestinations).map(city => (
                     <Dropdown.Item key={city} onClick={() => setSelectedCity(city)}>{city}</Dropdown.Item>
@@ -101,12 +110,13 @@ function App() {
               const [date, time] = queryData.queryTime.split('T');
               const formattedTime = time.split('.')[0];
               const headerText = queryData.query === '1' ? 'Товары с главной страницы' : queryData.query;
-
               return (
                   <Accordion.Item eventKey={index.toString()} key={index}>
                     <Accordion.Header>
                       <div className="flex-grow-1">{headerText}</div>
-                      <div className="date-time"> Дата: {date}, Время: {formattedTime} </div>
+                      <div className="date-time">
+                        Дата: {date}, Время: {formattedTime}
+                      </div>
                     </Accordion.Header>
                     <Accordion.Body>
                       <table id="productsTable">
@@ -148,4 +158,5 @@ function App() {
       </div>
   );
 }
+
 export default App;
