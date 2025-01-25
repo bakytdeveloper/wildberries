@@ -3,7 +3,14 @@ import Accordion from 'react-bootstrap/Accordion';
 import { Form, Button, InputGroup, Alert, DropdownButton, Dropdown } from 'react-bootstrap';
 import './styles.css'; // Подключаем CSS стили
 
-const cityDestinations = { 'Москва': '-1275551', 'Дмитров': '123589350', 'Бишкек': '286' };
+const cityDestinations = {
+  'г.Москва': '-1275551',
+  'г.Санкт-Петербург': '-1123300',
+  'г.Дмитров': '123589350',
+  'г.Краснодар': '12358062',
+  'г.Казань': '-2133462',
+  'г.Бишкек': '286'
+};
 
 function App() {
   const [query, setQuery] = useState('');

@@ -7,7 +7,6 @@ const fallbackApiUrl = 'https://recom.wb.ru/personal/sng/common/v5/search';
 axiosRetry(axios, { retries: 3, retryDelay: (retryCount) => retryCount * 100, retryCondition: (error) => axiosRetry.isNetworkOrIdempotentRequestError(error)});
 
 export const getProducts = async (query: string, dest: string, page: number = 1): Promise<any> => {
-    console.log("destqwertyuiopoiuytrewqwert : ", dest)
     try {
         let url = apiUrl;
         const params: any = {
