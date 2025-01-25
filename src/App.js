@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Accordion from 'react-bootstrap/Accordion';
-import { Form, Button, InputGroup, Alert } from 'react-bootstrap';
-import './styles.css';  // Подключаем CSS стили
+import { Form, Button, InputGroup, Alert, DropdownButton, Dropdown } from 'react-bootstrap';
+import './styles.css'; // Подключаем CSS стили
+
+const cityDestinations = { 'Москва': '-1275551', 'Дмитров': '123589350', 'Бишкек': '286' };
 
 function App() {
   const [query, setQuery] = useState('');
@@ -11,6 +13,12 @@ function App() {
   const [activeKey, setActiveKey] = useState(null);
   const [isRequesting, setIsRequesting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [selectedCity, setSelectedCity] = useState('Дмитров'); // По умолчанию Дмитров
+  const [dest, setDest] = useState(cityDestinations['Дмитров']); // По умолчанию значение для Дмитрова
+
+  useEffect(() => {
+    setDest(cityDestinations[selectedCity]);
+  }, [selectedCity]);
 
   const fetchProducts = async () => {
     if (isRequesting) return; // Если запрос уже выполняется, выходим
@@ -20,42 +28,33 @@ function App() {
     setErrorMessage('');
     setSuccessMessage('');
 
-    let searchQuery = query || 'Одежда S.Point';
-    // if (searchQuery.toLowerCase() === 'все') searchQuery = 'Одежда S.Point';
-
+    let searchQuery = query || 'Одежда S.Point'; // if (searchQuery.toLowerCase() === 'все') searchQuery = 'Одежда S.Point';
     try {
-      const response = await fetch(`http://localhost:4000/api/products?query=${searchQuery}`);
+      const response = await fetch(`http://localhost:4000/api/products?query=${searchQuery}&dest=${dest}`);
       const productsData = await response.json();
-
       setLoadingMessage('');
 
       if (!Array.isArray(productsData)) {
         setErrorMessage('Ошибка получения данных');
       } else if (productsData.length === 0) {
         setErrorMessage('Товары не найдены');
-        setTimeout(() => {
-          setErrorMessage('');
-        }, 3000);
-
+        setTimeout(() => { setErrorMessage(''); }, 3000);
       } else {
         // Получаем текущее время в UTC
         const now = new Date();
-
         // Устанавливаем смещение +3 часа для Москвы
         now.setHours(now.getHours() + 3);
-
         // Преобразуем в ISO-формат
         const queryTime = now.toISOString();
         const newQueries = [{ query: searchQuery, products: productsData, queryTime }, ...allQueries];
+
         setAllQueries(newQueries);
         setActiveKey('0'); // Устанавливаем активный аккордеон
         setSuccessMessage('Запрос выполнен успешно!');
         clearInput(); // Очищаем инпут после успешного запроса
 
         // Удаляем сообщение об успехе через 3 секунды
-        setTimeout(() => {
-          setSuccessMessage('');
-        }, 3000);
+        setTimeout(() => { setSuccessMessage(''); }, 3000);
       }
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -67,10 +66,7 @@ function App() {
   };
 
   const clearInput = () => setQuery('');
-
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') fetchProducts();
-  };
+  const handleKeyPress = (e) => { if (e.key === 'Enter') fetchProducts(); };
 
   return (
       <div>
@@ -80,15 +76,12 @@ function App() {
         <div className="container">
           <Form className="search" onSubmit={(e) => e.preventDefault()}>
             <InputGroup className="InputGroupForm">
-              <Form.Control
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Введите запрос"
-                  required
-                  disabled={isRequesting} // Делаем инпут неактивным во время запроса
-              />
+              <Form.Control type="text" value={query} onChange={(e) => setQuery(e.target.value)} onKeyPress={handleKeyPress} placeholder="Введите запрос" required disabled={isRequesting} />
+              <DropdownButton id="dropdown-basic-button" title={selectedCity}>
+                {Object.keys(cityDestinations).map(city => (
+                    <Dropdown.Item key={city} onClick={() => setSelectedCity(city)}>{city}</Dropdown.Item>
+                ))}
+              </DropdownButton>
               <Button variant="primary" onClick={fetchProducts} disabled={isRequesting}>Поиск</Button>
               <Button variant="secondary" onClick={clearInput} id="clearButton" disabled={isRequesting}>X</Button>
             </InputGroup>
@@ -96,7 +89,6 @@ function App() {
           {loadingMessage && <div id="loadingMessage" className="message">{loadingMessage}</div>}
           {errorMessage && <div id="errorMessage" className="message error">{errorMessage}</div>}
           {successMessage && <Alert id="successMessage" variant="success">{successMessage}</Alert>}
-
           <Accordion activeKey={activeKey} onSelect={(key) => setActiveKey(key)}>
             {allQueries.map((queryData, index) => {
               const [date, time] = queryData.queryTime.split('T');
@@ -107,9 +99,7 @@ function App() {
                   <Accordion.Item eventKey={index.toString()} key={index}>
                     <Accordion.Header>
                       <div className="flex-grow-1">{headerText}</div>
-                      <div className="date-time">
-                        Дата: {date}, Время: {formattedTime}
-                      </div>
+                      <div className="date-time"> Дата: {date}, Время: {formattedTime} </div>
                     </Accordion.Header>
                     <Accordion.Body>
                       <table id="productsTable">
@@ -127,8 +117,6 @@ function App() {
                         </thead>
                         <tbody>
                         {Array.isArray(queryData.products) && queryData.products.map((product, i) => {
-                          // const [prodDate, prodTime] = product.queryTime.split('T');
-                          // const formattedProdTime = prodTime.split('.')[0];
                           return (
                               <tr key={i}>
                                 <td className="td_table">{i + 1}</td>
@@ -153,5 +141,4 @@ function App() {
       </div>
   );
 }
-
 export default App;
