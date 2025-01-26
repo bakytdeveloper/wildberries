@@ -144,6 +144,7 @@ function App() {
               return (
                   <Accordion.Item eventKey={index.toString()} key={index}>
                     <Accordion.Header>
+                      <div className="flex-grow-0">{index + 1})</div>
                       <div className="flex-grow-1">{headerText}</div>
                       <div className="date-time">
                         Дата: {date}, Время: {time}
