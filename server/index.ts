@@ -36,11 +36,11 @@ app.get('/api/queries', async (req: Request, res: Response) => {
 });
 
 app.get('/api/products', async (req: Request, res: Response) => {
-    const { query, dest } = req.query;
-    console.log(`Received query: ${query}, dest: ${dest}`);
+    const { query, dest, city } = req.query;
+    console.log(`Received query: ${query}, dest: ${dest}, city: ${city}`);
 
-    if (!query || !dest) {
-        res.status(400).json({ error: 'Query and dest parameters are required' });
+    if (!query || !dest || !city) {
+        res.status(400).json({ error: 'Query, dest, and city parameters are required' });
         return;
     }
 
@@ -55,6 +55,8 @@ app.get('/api/products', async (req: Request, res: Response) => {
             query: query,
             dest: dest,
             response: products,
+            createdAt: new Date(),
+            city: city as string,
             queryTime: queryTime
         });
         await newQuery.save();

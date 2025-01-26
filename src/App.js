@@ -36,6 +36,7 @@ function App() {
             'Content-Type': 'application/json'
           }
         });
+        console.log('response', response);
         if (!response.ok) {
           throw new Error('Ошибка загрузки данных');
         }
@@ -62,10 +63,10 @@ function App() {
     setErrorMessage('');
     setSuccessMessage('');
 
-    let searchQuery = query || 'Одежда S.Point';
+    let searchQuery = query.trim() === '' ? 'Одежда S.Point' : query;
 
     try {
-      const response = await fetch(`http://localhost:5500/api/products?query=${encodeURIComponent(searchQuery)}&dest=${encodeURIComponent(dest)}`);
+      const response = await fetch(`http://localhost:5500/api/products?query=${encodeURIComponent(searchQuery)}&dest=${encodeURIComponent(dest)}&city=${encodeURIComponent(selectedCity)}`);
       const productsData = await response.json();
       setLoadingMessage('');
 
@@ -81,7 +82,7 @@ function App() {
         now.setHours(now.getUTCHours() + 3); // Московское время (UTC+3)
         const queryTime = now.toISOString();
 
-        const newQueries = [{ query: searchQuery, products: productsData, queryTime }, ...allQueries];
+        const newQueries = [{ query: searchQuery, products: productsData, queryTime, city: selectedCity }, ...allQueries];
         setAllQueries(newQueries);
         setActiveKey('0');
         setSuccessMessage('Запрос выполнен успешно!');
@@ -139,7 +140,7 @@ function App() {
               const createdAt = new Date(dateTime);
               const date = createdAt.toLocaleDateString();
               const time = createdAt.toLocaleTimeString();
-              const headerText = queryData.query === '1' ? 'Товары с главной страницы' : queryData.query;
+              const headerText = queryData.query === '1' ? 'Товары с главной страницы' : queryData.city ? `${queryData.query} (${queryData.city})` : queryData.query;
               return (
                   <Accordion.Item eventKey={index.toString()} key={index}>
                     <Accordion.Header>
