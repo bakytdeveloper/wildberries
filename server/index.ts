@@ -5,27 +5,40 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import { QueryModel } from './models/queryModel';
 import { fetchAndParseProducts } from './services/productService';
-import { WebSocketServer } from 'ws';
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 5500;
 
-mongoose.connect(process.env.MONGODB_URI!, {
-    serverSelectionTimeoutMS: 10000, // 10 seconds timeout
-    connectTimeoutMS: 30000,         // 30 seconds timeout for initial connection
-    socketTimeoutMS: 45000,          // 45 seconds timeout for socket
-})
-    .then(() => {
-        console.log('Connected to MongoDB');
+const connectWithRetry = () => {
+    mongoose.connect(process.env.MONGODB_URI!, {
+        // Таймаут выбора сервера: клиент MongoDB ждет 5 секунд,
+        // чтобы найти подходящий сервер в кластере.
+        serverSelectionTimeoutMS: 5000,
+
     })
-    .catch((error: any) => {
-        console.error('Error connecting to MongoDB:', error.message, error);
-        if (error.cause && error.cause.errors) {
-            console.error('Error details:', error.cause.errors);
-        }
+        .then(() => {
+            console.log('Connected to MongoDB');
+            startServer();
+        })
+        .catch((error: any) => {
+            console.error('Error connecting to MongoDB:', error.message, error);
+            if (error.cause && error.cause.errors) {
+                console.error('Error details:', error.cause.errors);
+            }
+            console.log('Retrying MongoDB connection in 5 seconds...');
+            setTimeout(connectWithRetry, 5000);
+        });
+};
+
+const startServer = () => {
+    app.listen(port, () => {
+        console.log(`Server running at http://localhost:${port}`);
     });
+};
+
+connectWithRetry();
 
 app.use(cors({ origin: '*' }));
 app.use(express.json());
@@ -34,16 +47,8 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '../../public')));
 
 app.get('/api/queries', async (req: Request, res: Response) => {
-    const sort = req.query.sort === 'true';
-    const search = req.query.search as string;
     try {
-        let queries;
-        if (sort && search) {
-            const regex = new RegExp(search, 'i'); // Создание регулярного выражения для поиска
-            queries = await QueryModel.find({ query: { $regex: regex } }).sort({ query: 1 });
-        } else {
-            queries = await QueryModel.find().sort({ createdAt: -1 });
-        }
+        const queries = await QueryModel.find().sort({ createdAt: -1 });
         console.log('queries:', queries);
         res.json(queries);
     } catch (error: any) {
@@ -83,25 +88,6 @@ app.get('/api/products', async (req: Request, res: Response) => {
         console.error('Error fetching products:', error.message);
         res.status(500).json({ error: 'Failed to fetch products' });
     }
-});
-
-// WebSocket server
-const server = app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
-});
-const wss = new WebSocketServer({ server });
-
-wss.on('connection', (ws) => {
-    console.log('New WebSocket connection');
-    ws.on('message', (message) => {
-        console.log(`Received message: ${message}`);
-    });
-
-    ws.on('close', () => {
-        console.log('WebSocket connection closed');
-    });
-
-    ws.send('Welcome to WebSocket server');
 });
 
 // Обработка маршрутов, которые не были найдены
