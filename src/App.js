@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Accordion from 'react-bootstrap/Accordion';
 import { Form, Button, InputGroup, Alert, DropdownButton, Dropdown } from 'react-bootstrap';
-import './styles.css'; // Подключаем CSS стили
+import './styles.css';
 
 const cityDestinations = {
   'г.Москва': '-1275551',
@@ -20,17 +20,44 @@ function App() {
   const [activeKey, setActiveKey] = useState(null);
   const [isRequesting, setIsRequesting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
-  const [selectedCity, setSelectedCity] = useState('г.Дмитров'); // По умолчанию Дмитров
-  const [dest, setDest] = useState(cityDestinations['г.Дмитров']); // По умолчанию значение для Дмитрова
+  const [selectedCity, setSelectedCity] = useState('г.Дмитров');
+  const [dest, setDest] = useState(cityDestinations[selectedCity]);
 
   useEffect(() => {
     setDest(cityDestinations[selectedCity]);
   }, [selectedCity]);
 
-  const fetchProducts = async () => {
-    if (isRequesting) return; // Если запрос уже выполняется, выходим
+  useEffect(() => {
+    const fetchSavedQueries = async () => {
+      try {
+        setLoadingMessage('Загрузка данных...');
+        const response = await fetch('http://localhost:5500/api/queries', {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        if (!response.ok) {
+          throw new Error('Ошибка загрузки данных');
+        }
+        const savedQueries = await response.json();
+        console.log('Fetched saved queries:', savedQueries);
+        if (Array.isArray(savedQueries)) {
+          setAllQueries(savedQueries);
+        }
+        setLoadingMessage('');
+      } catch (error) {
+        setErrorMessage('Не удалось загрузить данные.');
+        console.error(error);
+      }
+    };
 
-    setIsRequesting(true); // Устанавливаем флаг выполнения запроса
+    fetchSavedQueries();
+  }, []);
+
+  const fetchProducts = async () => {
+    if (isRequesting) return;
+
+    setIsRequesting(true);
     setLoadingMessage('Загрузка...');
     setErrorMessage('');
     setSuccessMessage('');
@@ -51,8 +78,9 @@ function App() {
         }, 3000);
       } else {
         const now = new Date();
-        now.setHours(now.getHours() + 3);
+        now.setHours(now.getUTCHours() + 3); // Московское время (UTC+3)
         const queryTime = now.toISOString();
+
         const newQueries = [{ query: searchQuery, products: productsData, queryTime }, ...allQueries];
         setAllQueries(newQueries);
         setActiveKey('0');
@@ -68,7 +96,7 @@ function App() {
       setErrorMessage('Ошибка получения данных');
     }
 
-    setIsRequesting(false); // Снимаем флаг выполнения запроса
+    setIsRequesting(false);
   };
 
   const clearInput = () => setQuery('');
@@ -107,15 +135,17 @@ function App() {
           {successMessage && <Alert id="successMessage" variant="success">{successMessage}</Alert>}
           <Accordion activeKey={activeKey} onSelect={(key) => setActiveKey(key)}>
             {allQueries.map((queryData, index) => {
-              const [date, time] = queryData.queryTime.split('T');
-              const formattedTime = time.split('.')[0];
+              const dateTime = queryData.queryTime || queryData.createdAt;
+              const createdAt = new Date(dateTime);
+              const date = createdAt.toLocaleDateString();
+              const time = createdAt.toLocaleTimeString();
               const headerText = queryData.query === '1' ? 'Товары с главной страницы' : queryData.query;
               return (
                   <Accordion.Item eventKey={index.toString()} key={index}>
                     <Accordion.Header>
                       <div className="flex-grow-1">{headerText}</div>
                       <div className="date-time">
-                        Дата: {date}, Время: {formattedTime}
+                        Дата: {date}, Время: {time}
                       </div>
                     </Accordion.Header>
                     <Accordion.Body>
@@ -133,7 +163,11 @@ function App() {
                         </tr>
                         </thead>
                         <tbody>
-                        {Array.isArray(queryData.products) && queryData.products.map((product, i) => {
+                        {Array.isArray(queryData.products || queryData.response) && (queryData.products || queryData.response).map((product, i) => {
+                          const queryTime = queryData.queryTime || queryData.createdAt;
+                          const createdAt = new Date(queryTime);
+                          const date = createdAt.toLocaleDateString();
+                          const time = createdAt.toLocaleTimeString();
                           return (
                               <tr key={i}>
                                 <td className="td_table">{i + 1}</td>
@@ -143,7 +177,7 @@ function App() {
                                 <td className="td_table">{product.brand}</td>
                                 <td className="td_table">{product.name}</td>
                                 <td className="td_table">{date}</td>
-                                <td className="td_table">{formattedTime}</td>
+                                <td className="td_table">{time}</td>
                               </tr>
                           );
                         })}
