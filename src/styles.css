@@ -156,7 +156,7 @@ tr:hover {
     display: flex;
     align-items: center; /* Центрируем элементы по вертикали */
     /*gap: 8px; !* Промежуток между элементами *!*/
-    width: 50%;
+    width: 100%;
     margin-bottom: 15px; /* Добавим отступ снизу */
 }
 
@@ -183,6 +183,62 @@ button {
     color: white;
     font-size: 14px; /* Уменьшаем шрифт */
     border-radius: 4px;
+    cursor: pointer;
+}
+
+button[disabled] {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+button:hover:enabled {
+    background-color: #2451aa;
+    color: white;
+}
+
+
+
+
+
+
+
+
+.search-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.search-left,
+.search-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.search-left {
+    flex: 0.5;
+    margin-right: 100px;
+}
+
+.search-right {
+    flex: 0.3;
+    justify-content: flex-end;
+    margin-left: 90px;
+
+}
+
+.search input,
+.search button,
+.search .dropdown button {
+    padding: 6px 10px;
+    font-size: 14px;
+    height: 38px;
+    border-radius: 4px;
+}
+
+button {
     cursor: pointer;
 }
 

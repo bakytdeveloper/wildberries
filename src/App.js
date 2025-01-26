@@ -148,6 +148,103 @@ function App() {
     if (e.key === 'Enter') fetchProducts();
   };
 
+  // return (
+  //     <div>
+  //       <header>
+  //         <h1>Поиск товаров S.Point в Wildberries</h1>
+  //       </header>
+  //       <div className="container">
+  //         <Form className="search" onSubmit={(e) => e.preventDefault()}>
+  //           <InputGroup className="InputGroupForm">
+  //             <Form.Control
+  //                 type="text"
+  //                 value={query}
+  //                 onChange={handleQueryInputChange}
+  //                 onKeyPress={handleKeyPress}
+  //                 placeholder="Введите запрос"
+  //                 required
+  //                 disabled={isRequesting}
+  //             />
+  //             <DropdownButton id="dropdown-basic-button" title={selectedCity}>
+  //               {Object.keys(cityDestinations).map(city => (
+  //                   <Dropdown.Item key={city} onClick={() => setSelectedCity(city)}>{city}</Dropdown.Item>
+  //               ))}
+  //             </DropdownButton>
+  //             <Button variant="primary" onClick={fetchProducts} disabled={isRequesting}>Поиск</Button>
+  //             <Button variant="secondary" onClick={clearInput} id="clearButton" disabled={isRequesting}>X</Button>
+  //           </InputGroup>
+  //           <InputGroup className="mt-3">
+  //             <Form.Control
+  //                 type="text"
+  //                 value={searchTerm}
+  //                 onChange={handleSortInputChange}
+  //                 placeholder="Поиск по заголовкам"
+  //             />
+  //           </InputGroup>
+  //         </Form>
+  //         {loadingMessage && <div id="loadingMessage" className="message">{loadingMessage}</div>}
+  //         {errorMessage && errorMessage !== 'Не удалось загрузить данные.' && <div id="errorMessage" className="message error">{errorMessage}</div>}
+  //         {successMessage && <Alert id="successMessage" variant="success">{successMessage}</Alert>}
+  //         <Accordion activeKey={activeKey} onSelect={(key) => setActiveKey(key)}>
+  //           {allQueries.map((queryData, index) => {
+  //             const dateTime = queryData.queryTime || queryData.createdAt;
+  //             const createdAt = new Date(dateTime);
+  //             const date = createdAt.toLocaleDateString();
+  //             const time = createdAt.toLocaleTimeString();
+  //             const headerText = queryData.query === '1' ? 'Товары с главной страницы' : queryData.city ? `${queryData.query} (${queryData.city})` : queryData.query;
+  //             return (
+  //                 <Accordion.Item eventKey={index.toString()} key={index}>
+  //                   <Accordion.Header>
+  //                     <div className="flex-grow-0">{index + 1})</div>
+  //                     <div className="flex-grow-1">{headerText}</div>
+  //                     <div className="date-time">
+  //                       Дата: {date}, Время: {time}
+  //                     </div>
+  //                   </Accordion.Header>
+  //                   <Accordion.Body>
+  //                     <table id="productsTable">
+  //                       <thead>
+  //                       <tr>
+  //                         <th className="th_table">№</th>
+  //                         <th className="th_table">Артикул</th>
+  //                         <th className="th_table">Страница</th>
+  //                         <th className="th_table">Позиция</th>
+  //                         <th className="th_table">Бренд</th>
+  //                         <th className="th_table">Наименование</th>
+  //                         <th className="th_table">Дата запроса</th>
+  //                         <th className="th_table">Время запроса</th>
+  //                       </tr>
+  //                       </thead>
+  //                       <tbody>
+  //                       {Array.isArray(queryData.products || queryData.response) && (queryData.products || queryData.response).map((product, i) => {
+  //                         const queryTime = queryData.queryTime || queryData.createdAt;
+  //                         const createdAt = new Date(queryTime);
+  //                         const date = createdAt.toLocaleDateString();
+  //                         const time = createdAt.toLocaleTimeString();
+  //                         return (
+  //                             <tr key={i}>
+  //                               <td className="td_table">{i + 1}</td>
+  //                               <td className="td_table">{product.id}</td>
+  //                               <td className="td_table">{product.page}</td>
+  //                               <td className="td_table">{product.position}</td>
+  //                               <td className="td_table">{product.brand}</td>
+  //                               <td className="td_table">{product.name}</td>
+  //                               <td className="td_table">{date}</td>
+  //                               <td className="td_table">{time}</td>
+  //                             </tr>
+  //                         );
+  //                       })}
+  //                       </tbody>
+  //                     </table>
+  //                   </Accordion.Body>
+  //                 </Accordion.Item>
+  //             );
+  //           })}
+  //         </Accordion>
+  //       </div>
+  //     </div>
+  // );
+
   return (
       <div>
         <header>
@@ -155,35 +252,49 @@ function App() {
         </header>
         <div className="container">
           <Form className="search" onSubmit={(e) => e.preventDefault()}>
-            <InputGroup className="InputGroupForm">
-              <Form.Control
-                  type="text"
-                  value={query}
-                  onChange={handleQueryInputChange}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Введите запрос"
-                  required
-                  disabled={isRequesting}
-              />
-              <DropdownButton id="dropdown-basic-button" title={selectedCity}>
-                {Object.keys(cityDestinations).map(city => (
-                    <Dropdown.Item key={city} onClick={() => setSelectedCity(city)}>{city}</Dropdown.Item>
-                ))}
-              </DropdownButton>
-              <Button variant="primary" onClick={fetchProducts} disabled={isRequesting}>Поиск</Button>
-              <Button variant="secondary" onClick={clearInput} id="clearButton" disabled={isRequesting}>X</Button>
-            </InputGroup>
-            <InputGroup className="mt-3">
-              <Form.Control
-                  type="text"
-                  value={searchTerm}
-                  onChange={handleSortInputChange}
-                  placeholder="Поиск по заголовкам"
-              />
-            </InputGroup>
+            <div className="search-container">
+              <div className="search-left">
+                <InputGroup className="InputGroupForm">
+                  <Form.Control
+                      type="text"
+                      value={query}
+                      onChange={handleQueryInputChange}
+                      onKeyPress={handleKeyPress}
+                      placeholder="Введите запрос"
+                      required
+                      disabled={isRequesting}
+                  />
+                  <DropdownButton id="dropdown-basic-button" title={selectedCity}>
+                    {Object.keys(cityDestinations).map((city) => (
+                        <Dropdown.Item key={city} onClick={() => setSelectedCity(city)}>
+                          {city}
+                        </Dropdown.Item>
+                    ))}
+                  </DropdownButton>
+                  <Button variant="primary" onClick={fetchProducts} disabled={isRequesting}>
+                    Поиск
+                  </Button>
+                  <Button variant="secondary" onClick={clearInput} id="clearButton" disabled={isRequesting}>
+                    X
+                  </Button>
+                </InputGroup>
+              </div>
+              <div className="search-right">
+                <InputGroup>
+                  <Form.Control
+                      type="text"
+                      value={searchTerm}
+                      onChange={handleSortInputChange}
+                      placeholder="Поиск по заголовкам"
+                  />
+                </InputGroup>
+              </div>
+            </div>
           </Form>
           {loadingMessage && <div id="loadingMessage" className="message">{loadingMessage}</div>}
-          {errorMessage && errorMessage !== 'Не удалось загрузить данные.' && <div id="errorMessage" className="message error">{errorMessage}</div>}
+          {errorMessage && errorMessage !== 'Не удалось загрузить данные.' && (
+              <div id="errorMessage" className="message error">{errorMessage}</div>
+          )}
           {successMessage && <Alert id="successMessage" variant="success">{successMessage}</Alert>}
           <Accordion activeKey={activeKey} onSelect={(key) => setActiveKey(key)}>
             {allQueries.map((queryData, index) => {
@@ -191,7 +302,8 @@ function App() {
               const createdAt = new Date(dateTime);
               const date = createdAt.toLocaleDateString();
               const time = createdAt.toLocaleTimeString();
-              const headerText = queryData.query === '1' ? 'Товары с главной страницы' : queryData.city ? `${queryData.query} (${queryData.city})` : queryData.query;
+              const headerText =
+                  queryData.query === '1' ? 'Товары с главной страницы' : queryData.city ? `${queryData.query} (${queryData.city})` : queryData.query;
               return (
                   <Accordion.Item eventKey={index.toString()} key={index}>
                     <Accordion.Header>
@@ -216,7 +328,8 @@ function App() {
                         </tr>
                         </thead>
                         <tbody>
-                        {Array.isArray(queryData.products || queryData.response) && (queryData.products || queryData.response).map((product, i) => {
+                        {Array.isArray(queryData.products || queryData.response) &&
+                        (queryData.products || queryData.response).map((product, i) => {
                           const queryTime = queryData.queryTime || queryData.createdAt;
                           const createdAt = new Date(queryTime);
                           const date = createdAt.toLocaleDateString();
@@ -244,6 +357,8 @@ function App() {
         </div>
       </div>
   );
+
+
 }
 
 export default App;
