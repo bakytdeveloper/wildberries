@@ -15,7 +15,8 @@
     "react": "^19.0.0",
     "react-bootstrap": "^2.10.8",
     "react-dom": "^19.0.0",
-    "react-scripts": "5.0.1"
+    "react-scripts": "5.0.1",
+    "ws": "^8.18.0"
   },
   "scripts": {
     "start": "concurrently --kill-others-on-fail --names \"SERVER,CLIENT\" -c \"bgGreen.bold,bgCyan.bold\" \"ts-node server/index.ts\" \"sleep 5 && PORT=3000 react-scripts start\"",

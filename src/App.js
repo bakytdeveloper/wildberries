@@ -14,6 +14,7 @@ const cityDestinations = {
 
 function App() {
   const [query, setQuery] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [loadingMessage, setLoadingMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [allQueries, setAllQueries] = useState([]);
@@ -28,32 +29,32 @@ function App() {
   }, [selectedCity]);
 
   useEffect(() => {
-    const fetchSavedQueries = async () => {
-      try {
-        setLoadingMessage('Загрузка данных...');
-        const response = await fetch('http://localhost:5500/api/queries', {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-        console.log('response', response);
-        if (!response.ok) {
-          throw new Error('Ошибка загрузки данных');
-        }
-        const savedQueries = await response.json();
-        console.log('Fetched saved queries:', savedQueries);
-        if (Array.isArray(savedQueries)) {
-          setAllQueries(savedQueries);
-        }
-        setLoadingMessage('');
-      } catch (error) {
-        setErrorMessage('Не удалось загрузить данные.');
-        console.error(error);
-      }
-    };
-
     fetchSavedQueries();
   }, []);
+
+  const fetchSavedQueries = async () => {
+    try {
+      setLoadingMessage('Загрузка данных...');
+      const response = await fetch('http://localhost:5500/api/queries', {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('response', response);
+      if (!response.ok) {
+        throw new Error('Ошибка загрузки данных');
+      }
+      const savedQueries = await response.json();
+      console.log('Fetched saved queries:', savedQueries);
+      if (Array.isArray(savedQueries)) {
+        setAllQueries(savedQueries);
+      }
+      setLoadingMessage('');
+    } catch (error) {
+      setErrorMessage('Не удалось загрузить данные.');
+      console.error(error);
+    }
+  };
 
   const fetchProducts = async () => {
     if (isRequesting) return;
@@ -100,6 +101,48 @@ function App() {
     setIsRequesting(false);
   };
 
+  const fetchSortedQueries = async (searchTerm) => {
+    if (searchTerm.trim() === '') {
+      fetchSavedQueries();
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:5500/api/queries?sort=true&search=${encodeURIComponent(searchTerm)}`, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('response', response);
+      if (!response.ok) {
+        throw new Error('Ошибка загрузки данных');
+      }
+      const sortedQueries = await response.json();
+      console.log('Fetched sorted queries:', sortedQueries);
+      if (Array.isArray(sortedQueries)) {
+        setAllQueries(sortedQueries);
+      }
+    } catch (error) {
+      console.error('Error fetching sorted queries:', error);
+    }
+  };
+
+  const handleQueryInputChange = (e) => {
+    setQuery(e.target.value);
+    if (e.target.value.trim() !== '') {
+      setSearchTerm(''); // Очистка второго инпута
+    }
+  };
+
+  const handleSortInputChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    fetchSortedQueries(value);
+    if (value.trim() !== '') {
+      setQuery(''); // Очистка первого инпута
+    }
+  };
+
   const clearInput = () => setQuery('');
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') fetchProducts();
@@ -116,7 +159,7 @@ function App() {
               <Form.Control
                   type="text"
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={handleQueryInputChange}
                   onKeyPress={handleKeyPress}
                   placeholder="Введите запрос"
                   required
@@ -130,9 +173,17 @@ function App() {
               <Button variant="primary" onClick={fetchProducts} disabled={isRequesting}>Поиск</Button>
               <Button variant="secondary" onClick={clearInput} id="clearButton" disabled={isRequesting}>X</Button>
             </InputGroup>
+            <InputGroup className="mt-3">
+              <Form.Control
+                  type="text"
+                  value={searchTerm}
+                  onChange={handleSortInputChange}
+                  placeholder="Поиск по заголовкам"
+              />
+            </InputGroup>
           </Form>
           {loadingMessage && <div id="loadingMessage" className="message">{loadingMessage}</div>}
-          {errorMessage && <div id="errorMessage" className="message error">{errorMessage}</div>}
+          {errorMessage && errorMessage !== 'Не удалось загрузить данные.' && <div id="errorMessage" className="message error">{errorMessage}</div>}
           {successMessage && <Alert id="successMessage" variant="success">{successMessage}</Alert>}
           <Accordion activeKey={activeKey} onSelect={(key) => setActiveKey(key)}>
             {allQueries.map((queryData, index) => {
