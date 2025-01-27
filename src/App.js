@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Accordion from 'react-bootstrap/Accordion';
 import { Form, Button, InputGroup, Alert, DropdownButton, Dropdown } from 'react-bootstrap';
 import './styles.css';
@@ -24,6 +24,9 @@ function App() {
   const [successMessage, setSuccessMessage] = useState('');
   const [selectedCity, setSelectedCity] = useState('г.Дмитров');
   const [dest, setDest] = useState(cityDestinations[selectedCity]);
+  const [retryAttempted, setRetryAttempted] = useState(false);
+
+  const accordionRef = useRef(null);
 
   useEffect(() => {
     setDest(cityDestinations[selectedCity]);
@@ -57,13 +60,28 @@ function App() {
       const savedQueries = await response.json();
       console.log('Fetched saved queries:', savedQueries);
       if (Array.isArray(savedQueries)) {
-        setAllQueries(savedQueries);
-        setFilteredQueries(savedQueries);
+        const adjustedQueries = savedQueries.map(query => {
+          const createdAt = new Date(query.createdAt || query.queryTime);
+          createdAt.setHours(createdAt.getUTCHours() + 3);
+          return {
+            ...query,
+            createdAt: createdAt.toISOString()
+          };
+        });
+        setAllQueries(adjustedQueries);
+        setFilteredQueries(adjustedQueries);
+        setRetryAttempted(false); // Успешная загрузка, сброс попыток
       }
       setLoadingMessage('');
     } catch (error) {
       setErrorMessage('Не удалось загрузить данные.');
       console.error(error);
+
+      // Попробовать повторную загрузку, если это первая попытка
+      if (!retryAttempted) {
+        setRetryAttempted(true);
+        setTimeout(fetchSavedQueries, 5000); // Повторная попытка через 5 секунд
+      }
     }
   };
 
@@ -83,7 +101,10 @@ function App() {
       setLoadingMessage('');
 
       if (!Array.isArray(productsData)) {
-        setErrorMessage('Ошибка получения данных');
+        setErrorMessage('Товары не найденны');
+        setTimeout(() => {
+          setErrorMessage('');
+        }, 3000);
       } else if (productsData.length === 0) {
         setErrorMessage('Товары не найдены');
         setTimeout(() => {
@@ -91,7 +112,7 @@ function App() {
         }, 3000);
       } else {
         const now = new Date();
-        now.setHours(now.getUTCHours() + 3); // Московское время (UTC+3)
+        now.setHours(now.getUTCHours() + 3);
         const queryTime = now.toISOString();
 
         const newQueries = [{ query: searchQuery, products: productsData, queryTime, city: selectedCity }, ...allQueries];
@@ -103,7 +124,14 @@ function App() {
         setTimeout(() => {
           setSuccessMessage('');
         }, 3000);
-        window.scrollTo(0, 0); // Автоматический скролл к верхней части монитора
+
+        // Прокрутка аккордеона к заголовку новой загруженной информации
+        setTimeout(() => {
+          const newAccordionItem = document.querySelector(`.accordion .accordion-item:first-child`);
+          if (newAccordionItem) {
+            newAccordionItem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 100); // Небольшая задержка для корректной работы скролла
       }
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -117,9 +145,9 @@ function App() {
   const handleQueryInputChange = (e) => {
     setQuery(e.target.value);
     if (e.target.value.trim() !== '') {
-      setSearchTerm(''); // Очистка второго инпута
+      setSearchTerm('');
     } else {
-      fetchSavedQueries(); // Если оба инпута пустые, отобразить все заголовки
+      fetchSavedQueries();
     }
   };
 
@@ -127,9 +155,9 @@ function App() {
     const value = e.target.value;
     setSearchTerm(value);
     if (value.trim() !== '') {
-      setQuery(''); // Очистка первого инпута
+      setQuery('');
     } else {
-      fetchSavedQueries(); // Если оба инпута пустые, отобразить все заголовки
+      fetchSavedQueries();
     }
   };
 
@@ -189,8 +217,14 @@ function App() {
               <div id="errorMessage" className="message error">{errorMessage}</div>
           )}
           {successMessage && <Alert id="successMessage" variant="success">{successMessage}</Alert>}
-          <Accordion activeKey={activeKey} onSelect={(key) => setActiveKey(key)}>
+          <Accordion ref={accordionRef} activeKey={activeKey} onSelect={(key) => setActiveKey(key)}>
             {filteredQueries.map((queryData, index) => {
+              // Проверяем, есть ли найденные элементы
+              const hasProducts = Array.isArray(queryData.products || queryData.response) && (queryData.products || queryData.response).length > 0;
+              if (!hasProducts) {
+                return null; // Пропускаем создание заголовка без контента
+              }
+
               const dateTime = queryData.queryTime || queryData.createdAt;
               const createdAt = new Date(dateTime);
               const date = createdAt.toLocaleDateString();
@@ -252,3 +286,4 @@ function App() {
 }
 
 export default App;
+
