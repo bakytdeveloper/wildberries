@@ -122,6 +122,7 @@ function App() {
         setFilteredQueries(newQueries);
         setActiveKey('0');
         setSuccessMessage('Запрос выполнен успешно!');
+        setQuery('');
         setTimeout(() => {
           setSuccessMessage('');
         }, 3000);
