@@ -5,12 +5,12 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import { QueryModel } from './models/queryModel';
 import { fetchAndParseProducts } from './services/productService';
+import { Product } from './models/product'; // Импортируем интерфейс Product
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 5500;
-
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
@@ -63,29 +63,40 @@ app.get('/api/products', async (req: Request, res: Response) => {
     }
 
     try {
-        const products = await fetchAndParseProducts(query as string, dest as string);
+        const products: Product[] = await fetchAndParseProducts(query as string, dest as string);
 
         if (!products || products.length === 0) {
-            res.status(404).json({ error: 'No products found' });
+            res.status(200).json({ message: 'No products found' });
             return;
         }
 
+        // Устанавливаю позицию товара в соответствии с полем log
+        const updatedProducts = products.map(product => {
+            if (product.log && product.log.position) {
+                const position = product.log.position.toString();
+                // Первая цифра для страницы
+                product.page = position[0];
+                // Остальные цифры для позиции
+                product.position = position.slice(1);
+            }
+            return product;
+        });
+
         const now = new Date();
-        // Московское время (UTC+3)
-        now.setHours(now.getUTCHours() + 3);
+        now.setHours(now.getUTCHours() + 3); // Московское время (UTC+3)
         const queryTime = now.toISOString();
 
         const newQuery = new QueryModel({
             query: query,
             dest: dest,
-            response: products,
+            response: updatedProducts,
             createdAt: new Date(),
             city: city as string,
             queryTime: queryTime
         });
         await newQuery.save();
 
-        res.json(products);
+        res.json(updatedProducts);
     } catch (error: any) {
         console.error('Error fetching products:', error.message);
         res.status(500).json({ error: 'Failed to fetch products' });

@@ -97,15 +97,17 @@ function App() {
 
     try {
       const response = await fetch(`http://localhost:5500/api/products?query=${encodeURIComponent(searchQuery)}&dest=${encodeURIComponent(dest)}&city=${encodeURIComponent(selectedCity)}`);
-      const productsData = await response.json();
+      const result = await response.json();
       setLoadingMessage('');
 
-      if (!Array.isArray(productsData)) {
-        setErrorMessage('Товары не найденны');
+      if (response.status === 200 && result.message === 'No products found') {
+        setErrorMessage('По данному запросу ничего не найдено');
         setTimeout(() => {
           setErrorMessage('');
         }, 3000);
-      } else if (productsData.length === 0) {
+      } else if (!Array.isArray(result)) {
+        setErrorMessage('Ошибка получения данных');
+      } else if (result.length === 0) {
         setErrorMessage('Товары не найдены');
         setTimeout(() => {
           setErrorMessage('');
@@ -115,12 +117,11 @@ function App() {
         now.setHours(now.getUTCHours() + 3);
         const queryTime = now.toISOString();
 
-        const newQueries = [{ query: searchQuery, products: productsData, queryTime, city: selectedCity }, ...allQueries];
+        const newQueries = [{ query: searchQuery, products: result, queryTime, city: selectedCity }, ...allQueries];
         setAllQueries(newQueries);
         setFilteredQueries(newQueries);
         setActiveKey('0');
         setSuccessMessage('Запрос выполнен успешно!');
-        clearInput();
         setTimeout(() => {
           setSuccessMessage('');
         }, 3000);
@@ -260,12 +261,22 @@ function App() {
                           const createdAt = new Date(queryTime);
                           const date = createdAt.toLocaleDateString();
                           const time = createdAt.toLocaleTimeString();
+
+                          // Учитываем поле log
+                          let page = product.page;
+                          let position = product.position;
+                          if (product.log && product.log.position) {
+                            const logPosition = product.log.position.toString();
+                            page = logPosition[0];
+                            position = logPosition.slice(1);
+                          }
+
                           return (
                               <tr key={i}>
                                 <td className="td_table">{i + 1}</td>
                                 <td className="td_table">{product.id}</td>
-                                <td className="td_table">{product.page}</td>
-                                <td className="td_table">{product.position}</td>
+                                <td className="td_table">{page}</td>
+                                <td className="td_table">{position}</td>
                                 <td className="td_table">{product.brand}</td>
                                 <td className="td_table">{product.name}</td>
                                 <td className="td_table">{date}</td>
@@ -286,4 +297,3 @@ function App() {
 }
 
 export default App;
-
