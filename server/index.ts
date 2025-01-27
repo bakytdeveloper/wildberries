@@ -10,6 +10,7 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 5500;
+
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
@@ -70,7 +71,8 @@ app.get('/api/products', async (req: Request, res: Response) => {
         }
 
         const now = new Date();
-        now.setHours(now.getUTCHours() + 3); // Московское время (UTC+3)
+        // Московское время (UTC+3)
+        now.setHours(now.getUTCHours() + 3);
         const queryTime = now.toISOString();
 
         const newQuery = new QueryModel({
