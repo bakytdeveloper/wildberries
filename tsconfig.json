@@ -10,6 +10,6 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*", "src/*.ts"],
+  "include": ["src/**/*", "src/*.ts", "server/*.ts", "server/**/*.ts"],
   "exclude": ["node_modules", "server/**/*"],
 }
