@@ -1,7 +1,7 @@
 // models/product.ts
 export interface Log {
     position: number;
-    // другие поля из объекта log, если они есть
+    // другие поля из объекта log, если они потребуются
 }
 
 export interface Product {

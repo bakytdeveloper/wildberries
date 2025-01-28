@@ -12,6 +12,13 @@ const cityDestinations = {
   'г.Бишкек': '286'
 };
 
+const brandDestinations = {
+  'S.Point': 'S.Point',
+  'AnvarArt': 'AnvarArt',
+  'Home & Gift': 'Home & Gift',
+  'best for women': 'best for women'
+};
+
 function App() {
   const [query, setQuery] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -24,6 +31,10 @@ function App() {
   const [successMessage, setSuccessMessage] = useState('');
   const [selectedCity, setSelectedCity] = useState('г.Дмитров');
   const [dest, setDest] = useState(cityDestinations[selectedCity]);
+
+  const [selectedBrands, setSelectedBrands] = useState('S.Point');
+  const [brands, setBrands] = useState(brandDestinations[selectedBrands]);
+
   const [retryAttempted, setRetryAttempted] = useState(false);
 
   const accordionRef = useRef(null);
@@ -31,6 +42,10 @@ function App() {
   useEffect(() => {
     setDest(cityDestinations[selectedCity]);
   }, [selectedCity]);
+
+  useEffect(() => {
+    setBrands(brandDestinations[selectedBrands]);
+  }, [selectedBrands]);
 
   useEffect(() => {
     fetchSavedQueries();
@@ -87,19 +102,19 @@ function App() {
 
   const fetchProducts = async () => {
     if (isRequesting) return;
-
     setIsRequesting(true);
     setLoadingMessage('Загрузка...');
     setErrorMessage('');
     setSuccessMessage('');
 
-    let searchQuery = query.trim() === '' ? 'Одежда S.Point' : query;
+    // Формируем поисковый запрос в зависимости от выбранного бренда
+    const baseQuery = selectedBrands === 'S.Point' ? 'Одежда' : '';
+    const searchQuery = query.trim() === '' ? `${baseQuery} ${selectedBrands}` : query;
 
     try {
-      const response = await fetch(`http://localhost:5500/api/products?query=${encodeURIComponent(searchQuery)}&dest=${encodeURIComponent(dest)}&city=${encodeURIComponent(selectedCity)}`);
+      const response = await fetch(`http://localhost:5500/api/products?query=${encodeURIComponent(searchQuery)}&dest=${encodeURIComponent(dest)}&city=${encodeURIComponent(selectedCity)}&brands=${encodeURIComponent(brands)}&brand=${encodeURIComponent(selectedBrands)}`);
       const result = await response.json();
       setLoadingMessage('');
-
       if (response.status === 200 && result.message === 'No products found') {
         setErrorMessage('По данному запросу ничего не найдено');
         setTimeout(() => {
@@ -116,8 +131,7 @@ function App() {
         const now = new Date();
         now.setHours(now.getUTCHours() + 3);
         const queryTime = now.toISOString();
-
-        const newQueries = [{ query: searchQuery, products: result, queryTime, city: selectedCity }, ...allQueries];
+        const newQueries = [{ query: searchQuery, products: result, queryTime, city: selectedCity, brand: selectedBrands }, ...allQueries];
         setAllQueries(newQueries);
         setFilteredQueries(newQueries);
         setActiveKey('0');
@@ -126,23 +140,22 @@ function App() {
         setTimeout(() => {
           setSuccessMessage('');
         }, 3000);
-
-        // Прокрутка аккордеона к заголовку новой загруженной информации
         setTimeout(() => {
           const newAccordionItem = document.querySelector(`.accordion .accordion-item:first-child`);
           if (newAccordionItem) {
             newAccordionItem.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }
-        }, 100); // Небольшая задержка для корректной работы скролла
+        }, 100);
       }
     } catch (error) {
       console.error('Error fetching products:', error);
       setLoadingMessage('');
       setErrorMessage('Ошибка получения данных');
     }
-
     setIsRequesting(false);
   };
+
+
 
   const handleQueryInputChange = (e) => {
     setQuery(e.target.value);
@@ -187,6 +200,14 @@ function App() {
                       required
                       disabled={isRequesting}
                   />
+                  <DropdownButton id="dropdown-basic-button" title={selectedBrands}>
+                    {Object.keys(brandDestinations).map((brand) => (
+                        <Dropdown.Item key={brand} onClick={() => setSelectedBrands(brand)}>
+                          {brand}
+                        </Dropdown.Item>
+                    ))}
+                  </DropdownButton>
+
                   <DropdownButton id="dropdown-basic-button" title={selectedCity}>
                     {Object.keys(cityDestinations).map((city) => (
                         <Dropdown.Item key={city} onClick={() => setSelectedCity(city)}>
