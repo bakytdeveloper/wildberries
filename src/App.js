@@ -12,13 +12,6 @@ const cityDestinations = {
   'г.Бишкек': '286'
 };
 
-const brandDestinations = {
-  'S.Point': 'S.Point',
-  'AnvarArt': 'AnvarArt',
-  'Home & Gift': 'Home & Gift',
-  'best for women': 'best for women'
-};
-
 function App() {
   const [query, setQuery] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,21 +24,13 @@ function App() {
   const [successMessage, setSuccessMessage] = useState('');
   const [selectedCity, setSelectedCity] = useState('г.Дмитров');
   const [dest, setDest] = useState(cityDestinations[selectedCity]);
-
-  const [selectedBrands, setSelectedBrands] = useState('S.Point');
-  const [brands, setBrands] = useState(brandDestinations[selectedBrands]);
-
+  const [selectedBrand, setSelectedBrand] = useState('');
   const [retryAttempted, setRetryAttempted] = useState(false);
-
   const accordionRef = useRef(null);
 
   useEffect(() => {
     setDest(cityDestinations[selectedCity]);
   }, [selectedCity]);
-
-  useEffect(() => {
-    setBrands(brandDestinations[selectedBrands]);
-  }, [selectedBrands]);
 
   useEffect(() => {
     fetchSavedQueries();
@@ -64,38 +49,29 @@ function App() {
     try {
       setLoadingMessage('Загрузка данных...');
       const response = await fetch('http://localhost:5500/api/queries', {
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        headers: { 'Content-Type': 'application/json' }
       });
-      console.log('response', response);
       if (!response.ok) {
         throw new Error('Ошибка загрузки данных');
       }
       const savedQueries = await response.json();
-      console.log('Fetched saved queries:', savedQueries);
       if (Array.isArray(savedQueries)) {
         const adjustedQueries = savedQueries.map(query => {
           const createdAt = new Date(query.createdAt || query.queryTime);
           createdAt.setHours(createdAt.getUTCHours() + 3);
-          return {
-            ...query,
-            createdAt: createdAt.toISOString()
-          };
+          return { ...query, createdAt: createdAt.toISOString() };
         });
         setAllQueries(adjustedQueries);
         setFilteredQueries(adjustedQueries);
-        setRetryAttempted(false); // Успешная загрузка, сброс попыток
+        setRetryAttempted(false);
       }
       setLoadingMessage('');
     } catch (error) {
       setErrorMessage('Не удалось загрузить данные.');
       console.error(error);
-
-      // Попробовать повторную загрузку, если это первая попытка
       if (!retryAttempted) {
         setRetryAttempted(true);
-        setTimeout(fetchSavedQueries, 5000); // Повторная попытка через 5 секунд
+        setTimeout(fetchSavedQueries, 5000);
       }
     }
   };
@@ -106,13 +82,10 @@ function App() {
     setLoadingMessage('Загрузка...');
     setErrorMessage('');
     setSuccessMessage('');
-
-    // Формируем поисковый запрос в зависимости от выбранного бренда
-    const baseQuery = selectedBrands === 'S.Point' ? 'Одежда' : '';
-    const searchQuery = query.trim() === '' ? `${baseQuery} ${selectedBrands}` : query;
-
+    const baseQuery = selectedBrand === 'S.Point' ? 'Одежда' : '';
+    const searchQuery = query.trim() === '' ? `${baseQuery} ${selectedBrand}` : query;
     try {
-      const response = await fetch(`http://localhost:5500/api/products?query=${encodeURIComponent(searchQuery)}&dest=${encodeURIComponent(dest)}&city=${encodeURIComponent(selectedCity)}&brands=${encodeURIComponent(brands)}&brand=${encodeURIComponent(selectedBrands)}`);
+      const response = await fetch(`http://localhost:5500/api/products?query=${encodeURIComponent(searchQuery)}&dest=${encodeURIComponent(dest)}&city=${encodeURIComponent(selectedCity)}&brand=${encodeURIComponent(selectedBrand)}`);
       const result = await response.json();
       setLoadingMessage('');
       if (response.status === 200 && result.message === 'No products found') {
@@ -131,7 +104,7 @@ function App() {
         const now = new Date();
         now.setHours(now.getUTCHours() + 3);
         const queryTime = now.toISOString();
-        const newQueries = [{ query: searchQuery, products: result, queryTime, city: selectedCity, brand: selectedBrands }, ...allQueries];
+        const newQueries = [{ query: searchQuery, products: result, queryTime, city: selectedCity, brand: selectedBrand }, ...allQueries];
         setAllQueries(newQueries);
         setFilteredQueries(newQueries);
         setActiveKey('0');
@@ -155,8 +128,6 @@ function App() {
     setIsRequesting(false);
   };
 
-
-
   const handleQueryInputChange = (e) => {
     setQuery(e.target.value);
     if (e.target.value.trim() !== '') {
@@ -176,7 +147,12 @@ function App() {
     }
   };
 
+  const handleBrandInputChange = (e) => {
+    setSelectedBrand(e.target.value);
+  };
+
   const clearInput = () => setQuery('');
+
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') fetchProducts();
   };
@@ -191,23 +167,8 @@ function App() {
             <div className="search-container">
               <div className="search-left">
                 <InputGroup className="InputGroupForm">
-                  <Form.Control
-                      type="text"
-                      value={query}
-                      onChange={handleQueryInputChange}
-                      onKeyPress={handleKeyPress}
-                      placeholder="Введите запрос"
-                      required
-                      disabled={isRequesting}
-                  />
-                  <DropdownButton id="dropdown-basic-button" title={selectedBrands}>
-                    {Object.keys(brandDestinations).map((brand) => (
-                        <Dropdown.Item key={brand} onClick={() => setSelectedBrands(brand)}>
-                          {brand}
-                        </Dropdown.Item>
-                    ))}
-                  </DropdownButton>
-
+                  <Form.Control type="text" value={query} onChange={handleQueryInputChange} onKeyPress={handleKeyPress} placeholder="Введите запрос" required disabled={isRequesting} />
+                  <Form.Control type="text" value={selectedBrand} onChange={handleBrandInputChange} placeholder="Введите бренд" required disabled={isRequesting} />
                   <DropdownButton id="dropdown-basic-button" title={selectedCity}>
                     {Object.keys(cityDestinations).map((city) => (
                         <Dropdown.Item key={city} onClick={() => setSelectedCity(city)}>
@@ -225,12 +186,7 @@ function App() {
               </div>
               <div className="search-right">
                 <InputGroup>
-                  <Form.Control
-                      type="text"
-                      value={searchTerm}
-                      onChange={handleSortInputChange}
-                      placeholder="Поиск по заголовкам"
-                  />
+                  <Form.Control type="text" value={searchTerm} onChange={handleSortInputChange} placeholder="Поиск по заголовкам" />
                 </InputGroup>
               </div>
             </div>
@@ -242,18 +198,15 @@ function App() {
           {successMessage && <Alert id="successMessage" variant="success">{successMessage}</Alert>}
           <Accordion ref={accordionRef} activeKey={activeKey} onSelect={(key) => setActiveKey(key)}>
             {filteredQueries.map((queryData, index) => {
-              // Проверяем, есть ли найденные элементы
               const hasProducts = Array.isArray(queryData.products || queryData.response) && (queryData.products || queryData.response).length > 0;
               if (!hasProducts) {
-                return null; // Пропускаем создание заголовка без контента
+                return null;
               }
-
               const dateTime = queryData.queryTime || queryData.createdAt;
               const createdAt = new Date(dateTime);
               const date = createdAt.toLocaleDateString();
               const time = createdAt.toLocaleTimeString();
-              const headerText =
-                  queryData.query === '1' ? 'Товары с главной страницы' : queryData.city ? `${queryData.query} (${queryData.city})` : queryData.query;
+              const headerText = queryData.city ? `${queryData.query} (${queryData.city})` : queryData.query;
               return (
                   <Accordion.Item eventKey={index.toString()} key={index}>
                     <Accordion.Header>
@@ -283,8 +236,6 @@ function App() {
                           const createdAt = new Date(queryTime);
                           const date = createdAt.toLocaleDateString();
                           const time = createdAt.toLocaleTimeString();
-
-                          // Учитываем поле log
                           let page = product.page;
                           let position = product.position;
                           if (product.log && product.log.position) {
@@ -292,7 +243,6 @@ function App() {
                             page = logPosition[0];
                             position = logPosition.slice(1);
                           }
-
                           return (
                               <tr key={i}>
                                 <td className="td_table">{i + 1}</td>
@@ -319,3 +269,17 @@ function App() {
 }
 
 export default App;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
