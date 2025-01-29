@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Accordion from 'react-bootstrap/Accordion';
 import { Form, Button, InputGroup, Alert, DropdownButton, Dropdown } from 'react-bootstrap';
+import Toastify from 'toastify-js';
+import "toastify-js/src/toastify.css";
 import './styles.css';
 
 const cityDestinations = {
@@ -59,7 +61,7 @@ function App() {
         const adjustedQueries = savedQueries.map(query => {
           const createdAt = new Date(query.createdAt || query.queryTime);
           createdAt.setHours(createdAt.getUTCHours() + 3);
-          return { ...query, createdAt: createdAt.toISOString() };
+          return { ...query, createdAt: createdAt.toISOString(), brand: query.brand || '' }; // Сохранение бренда
         });
         setAllQueries(adjustedQueries);
         setFilteredQueries(adjustedQueries);
@@ -78,28 +80,47 @@ function App() {
 
   const fetchProducts = async () => {
     if (isRequesting) return;
+    if (query.trim() === '') {
+      Toastify({
+        text: "Поле 'Введите запрос' обязательно для заполнения.",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#ff0000"
+      }).showToast();
+      return;
+    }
+    if (selectedBrand.trim() === '') {
+      Toastify({
+        text: "Поле 'Введите бренд' обязательно для заполнения.",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#ff0000"
+      }).showToast();
+      return;
+    }
+
     setIsRequesting(true);
     setLoadingMessage('Загрузка...');
     setErrorMessage('');
     setSuccessMessage('');
     const baseQuery = selectedBrand === 'S.Point' ? 'Одежда' : '';
     const searchQuery = query.trim() === '' ? `${baseQuery} ${selectedBrand}` : query;
+
     try {
       const response = await fetch(`http://localhost:5500/api/products?query=${encodeURIComponent(searchQuery)}&dest=${encodeURIComponent(dest)}&city=${encodeURIComponent(selectedCity)}&brand=${encodeURIComponent(selectedBrand)}`);
       const result = await response.json();
       setLoadingMessage('');
+
       if (response.status === 200 && result.message === 'No products found') {
         setErrorMessage('По данному запросу ничего не найдено');
-        setTimeout(() => {
-          setErrorMessage('');
-        }, 3000);
+        setTimeout(() => { setErrorMessage(''); }, 3000);
       } else if (!Array.isArray(result)) {
         setErrorMessage('Ошибка получения данных');
       } else if (result.length === 0) {
         setErrorMessage('Товары не найдены');
-        setTimeout(() => {
-          setErrorMessage('');
-        }, 3000);
+        setTimeout(() => { setErrorMessage(''); }, 3000);
       } else {
         const now = new Date();
         now.setHours(now.getUTCHours() + 3);
@@ -110,9 +131,8 @@ function App() {
         setActiveKey('0');
         setSuccessMessage('Запрос выполнен успешно!');
         setQuery('');
-        setTimeout(() => {
-          setSuccessMessage('');
-        }, 3000);
+        setSelectedBrand(''); // Очистка поля ввода для бренда после успешного запроса
+        setTimeout(() => { setSuccessMessage(''); }, 3000);
         setTimeout(() => {
           const newAccordionItem = document.querySelector(`.accordion .accordion-item:first-child`);
           if (newAccordionItem) {
@@ -154,21 +174,37 @@ function App() {
   const clearInput = () => setQuery('');
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') fetchProducts();
+    if (e.key === 'Enter') fetchProducts(); // Обработка нажатия клавиши Enter для поиска
   };
 
   return (
       <div>
         <header>
-          <h1>Поиск товаров S.Point в Wildberries</h1>
+          <h1>Поиск товаров на Wildberries</h1>
+          <h2>{selectedBrand && query ? `${selectedBrand} - ${query}` : null}</h2>
         </header>
         <div className="container">
           <Form className="search" onSubmit={(e) => e.preventDefault()}>
             <div className="search-container">
               <div className="search-left">
                 <InputGroup className="InputGroupForm">
-                  <Form.Control type="text" value={query} onChange={handleQueryInputChange} onKeyPress={handleKeyPress} placeholder="Введите запрос" required disabled={isRequesting} />
-                  <Form.Control type="text" value={selectedBrand} onChange={handleBrandInputChange} placeholder="Введите бренд" required disabled={isRequesting} />
+                  <Form.Control
+                      type="text"
+                      value={query}
+                      onChange={handleQueryInputChange}
+                      onKeyPress={handleKeyPress}
+                      placeholder="Введите запрос"
+                      required
+                      disabled={isRequesting}
+                  />
+                  <Form.Control
+                      type="text"
+                      value={selectedBrand}
+                      onChange={handleBrandInputChange}
+                      placeholder="Введите бренд"
+                      required
+                      disabled={isRequesting}
+                  />
                   <DropdownButton id="dropdown-basic-button" title={selectedCity}>
                     {Object.keys(cityDestinations).map((city) => (
                         <Dropdown.Item key={city} onClick={() => setSelectedCity(city)}>
@@ -176,18 +212,15 @@ function App() {
                         </Dropdown.Item>
                     ))}
                   </DropdownButton>
-                  <Button variant="primary" onClick={fetchProducts} disabled={isRequesting}>
-                    Поиск
-                  </Button>
-                  <Button variant="secondary" onClick={clearInput} id="clearButton" disabled={isRequesting}>
-                    X
-                  </Button>
+                  <Button variant="primary" onClick={fetchProducts} disabled={isRequesting}>Поиск</Button>
+                  <Button variant="secondary" onClick={clearInput} id="clearButton" disabled={isRequesting}>X</Button>
                 </InputGroup>
-              </div>
-              <div className="search-right">
-                <InputGroup>
-                  <Form.Control type="text" value={searchTerm} onChange={handleSortInputChange} placeholder="Поиск по заголовкам" />
-                </InputGroup>
+                <Form.Control
+                    type="text"
+                    value={searchTerm}
+                    onChange={handleSortInputChange}
+                    placeholder="Поиск по заголовкам"
+                />
               </div>
             </div>
           </Form>
@@ -204,17 +237,15 @@ function App() {
               }
               const dateTime = queryData.queryTime || queryData.createdAt;
               const createdAt = new Date(dateTime);
-              const date = createdAt.toLocaleDateString();
+              const date = createdAt.toLocaleDateString(); // Исправлено
               const time = createdAt.toLocaleTimeString();
-              const headerText = queryData.city ? `${queryData.query} (${queryData.city})` : queryData.query;
+              const headerText = queryData.city ? `${queryData.query} (${queryData.city}) - ${queryData.brand}` : queryData.query;
               return (
                   <Accordion.Item eventKey={index.toString()} key={index}>
                     <Accordion.Header>
                       <div className="flex-grow-0">{index + 1})</div>
                       <div className="flex-grow-1">{headerText}</div>
-                      <div className="date-time">
-                        Дата: {date}, Время: {time}
-                      </div>
+                      <div className="date-time"> Дата: {date}, Время: {time} </div>
                     </Accordion.Header>
                     <Accordion.Body>
                       <table id="productsTable">
@@ -269,17 +300,3 @@ function App() {
 }
 
 export default App;
-
-
-
-
-
-
-
-
-
-
-
-
-
-

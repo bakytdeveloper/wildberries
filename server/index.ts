@@ -89,6 +89,7 @@ app.get('/api/products', async (req: Request, res: Response) => {
             response: updatedProducts,
             createdAt: new Date(),
             city: city as string,
+            brand: selectedBrand as string, // Сохранение бренда
             queryTime: queryTime
         });
         await newQuery.save();

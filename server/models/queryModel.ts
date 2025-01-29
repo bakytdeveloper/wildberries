@@ -6,6 +6,7 @@ export interface QueryDocument extends Document {
     response: any;
     createdAt: Date;
     city: string;
+    brand: string; // Новое поле для бренда
 }
 
 const querySchema = new Schema<QueryDocument>({
@@ -13,7 +14,8 @@ const querySchema = new Schema<QueryDocument>({
     dest: { type: String, required: true },
     response: { type: Schema.Types.Mixed, required: true },
     createdAt: { type: Date, default: Date.now },
-    city: { type: String, required: true }
+    city: { type: String, required: true },
+    brand: { type: String, required: true } // Новое поле для бренда
 });
 
 export const QueryModel = model<QueryDocument>('Query', querySchema);
