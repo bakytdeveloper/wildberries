@@ -215,13 +215,16 @@ function App() {
                   <Button variant="primary" onClick={fetchProducts} disabled={isRequesting}>Поиск</Button>
                   <Button variant="secondary" onClick={clearInput} id="clearButton" disabled={isRequesting}>X</Button>
                 </InputGroup>
+              </div>
+              <div className="search-right">
                 <Form.Control
                     type="text"
                     value={searchTerm}
                     onChange={handleSortInputChange}
                     placeholder="Поиск по заголовкам"
                 />
-              </div>
+
+            </div>
             </div>
           </Form>
           {loadingMessage && <div id="loadingMessage" className="message">{loadingMessage}</div>}
