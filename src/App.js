@@ -169,6 +169,11 @@ function App() {
 
   const handleBrandInputChange = (e) => {
     setSelectedBrand(e.target.value);
+    if (e.target.value.trim() !== '') {
+      setSearchTerm('');
+    } else {
+      fetchSavedQueries();
+    }
   };
 
   const clearInput = () => setQuery('');
@@ -201,6 +206,7 @@ function App() {
                       type="text"
                       value={selectedBrand}
                       onChange={handleBrandInputChange}
+                      onKeyPress={handleKeyPress}
                       placeholder="Введите бренд"
                       required
                       disabled={isRequesting}
