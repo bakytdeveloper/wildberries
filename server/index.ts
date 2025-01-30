@@ -45,7 +45,7 @@ app.use(express.static(path.join(__dirname, '../../public')));
 app.get('/api/queries', async (req: Request, res: Response) => {
     try {
         const queries = await QueryModel.find().sort({ createdAt: -1 });
-        console.log('queries:', queries);
+        // console.log('queries:', queries);
         res.json(queries);
     } catch (error: any) {
         console.error('Error fetching queries:', error.message);

@@ -10,5 +10,6 @@ export interface Product {
     position: number | string;
     page: number | string;
     queryTime: string;
+    imageUrl: string; // Новое поле для URL картинки
     log?: Log; // необязательное поле
 }

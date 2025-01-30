@@ -100,27 +100,28 @@ function App() {
       }).showToast();
       return;
     }
-
     setIsRequesting(true);
     setLoadingMessage('Загрузка...');
     setErrorMessage('');
     setSuccessMessage('');
     const baseQuery = selectedBrand === 'S.Point' ? 'Одежда' : '';
     const searchQuery = query.trim() === '' ? `${baseQuery} ${selectedBrand}` : query;
-
     try {
       const response = await fetch(`http://localhost:5500/api/products?query=${encodeURIComponent(searchQuery)}&dest=${encodeURIComponent(dest)}&city=${encodeURIComponent(selectedCity)}&brand=${encodeURIComponent(selectedBrand)}`);
       const result = await response.json();
       setLoadingMessage('');
-
       if (response.status === 200 && result.message === 'No products found') {
         setErrorMessage('По данному запросу ничего не найдено');
-        setTimeout(() => { setErrorMessage(''); }, 3000);
+        setTimeout(() => {
+          setErrorMessage('');
+        }, 3000);
       } else if (!Array.isArray(result)) {
         setErrorMessage('Ошибка получения данных');
       } else if (result.length === 0) {
         setErrorMessage('Товары не найдены');
-        setTimeout(() => { setErrorMessage(''); }, 3000);
+        setTimeout(() => {
+          setErrorMessage('');
+        }, 3000);
       } else {
         const now = new Date();
         now.setHours(now.getUTCHours() + 3);
@@ -132,7 +133,9 @@ function App() {
         setSuccessMessage('Запрос выполнен успешно!');
         setQuery('');
         setSelectedBrand(''); // Очистка поля ввода для бренда после успешного запроса
-        setTimeout(() => { setSuccessMessage(''); }, 3000);
+        setTimeout(() => {
+          setSuccessMessage('');
+        }, 3000);
         setTimeout(() => {
           const newAccordionItem = document.querySelector(`.accordion .accordion-item:first-child`);
           if (newAccordionItem) {
@@ -176,7 +179,7 @@ function App() {
     }
   };
 
-  const clearInput = () => setQuery('') ;
+  const clearInput = () => setQuery('');
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') fetchProducts(); // Обработка нажатия клавиши Enter для поиска
@@ -186,7 +189,6 @@ function App() {
       <div>
         <header>
           <h1>Поиск товаров на Wildberries</h1>
-          <h2>{selectedBrand && query ? `${selectedBrand} - ${query}` : null}</h2>
         </header>
         <div className="container">
           <Form className="search" onSubmit={(e) => e.preventDefault()}>
@@ -218,8 +220,12 @@ function App() {
                         </Dropdown.Item>
                     ))}
                   </DropdownButton>
-                  <Button variant="primary" onClick={fetchProducts} disabled={isRequesting}>Поиск</Button>
-                  <Button variant="secondary" onClick={clearInput} id="clearButton" disabled={isRequesting}>X</Button>
+                  <Button variant="primary" onClick={fetchProducts} disabled={isRequesting}>
+                    Поиск
+                  </Button>
+                  <Button variant="secondary" onClick={clearInput} id="clearButton" disabled={isRequesting}>
+                    X
+                  </Button>
                 </InputGroup>
               </div>
               <div className="search-right">
@@ -229,15 +235,16 @@ function App() {
                     onChange={handleSortInputChange}
                     placeholder="Поиск по заголовкам"
                 />
-
-            </div>
+              </div>
             </div>
           </Form>
+
           {loadingMessage && <div id="loadingMessage" className="message">{loadingMessage}</div>}
           {errorMessage && errorMessage !== 'Не удалось загрузить данные.' && (
               <div id="errorMessage" className="message error">{errorMessage}</div>
           )}
           {successMessage && <Alert id="successMessage" variant="success">{successMessage}</Alert>}
+
           <Accordion ref={accordionRef} activeKey={activeKey} onSelect={(key) => setActiveKey(key)}>
             {filteredQueries.map((queryData, index) => {
               const hasProducts = Array.isArray(queryData.products || queryData.response) && (queryData.products || queryData.response).length > 0;
@@ -261,6 +268,7 @@ function App() {
                         <thead>
                         <tr>
                           <th className="th_table">№</th>
+                          <th className="th_table">Картинка</th> {/* Новая колонка */}
                           <th className="th_table">Артикул</th>
                           <th className="th_table">Страница</th>
                           <th className="th_table">Позиция</th>
@@ -286,6 +294,9 @@ function App() {
                           return (
                               <tr key={i}>
                                 <td className="td_table">{i + 1}</td>
+                                <td className="td_table">
+                                  <img src={product.imageUrl} alt={product.name} width="50" height="50" />
+                                </td> {/* Новая ячейка для картинки */}
                                 <td className="td_table">{product.id}</td>
                                 <td className="td_table">{page}</td>
                                 <td className="td_table">{position}</td>
