@@ -179,7 +179,10 @@ function App() {
     }
   };
 
-  const clearInput = () => setQuery('');
+  const clearInput = () => {
+    setQuery('')
+    setSelectedBrand('')
+  };
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') fetchProducts(); // Обработка нажатия клавиши Enter для поиска
