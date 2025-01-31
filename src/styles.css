@@ -99,7 +99,7 @@ button:hover:enabled {
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 5px;
+    /*margin-top: 5px;*/
 }
 
 th, td {
@@ -137,6 +137,7 @@ tr:hover {
     display: flex;
     width: 100%;
     align-items: center;
+
 }
 
 .tableIndexDescription {
