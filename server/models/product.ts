@@ -1,4 +1,3 @@
-// models/product.ts
 export interface Log {
     position: number;
     // другие поля из объекта log, если они потребуются
@@ -12,4 +11,10 @@ export interface Product {
     queryTime: string;
     imageUrl: string; // Новое поле для URL картинки
     log?: Log; // необязательное поле
+}
+
+// Новая модель для таблиц с товарами
+export interface ProductTable {
+    tableId: string;
+    products: Product[];
 }

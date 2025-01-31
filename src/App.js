@@ -26,9 +26,10 @@ function App() {
   const [successMessage, setSuccessMessage] = useState('');
   const [selectedCity, setSelectedCity] = useState('г.Дмитров');
   const [dest, setDest] = useState(cityDestinations[selectedCity]);
-  const [selectedBrand, setSelectedBrand] = useState('');
   const [retryAttempted, setRetryAttempted] = useState(false);
   const accordionRef = useRef(null);
+
+  const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', brand: '', isMain: true }]);
 
   useEffect(() => {
     setDest(cityDestinations[selectedCity]);
@@ -50,9 +51,7 @@ function App() {
   const fetchSavedQueries = async () => {
     try {
       setLoadingMessage('Загрузка данных...');
-      const response = await fetch('http://localhost:5500/api/queries', {
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const response = await fetch('http://localhost:5500/api/queries', { headers: { 'Content-Type': 'application/json' } });
       if (!response.ok) {
         throw new Error('Ошибка загрузки данных');
       }
@@ -61,7 +60,11 @@ function App() {
         const adjustedQueries = savedQueries.map(query => {
           const createdAt = new Date(query.createdAt || query.queryTime);
           createdAt.setHours(createdAt.getUTCHours() + 3);
-          return { ...query, createdAt: createdAt.toISOString(), brand: query.brand || '' }; // Сохранение бренда
+          return {
+            ...query,
+            createdAt: createdAt.toISOString(),
+            brand: query.brand || ''
+          };
         });
         setAllQueries(adjustedQueries);
         setFilteredQueries(adjustedQueries);
@@ -80,9 +83,11 @@ function App() {
 
   const fetchProducts = async () => {
     if (isRequesting) return;
-    if (query.trim() === '') {
+
+    const validForms = requestForms.filter(form => form.query.trim() !== '' && form.brand.trim() !== '');
+    if (validForms.length === 0) {
       Toastify({
-        text: "Поле 'Введите запрос' обязательно для заполнения.",
+        text: "Все формы должны быть заполнены.",
         duration: 3000,
         gravity: "top",
         position: "right",
@@ -90,74 +95,46 @@ function App() {
       }).showToast();
       return;
     }
-    if (selectedBrand.trim() === '') {
-      Toastify({
-        text: "Поле 'Введите бренд' обязательно для заполнения.",
-        duration: 3000,
-        gravity: "top",
-        position: "right",
-        backgroundColor: "#ff0000"
-      }).showToast();
-      return;
-    }
+
     setIsRequesting(true);
     setLoadingMessage('Загрузка...');
     setErrorMessage('');
     setSuccessMessage('');
-    const baseQuery = selectedBrand === 'S.Point' ? 'Одежда' : '';
-    const searchQuery = query.trim() === '' ? `${baseQuery} ${selectedBrand}` : query;
+
     try {
-      const response = await fetch(`http://localhost:5500/api/products?query=${encodeURIComponent(searchQuery)}&dest=${encodeURIComponent(dest)}&city=${encodeURIComponent(selectedCity)}&brand=${encodeURIComponent(selectedBrand)}`);
+      const response = await fetch('http://localhost:5500/api/queries', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ forms: validForms.map(form => ({ ...form, dest, city: selectedCity })) })
+      });
+
       const result = await response.json();
-      setLoadingMessage('');
-      if (response.status === 200 && result.message === 'No products found') {
-        setErrorMessage('По данному запросу ничего не найдено');
-        setTimeout(() => {
-          setErrorMessage('');
-        }, 3000);
-      } else if (!Array.isArray(result)) {
-        setErrorMessage('Ошибка получения данных');
-      } else if (result.length === 0) {
-        setErrorMessage('Товары не найдены');
-        setTimeout(() => {
-          setErrorMessage('');
-        }, 3000);
-      } else {
-        const now = new Date();
-        now.setHours(now.getUTCHours() + 3);
-        const queryTime = now.toISOString();
-        const newQueries = [{ query: searchQuery, products: result, queryTime, city: selectedCity, brand: selectedBrand }, ...allQueries];
-        setAllQueries(newQueries);
-        setFilteredQueries(newQueries);
-        setActiveKey('0');
-        setSuccessMessage('Запрос выполнен успешно!');
-        setQuery('');
-        setSelectedBrand(''); // Очистка поля ввода для бренда после успешного запроса
-        setTimeout(() => {
-          setSuccessMessage('');
-        }, 3000);
-        setTimeout(() => {
-          const newAccordionItem = document.querySelector(`.accordion .accordion-item:first-child`);
-          if (newAccordionItem) {
-            newAccordionItem.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        }, 100);
+      if (response.status !== 200) {
+        throw new Error(result.error || 'Ошибка выполнения запроса');
       }
+
+      setAllQueries([result, ...allQueries]);
+      setFilteredQueries([result, ...allQueries]);
+      setSuccessMessage('Запрос выполнен успешно!');
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
     } catch (error) {
       console.error('Error fetching products:', error);
-      setLoadingMessage('');
-      setErrorMessage('Ошибка получения данных');
+      setErrorMessage('Ошибка выполнения запроса');
     }
+
     setIsRequesting(false);
   };
 
-  const handleQueryInputChange = (e) => {
-    setQuery(e.target.value);
-    if (e.target.value.trim() !== '') {
-      setSearchTerm('');
-    } else {
-      fetchSavedQueries();
-    }
+  const handleQueryInputChange = (e, formId) => {
+    setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: e.target.value } : f));
+  };
+
+  const handleBrandInputChange = (e, formId) => {
+    setRequestForms(requestForms.map(f => f.id === formId ? { ...f, brand: e.target.value } : f));
   };
 
   const handleSortInputChange = (e) => {
@@ -170,22 +147,20 @@ function App() {
     }
   };
 
-  const handleBrandInputChange = (e) => {
-    setSelectedBrand(e.target.value);
-    if (e.target.value.trim() !== '') {
-      setSearchTerm('');
-    } else {
-      fetchSavedQueries();
-    }
+  const clearInput = (formId) => {
+    setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: '', brand: '' } : f));
   };
 
-  const clearInput = () => {
-    setQuery('')
-    setSelectedBrand('')
+  const handleKeyPress = (e, formId) => {
+    if (e.key === 'Enter') fetchProducts();
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') fetchProducts(); // Обработка нажатия клавиши Enter для поиска
+  const addRequestForm = () => {
+    setRequestForms([...requestForms, { id: Date.now(), query: '', brand: '', isMain: false }]);
+  };
+
+  const removeRequestForm = (formId) => {
+    setRequestForms(requestForms.filter(f => f.id !== formId));
   };
 
   return (
@@ -194,69 +169,83 @@ function App() {
           <h1>Поиск товаров на Wildberries</h1>
         </header>
         <div className="container">
-          <Form className="search" onSubmit={(e) => e.preventDefault()}>
-            <div className="search-container">
-              <div className="search-left">
-                <InputGroup className="InputGroupForm">
-                  <Form.Control
-                      type="text"
-                      value={query}
-                      onChange={handleQueryInputChange}
-                      onKeyPress={handleKeyPress}
-                      placeholder="Введите запрос"
-                      required
-                      disabled={isRequesting}
-                  />
-                  <Form.Control
-                      type="text"
-                      value={selectedBrand}
-                      onChange={handleBrandInputChange}
-                      onKeyPress={handleKeyPress}
-                      placeholder="Введите бренд"
-                      required
-                      disabled={isRequesting}
-                  />
-                  <DropdownButton id="dropdown-basic-button" title={selectedCity}>
-                    {Object.keys(cityDestinations).map((city) => (
-                        <Dropdown.Item key={city} onClick={() => setSelectedCity(city)}>
-                          {city}
-                        </Dropdown.Item>
-                    ))}
-                  </DropdownButton>
-                  <Button variant="primary" onClick={fetchProducts} disabled={isRequesting}>
-                    Поиск
-                  </Button>
-                  <Button variant="secondary" onClick={clearInput} id="clearButton" disabled={isRequesting}>
-                    X
-                  </Button>
-                </InputGroup>
-              </div>
-              <div className="search-right">
-                <Form.Control
-                    type="text"
-                    value={searchTerm}
-                    onChange={handleSortInputChange}
-                    placeholder="Поиск по заголовкам"
-                />
-              </div>
-            </div>
-          </Form>
-
+          {requestForms.map((form, index) => (
+              <Form key={form.id} className="search" onSubmit={(e) => e.preventDefault()}>
+                <div className="search-container">
+                  <div className="search-left">
+                    <InputGroup className="InputGroupForm">
+                      <Form.Control
+                          type="text"
+                          value={form.query}
+                          onChange={(e) => handleQueryInputChange(e, form.id)}
+                          onKeyPress={(e) => handleKeyPress(e, form.id)}
+                          placeholder="Введите запрос"
+                          required
+                          disabled={isRequesting}
+                      />
+                      <Form.Control
+                          type="text"
+                          value={form.brand}
+                          onChange={(e) => handleBrandInputChange(e, form.id)}
+                          onKeyPress={(e) => handleKeyPress(e, form.id)}
+                          placeholder="Введите бренд"
+                          required
+                          disabled={isRequesting}
+                      />
+                      <DropdownButton
+                          id="dropdown-basic-button"
+                          title={selectedCity}
+                          onSelect={(city) => setSelectedCity(city)}
+                      >
+                        {Object.keys(cityDestinations).map((city) => (
+                            <Dropdown.Item
+                                key={city}
+                                eventKey={city}
+                            >
+                              {city}
+                            </Dropdown.Item>
+                        ))}
+                      </DropdownButton>
+                      {form.isMain ? (
+                          <Button variant="primary" onClick={fetchProducts} disabled={isRequesting}>
+                            Поиск
+                          </Button>
+                      ) : (
+                          <Button variant="danger" onClick={() => removeRequestForm(form.id)}>
+                            Удалить
+                          </Button>
+                      )}
+                      <Button variant="secondary" onClick={() => clearInput(form.id)} id="clearButton" disabled={isRequesting}>
+                        X
+                      </Button>
+                    </InputGroup>
+                  </div>
+                  <div className="search-right">
+                    <Form.Control
+                        type="text"
+                        value={searchTerm}
+                        onChange={handleSortInputChange}
+                        placeholder="Поиск по заголовкам"
+                    />
+                  </div>
+                </div>
+              </Form>
+          ))}
+          <Button variant="success" onClick={addRequestForm}>Добавить запрос</Button>
           {loadingMessage && <div id="loadingMessage" className="message">{loadingMessage}</div>}
           {errorMessage && errorMessage !== 'Не удалось загрузить данные.' && (
               <div id="errorMessage" className="message error">{errorMessage}</div>
           )}
           {successMessage && <Alert id="successMessage" variant="success">{successMessage}</Alert>}
-
           <Accordion ref={accordionRef} activeKey={activeKey} onSelect={(key) => setActiveKey(key)}>
             {filteredQueries.map((queryData, index) => {
-              const hasProducts = Array.isArray(queryData.products || queryData.response) && (queryData.products || queryData.response).length > 0;
+              const hasProducts = queryData.productTables && queryData.productTables.length > 0;
               if (!hasProducts) {
                 return null;
               }
               const dateTime = queryData.queryTime || queryData.createdAt;
               const createdAt = new Date(dateTime);
-              const date = createdAt.toLocaleDateString(); // Исправлено
+              const date = createdAt.toLocaleDateString();
               const time = createdAt.toLocaleTimeString();
               const headerText = queryData.city ? `${queryData.query} (${queryData.city}) - ${queryData.brand}` : queryData.query;
               return (
@@ -267,51 +256,66 @@ function App() {
                       <div className="date-time"> Дата: {date}, Время: {time} </div>
                     </Accordion.Header>
                     <Accordion.Body>
-                      <table id="productsTable">
-                        <thead>
-                        <tr>
-                          <th className="th_table">№</th>
-                          <th className="th_table">Картинка</th> {/* Новая колонка */}
-                          <th className="th_table">Артикул</th>
-                          <th className="th_table">Страница</th>
-                          <th className="th_table">Позиция</th>
-                          <th className="th_table">Бренд</th>
-                          <th className="th_table">Наименование</th>
-                          <th className="th_table">Дата запроса</th>
-                          <th className="th_table">Время запроса</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {Array.isArray(queryData.products || queryData.response) && (queryData.products || queryData.response).map((product, i) => {
-                          const queryTime = queryData.queryTime || queryData.createdAt;
-                          const createdAt = new Date(queryTime);
-                          const date = createdAt.toLocaleDateString();
-                          const time = createdAt.toLocaleTimeString();
-                          let page = product.page;
-                          let position = product.position;
-                          if (product.log && product.log.position) {
-                            const logPosition = product.log.position.toString();
-                            page = logPosition[0];
-                            position = logPosition.slice(1);
-                          }
-                          return (
-                              <tr key={i}>
-                                <td className="td_table">{i + 1}</td>
-                                <td className="td_table">
-                                  <img src={product.imageUrl} alt={product.name} width="50" height="50" />
-                                </td> {/* Новая ячейка для картинки */}
-                                <td className="td_table">{product.id}</td>
-                                <td className="td_table">{page}</td>
-                                <td className="td_table">{position}</td>
-                                <td className="td_table">{product.brand}</td>
-                                <td className="td_table">{product.name}</td>
-                                <td className="td_table">{date}</td>
-                                <td className="td_table">{time}</td>
+                      {queryData.productTables.map((table, tableIndex) => (
+                          <div key={tableIndex}>
+
+                              <div className="tableIndexRow">
+                                {/*<h6>Таблица № {tableIndex + 1}</h6>*/}
+                                <div className="tableIndexDescription">
+                                  <p><strong>{tableIndex + 1})</strong></p>
+                                  <p>Запрос: <strong>{queryData.query.split('; ')[tableIndex]}</strong></p>
+                                  <p>Бренд: <strong>{queryData.brand}</strong></p>
+                                  <p>Город: <strong>{queryData.city}</strong></p>
+                                </div>
+                              </div>
+
+                            <table id="productsTable">
+                              <thead>
+                              <tr>
+                                <th className="th_table">№</th>
+                                <th className="th_table">Картинка</th>
+                                <th className="th_table">Артикул</th>
+                                <th className="th_table">Страница</th>
+                                <th className="th_table">Позиция</th>
+                                <th className="th_table">Бренд</th>
+                                <th className="th_table">Наименование</th>
+                                <th className="th_table">Дата запроса</th>
+                                <th className="th_table">Время запроса</th>
                               </tr>
-                          );
-                        })}
-                        </tbody>
-                      </table>
+                              </thead>
+                              <tbody>
+                              {table.products.map((product, i) => {
+                                const queryTime = queryData.queryTime || queryData.createdAt;
+                                const createdAt = new Date(queryTime);
+                                const date = createdAt.toLocaleDateString();
+                                const time = createdAt.toLocaleTimeString();
+                                let page = product.page;
+                                let position = product.position;
+                                if (product.log && product.log.position) {
+                                  const logPosition = product.log.position.toString();
+                                  page = logPosition[0];
+                                  position = logPosition.slice(1);
+                                }
+                                return (
+                                    <tr key={i}>
+                                      <td className="td_table">{i + 1}</td>
+                                      <td className="td_table">
+                                        <img src={product.imageUrl} alt={product.name} width="50" height="50" />
+                                      </td>
+                                      <td className="td_table">{product.id}</td>
+                                      <td className="td_table">{page}</td>
+                                      <td className="td_table">{position}</td>
+                                      <td className="td_table">{product.brand}</td>
+                                      <td className="td_table">{product.name}</td>
+                                      <td className="td_table">{date}</td>
+                                      <td className="td_table">{time}</td>
+                                    </tr>
+                                );
+                              })}
+                              </tbody>
+                            </table>
+                          </div>
+                      ))}
                     </Accordion.Body>
                   </Accordion.Item>
               );

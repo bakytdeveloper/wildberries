@@ -50,4 +50,3 @@ export const getProducts = async (query: string, dest: string, page: number = 1)
         throw error;
     }
 };
-

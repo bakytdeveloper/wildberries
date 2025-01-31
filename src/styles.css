@@ -132,6 +132,24 @@ tr:hover {
     padding: 2px;
 }
 
+
+.tableIndexRow {
+    display: flex;
+    width: 100%;
+    align-items: center;
+}
+
+.tableIndexDescription {
+    display: flex;
+    align-items: center;
+}
+
+.tableIndexDescription p {
+    margin-left: 10px;
+    font-weight: bold;
+}
+
+
 .th_table {
     text-align: center;
     font-size: 13px;
