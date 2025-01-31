@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Accordion from 'react-bootstrap/Accordion';
+import Modal from 'react-bootstrap/Modal';
 import { Form, Button, InputGroup, Alert, DropdownButton, Dropdown } from 'react-bootstrap';
 import Toastify from 'toastify-js';
 import "toastify-js/src/toastify.css";
@@ -27,6 +28,7 @@ function App() {
   const [selectedCity, setSelectedCity] = useState('г.Дмитров');
   const [dest, setDest] = useState(cityDestinations[selectedCity]);
   const [retryAttempted, setRetryAttempted] = useState(false);
+  const [modalImage, setModalImage] = useState(null);
   const accordionRef = useRef(null);
 
   const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', brand: '', isMain: true }]);
@@ -170,6 +172,16 @@ function App() {
     setRequestForms(requestForms.filter(f => f.id !== formId));
   };
 
+  const handleImageClick = (imageUrl) => {
+    setModalImage(imageUrl);
+    document.body.style.overflow = 'hidden'; // Disable background scroll
+  };
+
+  const closeModal = () => {
+    setModalImage(null);
+    document.body.style.overflow = 'auto'; // Enable background scroll
+  };
+
   return (
       <div>
         <header>
@@ -269,9 +281,8 @@ function App() {
                           queryData.productTables.map((table, tableIndex) => (
                               <div key={tableIndex}>
                                 <div className="tableIndexRow">
-                                  {/*<h6>Таблица № {tableIndex + 1}</h6>*/}
+                                  <h6>Таблица № {tableIndex + 1}</h6>
                                   <div className="tableIndexDescription">
-                                    <p> <strong>{tableIndex + 1})</strong></p>
                                     <p>Запрос: <strong>{queryData.query.split('; ')[tableIndex]}</strong></p>
                                     <p>Бренд: <strong>{queryData.brand.split('; ')[tableIndex]}</strong></p>
                                     <p>Город: <strong>{queryData.city.split('; ')[tableIndex]}</strong></p>
@@ -309,7 +320,14 @@ function App() {
                                             <tr key={i}>
                                               <td className="td_table">{i + 1}</td>
                                               <td className="td_table">
-                                                <img src={product.imageUrl} alt={product.name} width="50" height="50" />
+                                                <img
+                                                    src={product.imageUrl}
+                                                    alt={product.name}
+                                                    width="50"
+                                                    height="50"
+                                                    onClick={() => handleImageClick(product.imageUrl)}
+                                                    style={{ cursor: 'pointer' }}
+                                                />
                                               </td>
                                               <td className="td_table">{product.id}</td>
                                               <td className="td_table">{page}</td>
@@ -347,6 +365,14 @@ function App() {
             })}
           </Accordion>
         </div>
+        <Modal show={modalImage !== null} onHide={closeModal} centered>
+          <Modal.Body style={{ padding: 0 }}>
+            <img src={modalImage} alt="Product" style={{ width: '100%' }} />
+            <Button variant="secondary" onClick={closeModal} style={{ position: 'absolute', top: 10, right: 10 }}>
+              &times;
+            </Button>
+          </Modal.Body>
+        </Modal>
       </div>
   );
 }
