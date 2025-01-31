@@ -118,6 +118,10 @@ function App() {
       setAllQueries([result, ...allQueries]);
       setFilteredQueries([result, ...allQueries]);
       setSuccessMessage('Запрос выполнен успешно!');
+
+      // Очистить поля и оставить только одну основную форму после удачного запроса
+      setRequestForms([{ id: Date.now(), query: '', brand: '', isMain: true }]);
+
       setTimeout(() => {
         setSuccessMessage('');
       }, 3000);
@@ -169,6 +173,18 @@ function App() {
           <h1>Поиск товаров на Wildberries</h1>
         </header>
         <div className="container">
+          <Form className="search" onSubmit={(e) => e.preventDefault()}>
+            <div className="search-container">
+              <div className="search-left">
+                <Form.Control
+                    type="text"
+                    value={searchTerm}
+                    onChange={handleSortInputChange}
+                    placeholder="Поиск по заголовкам"
+                />
+              </div>
+            </div>
+          </Form>
           {requestForms.map((form, index) => (
               <Form key={form.id} className="search" onSubmit={(e) => e.preventDefault()}>
                 <div className="search-container">
@@ -178,7 +194,6 @@ function App() {
                           type="text"
                           value={form.query}
                           onChange={(e) => handleQueryInputChange(e, form.id)}
-                          onKeyPress={(e) => handleKeyPress(e, form.id)}
                           placeholder="Введите запрос"
                           required
                           disabled={isRequesting}
@@ -187,7 +202,6 @@ function App() {
                           type="text"
                           value={form.brand}
                           onChange={(e) => handleBrandInputChange(e, form.id)}
-                          onKeyPress={(e) => handleKeyPress(e, form.id)}
                           placeholder="Введите бренд"
                           required
                           disabled={isRequesting}
@@ -220,14 +234,6 @@ function App() {
                       </Button>
                     </InputGroup>
                   </div>
-                  <div className="search-right">
-                    <Form.Control
-                        type="text"
-                        value={searchTerm}
-                        onChange={handleSortInputChange}
-                        placeholder="Поиск по заголовкам"
-                    />
-                  </div>
                 </div>
               </Form>
           ))}
@@ -241,6 +247,7 @@ function App() {
             {filteredQueries.map((queryData, index) => {
               const hasProducts = queryData.productTables && queryData.productTables.length > 0;
               if (!hasProducts) {
+
                 return null;
               }
               const dateTime = queryData.queryTime || queryData.createdAt;
@@ -258,17 +265,14 @@ function App() {
                     <Accordion.Body>
                       {queryData.productTables.map((table, tableIndex) => (
                           <div key={tableIndex}>
-
-                              <div className="tableIndexRow">
-                                {/*<h6>Таблица № {tableIndex + 1}</h6>*/}
-                                <div className="tableIndexDescription">
-                                  <p><strong>{tableIndex + 1})</strong></p>
-                                  <p>Запрос: <strong>{queryData.query.split('; ')[tableIndex]}</strong></p>
-                                  <p>Бренд: <strong>{queryData.brand}</strong></p>
-                                  <p>Город: <strong>{queryData.city}</strong></p>
-                                </div>
+                            <div className="tableIndexRow">
+                              <h6>Таблица № {tableIndex + 1}</h6>
+                              <div className="tableIndexDescription">
+                                <p>Запрос: <strong>{queryData.query.split('; ')[tableIndex]}</strong></p>
+                                <p>Бренд: <strong>{queryData.brand}</strong></p>
+                                <p>Город: <strong>{queryData.city}</strong></p>
                               </div>
-
+                            </div>
                             <table id="productsTable">
                               <thead>
                               <tr>

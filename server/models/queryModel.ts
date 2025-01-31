@@ -1,38 +1,31 @@
-import { Schema, model, Document } from 'mongoose';
-import {Product, ProductTable} from './product';
+import mongoose from 'mongoose';
 
-export interface QueryDocument extends Document {
-    query: string;
-    dest: string;
-    productTables: ProductTable[]; // Поле для таблиц с товарами
-    createdAt: Date;
-    city: string;
-    brand: string;
-}
-
-// Новая схема для таблиц с товарами
-const productSchema = new Schema<Product>({
-    brand: { type: String, required: true },
-    name: { type: String, required: true },
-    position: { type: Schema.Types.Mixed, required: true },
-    page: { type: Schema.Types.Mixed, required: true },
-    queryTime: { type: String, required: true },
-    imageUrl: { type: String, required: true },
-    log: { type: Schema.Types.Mixed }
+const productSchema = new mongoose.Schema({
+    id: { type: String, required: true }, // Артикул товара
+    imageUrl: String,
+    page: Number,
+    position: Number,
+    brand: String,
+    name: String,
+    log: {
+        position: Number
+    }
 });
 
-const productTableSchema = new Schema({
-    tableId: { type: String, required: true },
-    products: { type: [productSchema], required: true }
+const productTableSchema = new mongoose.Schema({
+    tableId: String,
+    products: [productSchema]
 });
 
-const querySchema = new Schema<QueryDocument>({
+const querySchema = new mongoose.Schema({
     query: { type: String, required: true },
     dest: { type: String, required: true },
-    productTables: { type: [productTableSchema], required: true }, // Поле для таблиц с товарами
+    productTables: [productTableSchema],
     createdAt: { type: Date, default: Date.now },
-    city: { type: String, required: true },
-    brand: { type: String, required: true }
+    city: String,
+    brand: String
 });
 
-export const QueryModel = model<QueryDocument>('Query', querySchema);
+const QueryModel = mongoose.model('Query', querySchema);
+
+export { QueryModel };
