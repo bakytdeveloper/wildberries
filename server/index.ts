@@ -3,7 +3,7 @@ import path from 'path';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import { QueryModel } from './models/queryModel';
+import { QueryModel } from './models/queryModel'; // Убедитесь, что путь правильный
 import { fetchAndParseProducts } from './services/productService';
 
 dotenv.config();
@@ -69,8 +69,8 @@ app.post('/api/queries', async (req: Request, res: Response) => {
             dest: forms.map(form => form.dest).join('; '),
             productTables,
             createdAt: new Date(),
-            city: forms[0].city, // Предполагаем, что все формы из одного города
-            brand: forms[0].brand // Предполагаем, что все формы одного бренда
+            city: forms.map(form => form.city).join('; '), // Сохраняем все города
+            brand: forms.map(form => form.brand).join('; ') // Сохраняем все бренды
         });
         await newQuery.save();
 

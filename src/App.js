@@ -247,7 +247,6 @@ function App() {
             {filteredQueries.map((queryData, index) => {
               const hasProducts = queryData.productTables && queryData.productTables.length > 0;
               if (!hasProducts) {
-
                 return null;
               }
               const dateTime = queryData.queryTime || queryData.createdAt;
@@ -269,8 +268,8 @@ function App() {
                               <h6>Таблица № {tableIndex + 1}</h6>
                               <div className="tableIndexDescription">
                                 <p>Запрос: <strong>{queryData.query.split('; ')[tableIndex]}</strong></p>
-                                <p>Бренд: <strong>{queryData.brand}</strong></p>
-                                <p>Город: <strong>{queryData.city}</strong></p>
+                                <p>Бренд: <strong>{queryData.brand.split('; ')[tableIndex]}</strong></p>
+                                <p>Город: <strong>{queryData.city.split('; ')[tableIndex]}</strong></p>
                               </div>
                             </div>
                             <table id="productsTable">
