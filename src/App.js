@@ -325,7 +325,9 @@ function App() {
                           ))
                       ) : (
                           <div className="no-products-message">
-                            <strong>Запрос:</strong> {queryData.query} - <strong>Товары не найдены.</strong>
+                            <div className="alert alert-warning" style={{ backgroundColor: '#ffcccb', color: '#000000' }}>
+                              <strong>Запрос:</strong> {queryData.query} - <strong>Товары не найдены.</strong>
+                            </div>
                           </div>
                       )}
                     </Accordion.Body>
