@@ -156,7 +156,10 @@ function App() {
   };
 
   const handleKeyPress = (e, formId) => {
-    if (e.key === 'Enter') fetchProducts();
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      fetchProducts();
+    }
   };
 
   const addRequestForm = () => {
@@ -194,6 +197,7 @@ function App() {
                           type="text"
                           value={form.query}
                           onChange={(e) => handleQueryInputChange(e, form.id)}
+                          onKeyPress={(e) => handleKeyPress(e, form.id)}
                           placeholder="Введите запрос"
                           required
                           disabled={isRequesting}
@@ -202,6 +206,7 @@ function App() {
                           type="text"
                           value={form.brand}
                           onChange={(e) => handleBrandInputChange(e, form.id)}
+                          onKeyPress={(e) => handleKeyPress(e, form.id)}
                           placeholder="Введите бренд"
                           required
                           disabled={isRequesting}
@@ -246,14 +251,12 @@ function App() {
           <Accordion ref={accordionRef} activeKey={activeKey} onSelect={(key) => setActiveKey(key)}>
             {filteredQueries.map((queryData, index) => {
               const hasProducts = queryData.productTables && queryData.productTables.length > 0;
-              if (!hasProducts) {
-                return null;
-              }
               const dateTime = queryData.queryTime || queryData.createdAt;
               const createdAt = new Date(dateTime);
               const date = createdAt.toLocaleDateString();
               const time = createdAt.toLocaleTimeString();
               const headerText = queryData.city ? `${queryData.query} (${queryData.city}) - ${queryData.brand}` : queryData.query;
+
               return (
                   <Accordion.Item eventKey={index.toString()} key={index}>
                     <Accordion.Header>
@@ -262,63 +265,69 @@ function App() {
                       <div className="date-time"> Дата: {date}, Время: {time} </div>
                     </Accordion.Header>
                     <Accordion.Body>
-                      {queryData.productTables.map((table, tableIndex) => (
-                          <div key={tableIndex}>
-                            <div className="tableIndexRow">
-                              <h6>Таблица № {tableIndex + 1}</h6>
-                              <div className="tableIndexDescription">
-                                <p>Запрос: <strong>{queryData.query.split('; ')[tableIndex]}</strong></p>
-                                <p>Бренд: <strong>{queryData.brand.split('; ')[tableIndex]}</strong></p>
-                                <p>Город: <strong>{queryData.city.split('; ')[tableIndex]}</strong></p>
+                      {hasProducts ? (
+                          queryData.productTables.map((table, tableIndex) => (
+                              <div key={tableIndex}>
+                                <div className="tableIndexRow">
+                                  <h6>Таблица № {tableIndex + 1}</h6>
+                                  <div className="tableIndexDescription">
+                                    <p>Запрос: <strong>{queryData.query.split('; ')[tableIndex]}</strong></p>
+                                    <p>Бренд: <strong>{queryData.brand.split('; ')[tableIndex]}</strong></p>
+                                    <p>Город: <strong>{queryData.city.split('; ')[tableIndex]}</strong></p>
+                                  </div>
+                                </div>
+                                <table id="productsTable">
+                                  <thead>
+                                  <tr>
+                                    <th className="th_table">№</th>
+                                    <th className="th_table">Картинка</th>
+                                    <th className="th_table">Артикул</th>
+                                    <th className="th_table">Страница</th>
+                                    <th className="th_table">Позиция</th>
+                                    <th className="th_table">Бренд</th>
+                                    <th className="th_table">Наименование</th>
+                                    <th className="th_table">Дата запроса</th>
+                                    <th className="th_table">Время запроса</th>
+                                  </tr>
+                                  </thead>
+                                  <tbody>
+                                  {table.products.map((product, i) => {
+                                    const queryTime = queryData.queryTime || queryData.createdAt;
+                                    const createdAt = new Date(queryTime);
+                                    const date = createdAt.toLocaleDateString();
+                                    const time = createdAt.toLocaleTimeString();
+                                    let page = product.page;
+                                    let position = product.position;
+                                    if (product.log && product.log.position) {
+                                      const logPosition = product.log.position.toString();
+                                      page = logPosition[0];
+                                      position = logPosition.slice(1);
+                                    }
+                                    return (
+                                        <tr key={i}>
+                                          <td className="td_table">{i + 1}</td>
+                                          <td className="td_table">
+                                            <img src={product.imageUrl} alt={product.name} width="50" height="50" />
+                                          </td>
+                                          <td className="td_table">{product.id}</td>
+                                          <td className="td_table">{page}</td>
+                                          <td className="td_table">{position}</td>
+                                          <td className="td_table">{product.brand}</td>
+                                          <td className="td_table">{product.name}</td>
+                                          <td className="td_table">{date}</td>
+                                          <td className="td_table">{time}</td>
+                                        </tr>
+                                    );
+                                  })}
+                                  </tbody>
+                                </table>
                               </div>
-                            </div>
-                            <table id="productsTable">
-                              <thead>
-                              <tr>
-                                <th className="th_table">№</th>
-                                <th className="th_table">Картинка</th>
-                                <th className="th_table">Артикул</th>
-                                <th className="th_table">Страница</th>
-                                <th className="th_table">Позиция</th>
-                                <th className="th_table">Бренд</th>
-                                <th className="th_table">Наименование</th>
-                                <th className="th_table">Дата запроса</th>
-                                <th className="th_table">Время запроса</th>
-                              </tr>
-                              </thead>
-                              <tbody>
-                              {table.products.map((product, i) => {
-                                const queryTime = queryData.queryTime || queryData.createdAt;
-                                const createdAt = new Date(queryTime);
-                                const date = createdAt.toLocaleDateString();
-                                const time = createdAt.toLocaleTimeString();
-                                let page = product.page;
-                                let position = product.position;
-                                if (product.log && product.log.position) {
-                                  const logPosition = product.log.position.toString();
-                                  page = logPosition[0];
-                                  position = logPosition.slice(1);
-                                }
-                                return (
-                                    <tr key={i}>
-                                      <td className="td_table">{i + 1}</td>
-                                      <td className="td_table">
-                                        <img src={product.imageUrl} alt={product.name} width="50" height="50" />
-                                      </td>
-                                      <td className="td_table">{product.id}</td>
-                                      <td className="td_table">{page}</td>
-                                      <td className="td_table">{position}</td>
-                                      <td className="td_table">{product.brand}</td>
-                                      <td className="td_table">{product.name}</td>
-                                      <td className="td_table">{date}</td>
-                                      <td className="td_table">{time}</td>
-                                    </tr>
-                                );
-                              })}
-                              </tbody>
-                            </table>
+                          ))
+                      ) : (
+                          <div className="no-products-message">
+                            <strong>Запрос:</strong> {queryData.query} - <strong>Товары не найдены.</strong>
                           </div>
-                      ))}
+                      )}
                     </Accordion.Body>
                   </Accordion.Item>
               );
