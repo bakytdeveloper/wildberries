@@ -174,12 +174,14 @@ function App() {
 
   const handleImageClick = (imageUrl) => {
     setModalImage(imageUrl);
-    document.body.style.overflow = 'hidden'; // Disable background scroll
+    // Отключить фоновую прокрутку(scroll)
+    document.body.style.overflow = 'hidden';
   };
 
   const closeModal = () => {
     setModalImage(null);
-    document.body.style.overflow = 'auto'; // Enable background scroll
+    // Включить фоновую прокрутку(scroll)
+    document.body.style.overflow = 'auto';
   };
 
   return (
@@ -281,8 +283,9 @@ function App() {
                           queryData.productTables.map((table, tableIndex) => (
                               <div key={tableIndex}>
                                 <div className="tableIndexRow">
-                                  <h6>Таблица № {tableIndex + 1}</h6>
+                                  {/*<h6>Таблица № {tableIndex + 1}</h6>*/}
                                   <div className="tableIndexDescription">
+                                    <p><strong>{tableIndex + 1})</strong></p>
                                     <p>Запрос: <strong>{queryData.query.split('; ')[tableIndex]}</strong></p>
                                     <p>Бренд: <strong>{queryData.brand.split('; ')[tableIndex]}</strong></p>
                                     <p>Город: <strong>{queryData.city.split('; ')[tableIndex]}</strong></p>
@@ -323,10 +326,8 @@ function App() {
                                                 <img
                                                     src={product.imageUrl}
                                                     alt={product.name}
-                                                    width="50"
-                                                    height="50"
+                                                    className="images_table"
                                                     onClick={() => handleImageClick(product.imageUrl)}
-                                                    style={{ cursor: 'pointer' }}
                                                 />
                                               </td>
                                               <td className="td_table">{product.id}</td>
