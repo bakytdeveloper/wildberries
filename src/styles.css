@@ -1,6 +1,6 @@
 html, body {
-    height: 100%;  /* Обеспечим 100% высоту для HTML и BODY */
-    margin: 0;    /* Уберем отступы */
+    height: 100%;
+    margin: 0;
     font-family: 'Roboto', sans-serif;
     background-color: #f5f5f5;
     color: #333;
@@ -24,23 +24,45 @@ header {
 
 .accordion {
     margin-top: 20px;
-    max-height: calc(88vh - 100px);  /* Максимальная высота равна высоте окна, минус отступы и высота header */
-    overflow-y: auto;  /* Добавляем вертикальный скролл при переполнении */
+    max-height: calc(88vh - 100px);
+    overflow-y: auto;
 }
 
-.search {
+.top-section {
     display: flex;
-    width: 33%;
-
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
 }
 
-#queryInput {
-    width: calc(50% - 200px);
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+.left-forms {
+    width: 55%;
+}
+
+.right-controls {
+    width: 35%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.controls-search-bar .search {
+    width: 100%;
+}
+
+.request-forms {
+    width: 100%;
+}
+
+.search-container {
+    display: flex;
+    width: 100%;
     margin-bottom: 10px;
-    font-size: 16px;
+}
+
+.InputGroupForm {
+    display: flex;
+    gap: 2px;
 }
 
 .message {
@@ -59,7 +81,6 @@ header {
     margin-top: 11px;
     padding: 0 10px;
     border-radius: 5px;
-
 }
 
 #successMessage {
@@ -67,23 +88,21 @@ header {
     margin-top: 11px;
     padding: 0 10px;
     margin-bottom: -10px;
+}
 
+.controls_primary {
+    margin-left: 10px;
 }
 
 button {
-    padding: 8px 10px;
-    height: 45px;
+    padding: 5px 10px;
+    height: 38px;
     border: none;
     background-color: #093aee;
     color: white;
     font-size: 16px;
     border-radius: 4px;
     cursor: pointer;
-}
-
-.collapsed {
-    padding: 0 10px!important;
-    font-size: 14px!important;
 }
 
 button[disabled] {
@@ -99,7 +118,6 @@ button:hover:enabled {
 table {
     width: 100%;
     border-collapse: collapse;
-    /*margin-top: 5px;*/
 }
 
 th, td {
@@ -132,12 +150,10 @@ tr:hover {
     padding: 2px;
 }
 
-
 .tableIndexRow {
     display: flex;
     width: 100%;
     align-items: center;
-
 }
 
 .tableIndexDescription {
@@ -149,7 +165,6 @@ tr:hover {
     margin-left: 10px;
     font-weight: bold;
 }
-
 
 .th_table {
     text-align: center;
@@ -171,117 +186,20 @@ tr:hover {
     text-align: right;
 }
 
-.search {
-    display: flex;
-    align-items: center; /* Центрируем элементы по вертикали */
-    /*gap: 8px; !* Промежуток между элементами *!*/
-    width: 100%;
-    margin-bottom: 15px; /* Добавим отступ снизу */
-}
-
-.InputGroupForm {
-    display: flex;
-    width: 100%;
-    /*gap: 8px; !* Расстояние между инпутом и кнопками *!*/
-}
-
 .search input {
-    padding: 6px 10px; /* Уменьшаем отступы */
-    font-size: 14px; /* Уменьшаем размер текста */
-    height: 38px; /* Снижаем высоту */
+    padding: 5px 10px;
+    font-size: 14px;
+    height: 38px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    flex-grow: 1; /* Инпут растягивается на свободное пространство */
+    flex-grow: 1;
 }
-
-button {
-    padding: 6px 10px; /* Уменьшаем внутренние отступы */
-    height: 38px; /* Снижаем высоту кнопок */
-    border: none;
-    background-color: #093aee;
-    color: white;
-    font-size: 14px; /* Уменьшаем шрифт */
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-button[disabled] {
-    background-color: #cccccc;
-    cursor: not-allowed;
-}
-
-button:hover:enabled {
-    background-color: #2451aa;
-    color: white;
-}
-
 
 .images_table {
     width: 40px;
     height: 40px;
     cursor: pointer;
 }
-
-
-
-
-
-.search-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-}
-
-.search-left,
-.search-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.search-left {
-    flex: 0.8;
-    margin-right: 100px;
-}
-
-.search-right {
-    flex: 0.3;
-    justify-content: flex-end;
-    margin-left: 90px;
-
-}
-
-.search input,
-.search button,
-.search .dropdown button {
-    padding: 6px 10px;
-    font-size: 14px;
-    height: 38px;
-    border-radius: 4px;
-}
-
-button {
-    cursor: pointer;
-}
-
-button[disabled] {
-    background-color: #cccccc;
-    cursor: not-allowed;
-}
-
-button:hover:enabled {
-    background-color: #2451aa;
-    color: white;
-}
-
-
-
-
-
-
-
-
 
 .modal {
     position: fixed;

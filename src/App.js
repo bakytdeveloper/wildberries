@@ -174,14 +174,12 @@ function App() {
 
   const handleImageClick = (imageUrl) => {
     setModalImage(imageUrl);
-    // Отключить фоновую прокрутку(scroll)
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden'; // Disable background scroll
   };
 
   const closeModal = () => {
     setModalImage(null);
-    // Включить фоновую прокрутку(scroll)
-    document.body.style.overflow = 'auto';
+    document.body.style.overflow = 'auto'; // Enable background scroll
   };
 
   return (
@@ -190,73 +188,77 @@ function App() {
           <h1>Поиск товаров на Wildberries</h1>
         </header>
         <div className="container">
-          <Form className="search" onSubmit={(e) => e.preventDefault()}>
-            <div className="search-container">
-              <div className="search-left">
-                <Form.Control
-                    type="text"
-                    value={searchTerm}
-                    onChange={handleSortInputChange}
-                    placeholder="Поиск по заголовкам"
-                />
+          <div className="top-section">
+            <div className="left-forms">
+              {requestForms.map((form, index) => (
+                  <Form key={form.id} className="search" onSubmit={(e) => e.preventDefault()}>
+                    <div className="search-container">
+                      <div className="search-left">
+                        <InputGroup className="InputGroupForm">
+                          <Form.Control
+                              type="text"
+                              value={form.query}
+                              onChange={(e) => handleQueryInputChange(e, form.id)}
+                              onKeyPress={(e) => handleKeyPress(e, form.id)}
+                              placeholder="Введите запрос"
+                              required
+                              disabled={isRequesting}
+                          />
+                          <Form.Control
+                              type="text"
+                              value={form.brand}
+                              onChange={(e) => handleBrandInputChange(e, form.id)}
+                              onKeyPress={(e) => handleKeyPress(e, form.id)}
+                              placeholder="Введите бренд"
+                              required
+                              disabled={isRequesting}
+                          />
+                          <DropdownButton
+                              id="dropdown-basic-button"
+                              title={selectedCity}
+                              onSelect={(city) => setSelectedCity(city)}
+                          >
+                            {Object.keys(cityDestinations).map((city) => (
+                                <Dropdown.Item key={city} eventKey={city}>
+                                  {city}
+                                </Dropdown.Item>
+                            ))}
+                          </DropdownButton>
+                          {form.isMain ? (
+                              <Button variant="primary" onClick={fetchProducts} disabled={isRequesting}>
+                                Поиск
+                              </Button>
+                          ) : (
+                              <Button variant="danger" onClick={() => removeRequestForm(form.id)}>
+                                Удалить
+                              </Button>
+                          )}
+                          <Button variant="secondary" onClick={() => clearInput(form.id)} id="clearButton" disabled={isRequesting}>
+                            X
+                          </Button>
+                        </InputGroup>
+                      </div>
+                    </div>
+                  </Form>
+              ))}
+            </div>
+            <div className="right-controls">
+              <div className="controls">
+                <Button className="controls_success" variant="success" onClick={addRequestForm}>Добавить запрос</Button>
+                <Button className="controls_primary" variant="primary" onClick={fetchProducts} disabled={isRequesting}>Поиск</Button>
+              </div>
+              <div className="search-bar">
+                <Form className="search" onSubmit={(e) => e.preventDefault()}>
+                  <Form.Control
+                      type="text"
+                      value={searchTerm}
+                      onChange={handleSortInputChange}
+                      placeholder="Поиск по заголовкам"
+                  />
+                </Form>
               </div>
             </div>
-          </Form>
-          {requestForms.map((form, index) => (
-              <Form key={form.id} className="search" onSubmit={(e) => e.preventDefault()}>
-                <div className="search-container">
-                  <div className="search-left">
-                    <InputGroup className="InputGroupForm">
-                      <Form.Control
-                          type="text"
-                          value={form.query}
-                          onChange={(e) => handleQueryInputChange(e, form.id)}
-                          onKeyPress={(e) => handleKeyPress(e, form.id)}
-                          placeholder="Введите запрос"
-                          required
-                          disabled={isRequesting}
-                      />
-                      <Form.Control
-                          type="text"
-                          value={form.brand}
-                          onChange={(e) => handleBrandInputChange(e, form.id)}
-                          onKeyPress={(e) => handleKeyPress(e, form.id)}
-                          placeholder="Введите бренд"
-                          required
-                          disabled={isRequesting}
-                      />
-                      <DropdownButton
-                          id="dropdown-basic-button"
-                          title={selectedCity}
-                          onSelect={(city) => setSelectedCity(city)}
-                      >
-                        {Object.keys(cityDestinations).map((city) => (
-                            <Dropdown.Item
-                                key={city}
-                                eventKey={city}
-                            >
-                              {city}
-                            </Dropdown.Item>
-                        ))}
-                      </DropdownButton>
-                      {form.isMain ? (
-                          <Button variant="primary" onClick={fetchProducts} disabled={isRequesting}>
-                            Поиск
-                          </Button>
-                      ) : (
-                          <Button variant="danger" onClick={() => removeRequestForm(form.id)}>
-                            Удалить
-                          </Button>
-                      )}
-                      <Button variant="secondary" onClick={() => clearInput(form.id)} id="clearButton" disabled={isRequesting}>
-                        X
-                      </Button>
-                    </InputGroup>
-                  </div>
-                </div>
-              </Form>
-          ))}
-          <Button variant="success" onClick={addRequestForm}>Добавить запрос</Button>
+          </div>
           {loadingMessage && <div id="loadingMessage" className="message">{loadingMessage}</div>}
           {errorMessage && errorMessage !== 'Не удалось загрузить данные.' && (
               <div id="errorMessage" className="message error">{errorMessage}</div>
@@ -283,9 +285,8 @@ function App() {
                           queryData.productTables.map((table, tableIndex) => (
                               <div key={tableIndex}>
                                 <div className="tableIndexRow">
-                                  {/*<h6>Таблица № {tableIndex + 1}</h6>*/}
+                                  <h6>Таблица № {tableIndex + 1}</h6>
                                   <div className="tableIndexDescription">
-                                    <p><strong>{tableIndex + 1})</strong></p>
                                     <p>Запрос: <strong>{queryData.query.split('; ')[tableIndex]}</strong></p>
                                     <p>Бренд: <strong>{queryData.brand.split('; ')[tableIndex]}</strong></p>
                                     <p>Город: <strong>{queryData.city.split('; ')[tableIndex]}</strong></p>
@@ -326,8 +327,10 @@ function App() {
                                                 <img
                                                     src={product.imageUrl}
                                                     alt={product.name}
-                                                    className="images_table"
+                                                    width="50"
+                                                    height="50"
                                                     onClick={() => handleImageClick(product.imageUrl)}
+                                                    style={{ cursor: 'pointer' }}
                                                 />
                                               </td>
                                               <td className="td_table">{product.id}</td>
@@ -379,3 +382,4 @@ function App() {
 }
 
 export default App;
+
