@@ -336,12 +336,10 @@ function App() {
                                               <td className="td_table">{i + 1}</td>
                                               <td className="td_table">
                                                 <img
+                                                    className="td_table_img"
                                                     src={product.imageUrl}
                                                     alt={product.name}
-                                                    width="50"
-                                                    height="50"
                                                     onClick={() => handleImageClick(product.imageUrl)}
-                                                    style={{ cursor: 'pointer' }}
                                                 />
                                               </td>
                                               <td className="td_table">{product.id}</td>

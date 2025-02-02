@@ -176,6 +176,12 @@ tr:hover {
     font-size: 13px;
 }
 
+.td_table_img {
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+}
+
 .flex-grow-0 {
     margin-right: 10px;
     font-weight: bold;
