@@ -124,9 +124,19 @@ function App() {
       // Очистить поля и оставить только одну основную форму после удачного запроса
       setRequestForms([{ id: Date.now(), query: '', brand: '', isMain: true }]);
 
+      // Устанавливаем активный ключ на новый элемент
+      setActiveKey('0');
+
       setTimeout(() => {
         setSuccessMessage('');
       }, 3000);
+      setTimeout(() => {
+        const newAccordionItem = document.querySelector(`.accordion .accordion-item:first-child`);
+        if (newAccordionItem) {
+          newAccordionItem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+
     } catch (error) {
       console.error('Error fetching products:', error);
       setErrorMessage('Ошибка выполнения запроса');
@@ -382,4 +392,3 @@ function App() {
 }
 
 export default App;
-
