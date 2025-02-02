@@ -69,7 +69,7 @@ header {
     display: inline-block!important;
     background: #43d9e7;
     color: #093aee;
-    margin-top: 11px;
+    margin-top: 0;
     padding: 0 10px;
     border-radius: 5px;
 }
@@ -78,16 +78,16 @@ header {
     display: inline-block!important;
     background: #efb0b0;
     color: red;
-    margin-top: 11px;
+    margin-top: 0;
     padding: 0 10px;
     border-radius: 5px;
 }
 
 #successMessage {
     display: inline-block!important;
-    margin-top: 11px;
+    margin-top: 0;
     padding: 0 10px;
-    margin-bottom: -10px;
+    /*margin-bottom: -10px;*/
 }
 
 .controls_primary {

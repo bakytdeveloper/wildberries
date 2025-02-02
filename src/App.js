@@ -120,6 +120,7 @@ function App() {
       setAllQueries([result, ...allQueries]);
       setFilteredQueries([result, ...allQueries]);
       setSuccessMessage('Запрос выполнен успешно!');
+      setLoadingMessage(''); // Скрываем сообщение "Загрузка..." после получения данных
 
       // Очистить поля и оставить только одну основную форму после удачного запроса
       setRequestForms([{ id: Date.now(), query: '', brand: '', isMain: true }]);
@@ -293,15 +294,12 @@ function App() {
                     <Accordion.Body>
                       {hasProducts ? (
                           queryData.productTables.map((table, tableIndex) => (
-                              <div className="accordion_body_table"key={tableIndex}>
-                                {/*<div className="tableIndexRow">*/}
-                                  {/*<h6>Таблица № {tableIndex + 1}</h6>*/}
-                                  <div className="tableIndexDescription">
-                                    <p><strong>{tableIndex + 1})</strong></p>
-                                    <p>Запрос: <strong>{queryData.query.split('; ')[tableIndex]}</strong></p>
-                                    <p>Бренд: <strong>{queryData.brand.split('; ')[tableIndex]}</strong></p>
-                                    <p>Город: <strong>{queryData.city.split('; ')[tableIndex]}</strong></p>
-                                  {/*</div>*/}
+                              <div className="accordion_body_table" key={tableIndex}>
+                                <div className="tableIndexDescription">
+                                  <p><strong>{tableIndex + 1})</strong></p>
+                                  <p>Запрос: <strong>{queryData.query.split('; ')[tableIndex]}</strong></p>
+                                  <p>Бренд: <strong>{queryData.brand.split('; ')[tableIndex]}</strong></p>
+                                  <p>Город: <strong>{queryData.city.split('; ')[tableIndex]}</strong></p>
                                 </div>
                                 {table.products.length > 0 ? (
                                     <table id="productsTable">
@@ -358,7 +356,7 @@ function App() {
                                     <div className="no-products-message" style={{ backgroundColor: '#ffcccb', color: '#000000', padding: '10px', borderRadius: '5px' }}>
                                       <strong>Запрос:</strong> {queryData.query.split('; ')[tableIndex]} <br />
                                       <strong>Бренд:</strong> {queryData.brand.split('; ')[tableIndex]} <br />
-                                      <strong>Город:</strong>                             {queryData.city.split('; ')[tableIndex]} <br />
+                                      <strong>Город:</strong> {queryData.city.split('; ')[tableIndex]} <br />
                                       <strong>Товары не найдены.</strong>
                                     </div>
                                 )}
