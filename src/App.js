@@ -117,10 +117,22 @@ function App() {
         throw new Error(result.error || 'Ошибка выполнения запроса');
       }
 
+      const allProductTables = result.productTables;
+      const totalRequests = validForms.length;
+      const successfulRequests = allProductTables.filter(table => table.products.length > 0).length;
+
+      if (successfulRequests === totalRequests) {
+        setSuccessMessage('Запрос выполнен успешно!');
+      } else if (successfulRequests > 0) {
+        setSuccessMessage('Запрос выполнен, но не все ответы полученны');
+      } else {
+        setSuccessMessage('По запросу ничего не найдено');
+      }
+
       setAllQueries([result, ...allQueries]);
       setFilteredQueries([result, ...allQueries]);
-      setSuccessMessage('Запрос выполнен успешно!');
-      setLoadingMessage(''); // Скрываем сообщение "Загрузка..." после получения данных
+      // Скрываем сообщение "Загрузка..." после получения данных
+      setLoadingMessage('');
 
       // Очистить поля и оставить только одну основную форму после удачного запроса
       setRequestForms([{ id: Date.now(), query: '', brand: '', isMain: true }]);
@@ -130,7 +142,7 @@ function App() {
 
       setTimeout(() => {
         setSuccessMessage('');
-      }, 3000);
+      }, 33000);
       setTimeout(() => {
         const newAccordionItem = document.querySelector(`.accordion .accordion-item:first-child`);
         if (newAccordionItem) {
@@ -213,7 +225,6 @@ function App() {
                               onKeyPress={(e) => handleKeyPress(e, form.id)}
                               placeholder="Введите запрос"
                               required
-                              disabled={isRequesting}
                           />
                           <Form.Control
                               type="text"
@@ -274,7 +285,9 @@ function App() {
           {errorMessage && errorMessage !== 'Не удалось загрузить данные.' && (
               <div id="errorMessage" className="message error">{errorMessage}</div>
           )}
-          {successMessage && <Alert id="successMessage" variant="success">{successMessage}</Alert>}
+          {successMessage && <Alert id="successMessage" variant="success" className={successMessage === 'По запросу ничего не найдено' ? 'no-results' : ''}>
+            {successMessage}
+          </Alert>}
           <Accordion ref={accordionRef} activeKey={activeKey} onSelect={(key) => setActiveKey(key)}>
             {filteredQueries.map((queryData, index) => {
               const hasProducts = queryData.productTables && queryData.productTables.some(table => table.products.length > 0);
