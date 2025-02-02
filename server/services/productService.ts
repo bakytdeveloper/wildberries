@@ -24,13 +24,19 @@ function generateImageUrl(id: number): string {
     return `https://basket-${r}.wbbasket.ru/${vol}/${part}/${id}/images/c516x688/1.webp`;
 }
 
+function convertToMoscowTime(date: Date): Date {
+    const moscowOffset = 3; // Offset Moscow time from UTC
+    const currentOffset = date.getTimezoneOffset() / 60;
+    return new Date(date.setHours(date.getHours() + moscowOffset - currentOffset));
+}
+
 export const fetchAndParseProducts = async (query: string, dest: string, selectedBrand: string): Promise<(Product & { position: number, page: number, queryTime: string })[]> => {
     try {
         const products: (Product & { position: number, page: number, queryTime: string })[] = [];
         const maxConcurrentPages = 18;
         let page = 1;
         let hasMoreData = true;
-        const queryTime = new Date().toISOString();
+        const queryTime = convertToMoscowTime(new Date()).toISOString();
         const baseQuery = selectedBrand === 'S.Point' ? 'Одежда S.Point' : '';
         const searchQuery = query.toLowerCase() === '' ? `${baseQuery} ${selectedBrand}` : query;
 

@@ -156,6 +156,11 @@ tr:hover {
     align-items: center;
 }
 
+.accordion_body_table {
+    margin-top: 10px;
+    margin-bottom: 0;
+}
+
 .tableIndexDescription {
     display: flex;
     align-items: center;
