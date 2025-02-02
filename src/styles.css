@@ -270,3 +270,7 @@ tr:hover {
 }
 
 
+.accordion-button.collapsed {
+    height: auto!important;
+    padding: 7px 15px!important;
+}

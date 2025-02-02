@@ -124,7 +124,7 @@ function App() {
       if (successfulRequests === totalRequests) {
         setSuccessMessage('Запрос выполнен успешно!');
       } else if (successfulRequests > 0) {
-        setSuccessMessage('Запрос выполнен, но не все ответы полученны');
+        setSuccessMessage('Запрос выполнен, но не все ответы получены');
       } else {
         setSuccessMessage('По запросу ничего не найдено');
       }
@@ -295,13 +295,17 @@ function App() {
               const createdAt = new Date(dateTime);
               const date = createdAt.toLocaleDateString();
               const time = createdAt.toLocaleTimeString();
-              const headerText = queryData.city ? `${queryData.query} (${queryData.city}) - ${queryData.brand}` : queryData.query;
+              const headerTextItems = queryData.query.split('; ').map((query, i) => (
+                  <div key={i}>
+                    {query} - {queryData.brand.split('; ')[i]} ({queryData.city.split('; ')[i]})
+                  </div>
+              ));
 
               return (
                   <Accordion.Item eventKey={index.toString()} key={index}>
-                    <Accordion.Header>
+                    <Accordion.Header id="accordion_header">
                       <div className="flex-grow-0">{index + 1})</div>
-                      <div className="flex-grow-1">{headerText}</div>
+                      <div className="flex-grow-1">{headerTextItems}</div>
                       <div className="date-time"> Дата: {date}, Время: {time} </div>
                     </Accordion.Header>
                     <Accordion.Body>
