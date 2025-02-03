@@ -199,7 +199,7 @@ function App() {
                     <div className="search-container">
                       <div className="search-left">
                         <InputGroup className="InputGroupForm">
-                          <Form.Control type="text" value={form.query} onChange={(e) => handleQueryInputChange(e, form.id)} onKeyPress={(e) => handleKeyPress(e, form.id)} placeholder="Введите запрос" required />
+                          <Form.Control type="text" value={form.query} onChange={(e) => handleQueryInputChange(e, form.id)} onKeyPress={(e) => handleKeyPress(e, form.id)} placeholder="Введите запрос" required disabled={isRequesting} />
                           <Form.Control type="text" value={form.brand} onChange={(e) => handleBrandInputChange(e, form.id)} onKeyPress={(e) => handleKeyPress(e, form.id)} placeholder="Введите бренд" required disabled={isRequesting} />
                           <DropdownButton id="dropdown-basic-button" title={form.city} onSelect={(city) => handleCityChange(city, form.id)}>
                             {Object.keys(cityDestinations).map((city) => (
