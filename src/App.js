@@ -5,15 +5,7 @@ import { Form, Button, InputGroup, Alert, DropdownButton, Dropdown } from 'react
 import Toastify from 'toastify-js';
 import "toastify-js/src/toastify.css";
 import './styles.css';
-
-const cityDestinations = {
-  'г.Москва': '-1275551',
-  'г.Санкт-Петербург': '-1123300',
-  'г.Дмитров': '123589350',
-  'г.Краснодар': '12358062',
-  'г.Казань': '-2133463',
-  'г.Бишкек': '286'
-};
+import cityDestinations from './utils/cityDestinations';
 
 function App() {
   const [query, setQuery] = useState('');
@@ -25,17 +17,11 @@ function App() {
   const [activeKey, setActiveKey] = useState(null);
   const [isRequesting, setIsRequesting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
-  const [selectedCity, setSelectedCity] = useState('г.Дмитров');
-  const [dest, setDest] = useState(cityDestinations[selectedCity]);
   const [retryAttempted, setRetryAttempted] = useState(false);
   const [modalImage, setModalImage] = useState(null);
   const accordionRef = useRef(null);
 
-  const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', brand: '', isMain: true }]);
-
-  useEffect(() => {
-    setDest(cityDestinations[selectedCity]);
-  }, [selectedCity]);
+  const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
 
   useEffect(() => {
     fetchSavedQueries();
@@ -61,10 +47,9 @@ function App() {
       if (Array.isArray(savedQueries)) {
         const adjustedQueries = savedQueries.map(query => {
           const createdAt = new Date(query.createdAt || query.queryTime);
-          createdAt.setHours(createdAt.getUTCHours() + 3); // Московское время
           return {
             ...query,
-            createdAt: createdAt.toISOString(),
+            createdAt: convertToMoscowTime(createdAt).toISOString(),
             brand: query.brand || ''
           };
         });
@@ -109,7 +94,7 @@ function App() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ forms: validForms.map(form => ({ ...form, dest, city: selectedCity })) })
+        body: JSON.stringify({ forms: validForms.map(form => ({ ...form, dest: cityDestinations[form.city], city: form.city })) })
       });
 
       const result = await response.json();
@@ -135,7 +120,7 @@ function App() {
       setLoadingMessage('');
 
       // Очистить поля и оставить только одну основную форму после удачного запроса
-      setRequestForms([{ id: Date.now(), query: '', brand: '', isMain: true }]);
+      setRequestForms([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
 
       // Устанавливаем активный ключ на новый элемент
       setActiveKey('0');
@@ -166,6 +151,10 @@ function App() {
     setRequestForms(requestForms.map(f => f.id === formId ? { ...f, brand: e.target.value } : f));
   };
 
+  const handleCityChange = (city, formId) => {
+    setRequestForms(requestForms.map(f => f.id === formId ? { ...f, city: city } : f));
+  };
+
   const handleSortInputChange = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
@@ -177,7 +166,7 @@ function App() {
   };
 
   const clearInput = (formId) => {
-    setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: '', brand: '' } : f));
+    setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: '', brand: '', city: 'г.Дмитров' } : f));
   };
 
   const handleKeyPress = (e, formId) => {
@@ -188,7 +177,7 @@ function App() {
   };
 
   const addRequestForm = () => {
-    setRequestForms([...requestForms, { id: Date.now(), query: '', brand: '', isMain: false }]);
+    setRequestForms([...requestForms, { id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: false }]);
   };
 
   const removeRequestForm = (formId) => {
@@ -203,6 +192,14 @@ function App() {
   const closeModal = () => {
     setModalImage(null);
     document.body.style.overflow = 'auto'; // Enable background scroll
+  };
+
+  const convertToMoscowTime = (date) => {
+    const moscowOffset = 3; // Moscow time is UTC+3
+    const bishkekOffset = 6; // Bishkek time is UTC+6
+    const offset = bishkekOffset - moscowOffset;
+    date.setHours(date.getHours() - offset);
+    return date;
   };
 
   return (
@@ -237,8 +234,8 @@ function App() {
                           />
                           <DropdownButton
                               id="dropdown-basic-button"
-                              title={selectedCity}
-                              onSelect={(city) => setSelectedCity(city)}
+                              title={form.city}
+                              onSelect={(city) => handleCityChange(city, form.id)}
                           >
                             {Object.keys(cityDestinations).map((city) => (
                                 <Dropdown.Item key={city} eventKey={city}>
@@ -292,7 +289,7 @@ function App() {
             {filteredQueries.map((queryData, index) => {
               const hasProducts = queryData.productTables && queryData.productTables.some(table => table.products.length > 0);
               const dateTime = queryData.queryTime || queryData.createdAt;
-              const createdAt = new Date(dateTime);
+              const createdAt = convertToMoscowTime(new Date(dateTime));
               const date = createdAt.toLocaleDateString();
               const time = createdAt.toLocaleTimeString();
               const headerTextItems = queryData.query.split('; ').map((query, i) => (
@@ -335,10 +332,9 @@ function App() {
                                       </thead>
                                       <tbody>
                                       {table.products.map((product, i) => {
-                                        const queryTime = queryData.queryTime || queryData.createdAt;
-                                        const createdAt = new Date(queryTime);
-                                        const date = createdAt.toLocaleDateString();
-                                        const time = createdAt.toLocaleTimeString();
+                                        const queryTime = convertToMoscowTime(new Date(queryData.queryTime || queryData.createdAt));
+                                        const date = queryTime.toLocaleDateString();
+                                        const time = queryTime.toLocaleTimeString();
                                         let page = product.page;
                                         let position = product.position;
                                         if (product.log && product.log.position) {
