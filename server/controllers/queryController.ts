@@ -14,32 +14,27 @@ export const getQueries = async (req: Request, res: Response) => {
 
 export const createQuery = async (req: Request, res: Response) => {
     const { forms } = req.body;
-
     if (!forms || !Array.isArray(forms) || forms.length === 0) {
         res.status(400).json({ error: 'Invalid request format' });
         return;
     }
 
     try {
-        const queryTime = new Date().toISOString();
         const productTables = await Promise.all(forms.map(async (form) => {
-            const products = await fetchAndParseProducts(form.query, form.dest, form.brand);
-            return {
-                tableId: form.id,
-                products
-            };
+            const products = await fetchAndParseProducts(form.query, form.dest, form.brand, form.queryTime);
+            return { tableId: form.id, products };
         }));
 
         const newQuery = new QueryModel({
             query: forms.map(form => form.query).join('; '),
             dest: forms.map(form => form.dest).join('; '),
             productTables,
-            createdAt: new Date(),
+            createdAt: new Date(forms[0].queryTime), // Устанавливаем время и дату запроса
             city: forms.map(form => form.city).join('; '),
             brand: forms.map(form => form.brand).join('; ')
         });
-        await newQuery.save();
 
+        await newQuery.save();
         res.json(newQuery);
     } catch (error) {
         console.error('Error saving queries:', error);

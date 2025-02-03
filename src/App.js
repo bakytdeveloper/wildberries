@@ -20,7 +20,6 @@ function App() {
   const [retryAttempted, setRetryAttempted] = useState(false);
   const [modalImage, setModalImage] = useState(null);
   const accordionRef = useRef(null);
-
   const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
 
   useEffect(() => {
@@ -45,16 +44,8 @@ function App() {
       }
       const savedQueries = await response.json();
       if (Array.isArray(savedQueries)) {
-        const adjustedQueries = savedQueries.map(query => {
-          const createdAt = new Date(query.createdAt || query.queryTime);
-          return {
-            ...query,
-            createdAt: convertToMoscowTime(createdAt).toISOString(),
-            brand: query.brand || ''
-          };
-        });
-        setAllQueries(adjustedQueries);
-        setFilteredQueries(adjustedQueries);
+        setAllQueries(savedQueries);
+        setFilteredQueries(savedQueries);
         setRetryAttempted(false);
       }
       setLoadingMessage('');
@@ -73,13 +64,7 @@ function App() {
 
     const validForms = requestForms.filter(form => form.query.trim() !== '' && form.brand.trim() !== '');
     if (validForms.length === 0) {
-      Toastify({
-        text: "Все формы должны быть заполнены.",
-        duration: 3000,
-        gravity: "top",
-        position: "right",
-        backgroundColor: "#ff0000"
-      }).showToast();
+      Toastify({ text: "Все формы должны быть заполнены.", duration: 3000, gravity: "top", position: "right", backgroundColor: "#ff0000" }).showToast();
       return;
     }
 
@@ -91,20 +76,19 @@ function App() {
     try {
       const response = await fetch('http://localhost:5500/api/queries', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ forms: validForms.map(form => ({ ...form, dest: cityDestinations[form.city], city: form.city })) })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ forms: validForms.map(form => ({ ...form, dest: cityDestinations[form.city], city: form.city, queryTime: new Date().toISOString() })) })
       });
 
-      const result = await response.json();
       if (response.status !== 200) {
+        const result = await response.json();
         throw new Error(result.error || 'Ошибка выполнения запроса');
       }
 
-      const allProductTables = result.productTables;
+      const result = await response.json();
+
       const totalRequests = validForms.length;
-      const successfulRequests = allProductTables.filter(table => table.products.length > 0).length;
+      const successfulRequests = result.productTables.filter(table => table.products.length > 0).length;
 
       if (successfulRequests === totalRequests) {
         setSuccessMessage('Запрос выполнен успешно!');
@@ -116,25 +100,24 @@ function App() {
 
       setAllQueries([result, ...allQueries]);
       setFilteredQueries([result, ...allQueries]);
+
       // Скрываем сообщение "Загрузка..." после получения данных
       setLoadingMessage('');
-
       // Очистить поля и оставить только одну основную форму после удачного запроса
       setRequestForms([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
-
       // Устанавливаем активный ключ на новый элемент
       setActiveKey('0');
 
       setTimeout(() => {
         setSuccessMessage('');
-      }, 33000);
+      }, 3000);
+
       setTimeout(() => {
         const newAccordionItem = document.querySelector(`.accordion .accordion-item:first-child`);
         if (newAccordionItem) {
           newAccordionItem.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }, 100);
-
     } catch (error) {
       console.error('Error fetching products:', error);
       setErrorMessage('Ошибка выполнения запроса');
@@ -194,14 +177,6 @@ function App() {
     document.body.style.overflow = 'auto'; // Enable background scroll
   };
 
-  const convertToMoscowTime = (date) => {
-    const moscowOffset = 3; // Moscow time is UTC+3
-    const bishkekOffset = 6; // Bishkek time is UTC+6
-    const offset = bishkekOffset - moscowOffset;
-    date.setHours(date.getHours() - offset);
-    return date;
-  };
-
   return (
       <div>
         <header>
@@ -215,28 +190,9 @@ function App() {
                     <div className="search-container">
                       <div className="search-left">
                         <InputGroup className="InputGroupForm">
-                          <Form.Control
-                              type="text"
-                              value={form.query}
-                              onChange={(e) => handleQueryInputChange(e, form.id)}
-                              onKeyPress={(e) => handleKeyPress(e, form.id)}
-                              placeholder="Введите запрос"
-                              required
-                          />
-                          <Form.Control
-                              type="text"
-                              value={form.brand}
-                              onChange={(e) => handleBrandInputChange(e, form.id)}
-                              onKeyPress={(e) => handleKeyPress(e, form.id)}
-                              placeholder="Введите бренд"
-                              required
-                              disabled={isRequesting}
-                          />
-                          <DropdownButton
-                              id="dropdown-basic-button"
-                              title={form.city}
-                              onSelect={(city) => handleCityChange(city, form.id)}
-                          >
+                          <Form.Control type="text" value={form.query} onChange={(e) => handleQueryInputChange(e, form.id)} onKeyPress={(e) => handleKeyPress(e, form.id)} placeholder="Введите запрос" required />
+                          <Form.Control type="text" value={form.brand} onChange={(e) => handleBrandInputChange(e, form.id)} onKeyPress={(e) => handleKeyPress(e, form.id)} placeholder="Введите бренд" required disabled={isRequesting} />
+                          <DropdownButton id="dropdown-basic-button" title={form.city} onSelect={(city) => handleCityChange(city, form.id)}>
                             {Object.keys(cityDestinations).map((city) => (
                                 <Dropdown.Item key={city} eventKey={city}>
                                   {city}
@@ -244,17 +200,11 @@ function App() {
                             ))}
                           </DropdownButton>
                           {form.isMain ? (
-                              <Button variant="primary" onClick={fetchProducts} disabled={isRequesting}>
-                                Поиск
-                              </Button>
+                              <Button variant="primary" onClick={fetchProducts} disabled={isRequesting}> Поиск </Button>
                           ) : (
-                              <Button variant="danger" onClick={() => removeRequestForm(form.id)}>
-                                Удалить
-                              </Button>
+                              <Button variant="danger" onClick={() => removeRequestForm(form.id)}> Удалить </Button>
                           )}
-                          <Button variant="secondary" onClick={() => clearInput(form.id)} id="clearButton" disabled={isRequesting}>
-                            X
-                          </Button>
+                          <Button variant="secondary" onClick={() => clearInput(form.id)} id="clearButton" disabled={isRequesting}> X </Button>
                         </InputGroup>
                       </div>
                     </div>
@@ -268,12 +218,7 @@ function App() {
               </div>
               <div className="search-bar">
                 <Form className="search" onSubmit={(e) => e.preventDefault()}>
-                  <Form.Control
-                      type="text"
-                      value={searchTerm}
-                      onChange={handleSortInputChange}
-                      placeholder="Поиск по заголовкам"
-                  />
+                  <Form.Control type="text" value={searchTerm} onChange={handleSortInputChange} placeholder="Поиск по заголовкам" />
                 </Form>
               </div>
             </div>
@@ -288,8 +233,7 @@ function App() {
           <Accordion ref={accordionRef} activeKey={activeKey} onSelect={(key) => setActiveKey(key)}>
             {filteredQueries.map((queryData, index) => {
               const hasProducts = queryData.productTables && queryData.productTables.some(table => table.products.length > 0);
-              const dateTime = queryData.queryTime || queryData.createdAt;
-              const createdAt = convertToMoscowTime(new Date(dateTime));
+              const createdAt = new Date(queryData.createdAt);
               const date = createdAt.toLocaleDateString();
               const time = createdAt.toLocaleTimeString();
               const headerTextItems = queryData.query.split('; ').map((query, i) => (
@@ -297,13 +241,14 @@ function App() {
                     {query} - {queryData.brand.split('; ')[i]} ({queryData.city.split('; ')[i]})
                   </div>
               ));
-
               return (
                   <Accordion.Item eventKey={index.toString()} key={index}>
                     <Accordion.Header id="accordion_header">
                       <div className="flex-grow-0">{index + 1})</div>
                       <div className="flex-grow-1">{headerTextItems}</div>
-                      <div className="date-time"> Дата: {date}, Время: {time} </div>
+                      <div className="date-time">
+                        Дата: {date}, Время: {time}
+                      </div>
                     </Accordion.Header>
                     <Accordion.Body>
                       {hasProducts ? (
@@ -332,7 +277,7 @@ function App() {
                                       </thead>
                                       <tbody>
                                       {table.products.map((product, i) => {
-                                        const queryTime = convertToMoscowTime(new Date(queryData.queryTime || queryData.createdAt));
+                                        const queryTime = new Date(queryData.queryTime || queryData.createdAt);
                                         const date = queryTime.toLocaleDateString();
                                         const time = queryTime.toLocaleTimeString();
                                         let page = product.page;
@@ -346,12 +291,7 @@ function App() {
                                             <tr key={i}>
                                               <td className="td_table">{i + 1}</td>
                                               <td className="td_table">
-                                                <img
-                                                    className="td_table_img"
-                                                    src={product.imageUrl}
-                                                    alt={product.name}
-                                                    onClick={() => handleImageClick(product.imageUrl)}
-                                                />
+                                                <img className="td_table_img" src={product.imageUrl} alt={product.name} onClick={() => handleImageClick(product.imageUrl)} />
                                               </td>
                                               <td className="td_table">{product.id}</td>
                                               <td className="td_table">{page}</td>
