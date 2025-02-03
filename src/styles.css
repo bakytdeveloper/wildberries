@@ -274,3 +274,8 @@ tr:hover {
     height: auto!important;
     padding: 7px 15px!important;
 }
+
+.accordion-button {
+    height: auto!important;
+    padding: 7px 15px!important;
+}
