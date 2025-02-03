@@ -74,10 +74,19 @@ function App() {
     setSuccessMessage('');
 
     try {
+      const trimmedForms = validForms.map(form => ({
+        ...form,
+        query: form.query.trim(),
+        brand: form.brand.trim(),
+        dest: cityDestinations[form.city],
+        city: form.city,
+        queryTime: new Date().toISOString()
+      }));
+
       const response = await fetch('http://localhost:5500/api/queries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ forms: validForms.map(form => ({ ...form, dest: cityDestinations[form.city], city: form.city, queryTime: new Date().toISOString() })) })
+        body: JSON.stringify({ forms: trimmedForms })
       });
 
       if (response.status !== 200) {
@@ -110,7 +119,7 @@ function App() {
 
       setTimeout(() => {
         setSuccessMessage('');
-      }, 3000);
+      }, 33000);
 
       setTimeout(() => {
         const newAccordionItem = document.querySelector(`.accordion .accordion-item:first-child`);
@@ -140,7 +149,7 @@ function App() {
 
   const handleSortInputChange = (e) => {
     const value = e.target.value;
-    setSearchTerm(value);
+    setSearchTerm(value.trim());
     if (value.trim() !== '') {
       setQuery('');
     } else {
@@ -342,3 +351,4 @@ function App() {
 }
 
 export default App;
+
