@@ -119,7 +119,7 @@ function App() {
 
       setTimeout(() => {
         setSuccessMessage('');
-      }, 33000);
+      }, 3000);
 
       setTimeout(() => {
         const newAccordionItem = document.querySelector(`.accordion .accordion-item:first-child`);

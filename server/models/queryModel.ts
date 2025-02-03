@@ -21,7 +21,7 @@ const querySchema = new mongoose.Schema({
     query: { type: String, required: true },
     dest: { type: String, required: true },
     productTables: [productTableSchema],
-    createdAt: { type: Date, default: Date.now },
+    createdAt: { type: Date, default: Date.now, expires: '7d' },
     city: String,
     brand: String
 });
