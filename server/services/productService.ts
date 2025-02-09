@@ -53,7 +53,7 @@ export const fetchAndParseProducts = async (query: string, dest: string, selecte
             }
             page += maxConcurrentPages;
         }
-        console.table(products);
+        // console.table(products);
         return products;
     } catch (error) {
         console.error('Error parsing products:', error);
