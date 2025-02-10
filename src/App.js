@@ -39,7 +39,7 @@ function App() {
   const fetchSavedQueries = async () => {
     try {
       setLoadingMessage('Загрузка данных...');
-      const response = await fetch(`${API_HOST}/queries`, { headers: { 'Content-Type': 'application/json' } });
+      const response = await fetch(`${API_HOST}/api/queries`, { headers: { 'Content-Type': 'application/json' } });
       if (!response.ok) {
         throw new Error('Ошибка загрузки данных');
       }
@@ -84,7 +84,7 @@ function App() {
         queryTime: new Date().toISOString()
       }));
 
-      const response = await fetch(`${API_HOST}/queries`, {
+      const response = await fetch(`${API_HOST}/api/queries`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ forms: trimmedForms })
