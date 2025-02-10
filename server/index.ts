@@ -8,7 +8,7 @@ dotenv.config();
 
 const app = express();
 const urlMongo = 'mongodb+srv://bakytdeveloper:wildberries@wildberries.vuwfs.mongodb.net/Wildberries?retryWrites=true&w=majority';
-const port = process.env.PORT || 5500;
+const port = process.env.PORT || 5505;
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
