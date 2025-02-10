@@ -21,6 +21,7 @@ function App() {
   const [modalImage, setModalImage] = useState(null);
   const accordionRef = useRef(null);
   const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
+  const API_HOST = process.env.REACT_APP_API_HOST;
 
   useEffect(() => {
     fetchSavedQueries();
@@ -38,7 +39,7 @@ function App() {
   const fetchSavedQueries = async () => {
     try {
       setLoadingMessage('Загрузка данных...');
-      const response = await fetch('http://localhost:5500/api/queries', { headers: { 'Content-Type': 'application/json' } });
+      const response = await fetch(`${API_HOST}/queries`, { headers: { 'Content-Type': 'application/json' } });
       if (!response.ok) {
         throw new Error('Ошибка загрузки данных');
       }
@@ -83,7 +84,7 @@ function App() {
         queryTime: new Date().toISOString()
       }));
 
-      const response = await fetch('http://localhost:5500/api/queries', {
+      const response = await fetch(`${API_HOST}/queries`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ forms: trimmedForms })
@@ -110,11 +111,8 @@ function App() {
       setAllQueries([result, ...allQueries]);
       setFilteredQueries([result, ...allQueries]);
 
-      // Скрываем сообщение "Загрузка..." после получения данных
       setLoadingMessage('');
-      // Очистить поля и оставить только одну основную форму после удачного запроса
       setRequestForms([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
-      // Устанавливаем активный ключ на новый элемент
       setActiveKey('0');
 
       setTimeout(() => {
