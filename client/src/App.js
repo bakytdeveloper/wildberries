@@ -40,25 +40,32 @@ function App() {
     try {
       setLoadingMessage('Загрузка данных...');
       const response = await fetch(`${API_HOST}/api/queries`, { headers: { 'Content-Type': 'application/json' } });
-      if (!response.ok) {
+      const text = await response.text(); // Получаем текстовый ответ
+
+      try {
+        const savedQueries = JSON.parse(text); // Парсим JSON
+        if (Array.isArray(savedQueries)) {
+          setAllQueries(savedQueries);
+          setFilteredQueries(savedQueries);
+          setRetryAttempted(false);
+        }
+      } catch (jsonError) {
+        console.error('Ошибка парсинга JSON:', jsonError);
         throw new Error('Ошибка загрузки данных');
       }
-      const savedQueries = await response.json();
-      if (Array.isArray(savedQueries)) {
-        setAllQueries(savedQueries);
-        setFilteredQueries(savedQueries);
-        setRetryAttempted(false);
-      }
+
       setLoadingMessage('');
     } catch (error) {
       setErrorMessage('Не удалось загрузить данные.');
-      console.error(error);
+      console.error('Ошибка запроса:', error);
       if (!retryAttempted) {
         setRetryAttempted(true);
         setTimeout(fetchSavedQueries, 5000);
       }
     }
   };
+
+
 
   const fetchProducts = async () => {
     if (isRequesting) return;

@@ -2,15 +2,17 @@ import { Request, Response } from 'express';
 import { QueryModel } from '../models/queryModel';
 import { fetchAndParseProducts } from '../services/productService';
 
+
 export const getQueries = async (req: Request, res: Response) => {
     try {
         const queries = await QueryModel.find().sort({ createdAt: -1 });
-        res.json(queries);
+        res.json(queries);  // Отправляем JSON ответ
     } catch (error) {
         console.error('Error fetching queries:', error);
         res.status(500).json({ error: 'Failed to fetch queries' });
     }
 };
+
 
 export const createQuery = async (req: Request, res: Response) => {
     const { forms } = req.body;
