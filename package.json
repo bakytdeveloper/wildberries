@@ -24,7 +24,7 @@
     "ws": "^8.13.0"
   },
   "scripts": {
-    "start": "concurrently --kill-others-on-fail --names 'SERVER,CLIENT' -c 'bgGreen.bold,bgCyan.bold' 'babel-node --extensions \".js,.ts,.jsx,.tsx\" server/index.ts' 'PORT=3001 react-scripts start'",
+    "start": "concurrently --kill-others-on-fail --names 'SERVER,CLIENT' -c 'bgGreen.bold,bgCyan.bold' 'babel-node --extensions \".js,.ts,.jsx,.tsx\" server/index.ts' 'PORT=3000 react-scripts start'",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
