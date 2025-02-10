@@ -19,8 +19,7 @@
     "ws": "^8.18.0"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "server": "node server/index.ts'",
+    "start": "concurrently --kill-others-on-fail --names 'SERVER,CLIENT' -c 'bgGreen.bold,bgCyan.bold' 'npx ts-node server/index.ts' 'wait-on tcp:5505 && PORT=3001 react-scripts start'",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
