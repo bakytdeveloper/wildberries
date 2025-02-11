@@ -19,7 +19,7 @@
     "nodemon": "^2.0.22"
   },
   "scripts": {
-    "start": "nodemon --exec babel-node --extensions \".js,.ts,.jsx,.tsx\" index.ts"
+    "start": "ts-node index.ts"
   },
   "devDependencies": {
     "@types/cors": "^2.8.12",
