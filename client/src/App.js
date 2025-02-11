@@ -27,7 +27,6 @@ function App() {
     fetchSavedQueries();
   }, []);
 
-
   useEffect(() => {
     if (searchTerm.trim() === '') {
       setFilteredQueries(allQueries);
@@ -37,13 +36,15 @@ function App() {
     }
   }, [searchTerm, allQueries]);
 
-
   const fetchSavedQueries = async () => {
     try {
       setLoadingMessage('Загрузка данных...');
-      const response = await fetch(`${API_HOST}/api/queries`, { headers: { 'Content-Type': 'application/json' } });
+      const response = await fetch(`${API_HOST}/api/queries`, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       const text = await response.text(); // Получаем текстовый ответ
-
       try {
         const savedQueries = JSON.parse(text); // Парсим JSON
         if (Array.isArray(savedQueries)) {
@@ -55,7 +56,6 @@ function App() {
         console.error('Ошибка парсинга JSON:', jsonError);
         throw new Error('Ошибка загрузки данных');
       }
-
       setLoadingMessage('');
     } catch (error) {
       setErrorMessage('Не удалось загрузить данные.');
@@ -67,22 +67,23 @@ function App() {
     }
   };
 
-
-
   const fetchProducts = async () => {
     if (isRequesting) return;
-
     const validForms = requestForms.filter(form => form.query.trim() !== '' && form.brand.trim() !== '');
     if (validForms.length === 0) {
-      Toastify({ text: "Все формы должны быть заполнены.", duration: 3000, gravity: "top", position: "right", backgroundColor: "#ff0000" }).showToast();
+      Toastify({
+        text: "Все формы должны быть заполнены.",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#ff0000"
+      }).showToast();
       return;
     }
-
     setIsRequesting(true);
     setLoadingMessage('Загрузка...');
     setErrorMessage('');
     setSuccessMessage('');
-
     try {
       const trimmedForms = validForms.map(form => ({
         ...form,
@@ -92,23 +93,20 @@ function App() {
         city: form.city,
         queryTime: new Date().toISOString()
       }));
-
       const response = await fetch(`${API_HOST}/api/queries`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ forms: trimmedForms })
       });
-
       if (response.status !== 200) {
         const result = await response.json();
         throw new Error(result.error || 'Ошибка выполнения запроса');
       }
-
       const result = await response.json();
-
       const totalRequests = validForms.length;
       const successfulRequests = result.productTables.filter(table => table.products.length > 0).length;
-
       if (successfulRequests === totalRequests) {
         setSuccessMessage('Запрос выполнен успешно!');
       } else if (successfulRequests > 0) {
@@ -116,18 +114,14 @@ function App() {
       } else {
         setSuccessMessage('По запросу ничего не найдено');
       }
-
       setAllQueries([result, ...allQueries]);
       setFilteredQueries([result, ...allQueries]);
-
       setLoadingMessage('');
       setRequestForms([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
       setActiveKey('0');
-
       setTimeout(() => {
         setSuccessMessage('');
       }, 3000);
-
       setTimeout(() => {
         const newAccordionItem = document.querySelector(`.accordion .accordion-item:first-child`);
         if (newAccordionItem) {
@@ -138,7 +132,6 @@ function App() {
       console.error('Error fetching products:', error);
       setErrorMessage('Ошибка выполнения запроса');
     }
-
     setIsRequesting(false);
   };
 
@@ -193,6 +186,11 @@ function App() {
     document.body.style.overflow = 'auto'; // Enable background scroll
   };
 
+  const handleProductClick = (searchQuery, page) => {
+    const url = `https://www.wildberries.ru/catalog/0/search.aspx?page=${page}&sort=popular&search=${encodeURIComponent(searchQuery)}`; // Ссылка на страницу поиска на Wildberries
+    window.open(url, '_blank'); // Открываем ссылку в новом окне
+  };
+
   return (
       <div>
         <header>
@@ -216,11 +214,17 @@ function App() {
                             ))}
                           </DropdownButton>
                           {form.isMain ? (
-                              <Button variant="primary" onClick={fetchProducts} disabled={isRequesting}> Поиск </Button>
+                              <Button variant="primary" onClick={fetchProducts} disabled={isRequesting}>
+                                Поиск
+                              </Button>
                           ) : (
-                              <Button variant="danger" onClick={() => removeRequestForm(form.id)}> Удалить </Button>
+                              <Button variant="danger" onClick={() => removeRequestForm(form.id)}>
+                                Удалить
+                              </Button>
                           )}
-                          <Button variant="secondary" onClick={() => clearInput(form.id)} id="clearButton" disabled={isRequesting}> X </Button>
+                          <Button variant="secondary" onClick={() => clearInput(form.id)} id="clearButton" disabled={isRequesting}>
+                            X
+                          </Button>
                         </InputGroup>
                       </div>
                     </div>
@@ -229,8 +233,12 @@ function App() {
             </div>
             <div className="right-controls">
               <div className="controls">
-                <Button className="controls_success" variant="success" onClick={addRequestForm}>Добавить запрос</Button>
-                <Button className="controls_primary" variant="primary" onClick={fetchProducts} disabled={isRequesting}>Поиск</Button>
+                <Button className="controls_success" variant="success" onClick={addRequestForm}>
+                  Добавить запрос
+                </Button>
+                <Button className="controls_primary" variant="primary" onClick={fetchProducts} disabled={isRequesting}>
+                  Поиск
+                </Button>
               </div>
               <div className="search-bar">
                 <Form className="search" onSubmit={(e) => e.preventDefault()}>
@@ -243,9 +251,11 @@ function App() {
           {errorMessage && errorMessage !== 'Не удалось загрузить данные.' && (
               <div id="errorMessage" className="message error">{errorMessage}</div>
           )}
-          {successMessage && <Alert id="successMessage" variant="success" className={successMessage === 'По запросу ничего не найдено' ? 'no-results' : ''}>
-            {successMessage}
-          </Alert>}
+          {successMessage && (
+              <Alert id="successMessage" variant="success" className={successMessage === 'По запросу ничего не найдено' ? 'no-results' : ''}>
+                {successMessage}
+              </Alert>
+          )}
           <Accordion ref={accordionRef} activeKey={activeKey} onSelect={(key) => setActiveKey(key)}>
             {filteredQueries.map((queryData, index) => {
               const hasProducts = queryData.productTables && queryData.productTables.some(table => table.products.length > 0);
@@ -296,20 +306,17 @@ function App() {
                                         const queryTime = new Date(queryData.queryTime || queryData.createdAt);
                                         const date = queryTime.toLocaleDateString();
                                         const time = queryTime.toLocaleTimeString();
-                                        let page = product.page;
-                                        let position = product.position;
-                                        if (product.log && product.log.position) {
-                                          const logPosition = product.log.position.toString();
-                                          page = logPosition[0];
-                                          position = logPosition.slice(1);
-                                        }
+                                        const page = product.page;
+                                        const position = product.position;
                                         return (
                                             <tr key={i}>
                                               <td className="td_table">{i + 1}</td>
                                               <td className="td_table">
                                                 <img className="td_table_img" src={product.imageUrl} alt={product.name} onClick={() => handleImageClick(product.imageUrl)} />
                                               </td>
-                                              <td className="td_table">{product.id}</td>
+                                              <td className="td_table td_table_article" onClick={() => handleProductClick(queryData.query.split('; ')[tableIndex], page)}>
+                                                {product.id}
+                                              </td>
                                               <td className="td_table">{page}</td>
                                               <td className="td_table">{position}</td>
                                               <td className="td_table">{product.brand}</td>
@@ -358,4 +365,3 @@ function App() {
 }
 
 export default App;
-

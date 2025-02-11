@@ -153,6 +153,10 @@ tr:hover {
     padding: 2px;
 }
 
+.td_table_article {
+    cursor: pointer;
+}
+
 .tableIndexRow {
     display: flex;
     width: 100%;
