@@ -31,7 +31,7 @@ export const createQuery = async (req: Request, res: Response) => {
             query: forms.map(form => form.query).join('; '),
             dest: forms.map(form => form.dest).join('; '),
             productTables,
-            createdAt: new Date(forms[0].queryTime), // Устанавливаем время и дату запроса
+            createdAt: new Date(forms[0].queryTime),
             city: forms.map(form => form.city).join('; '),
             brand: forms.map(form => form.brand).join('; ')
         });

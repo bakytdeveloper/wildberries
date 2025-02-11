@@ -16,6 +16,7 @@ function generateImageUrl(id: number): string {
     return `https://basket-${r}.wbbasket.ru/${vol}/${part}/${id}/images/c516x688/1.webp`;
 }
 
+
 export const fetchAndParseProducts = async (query: string, dest: string, selectedBrand: string, queryTime: string): Promise<(Product & { position: number, page: number, queryTime: string })[]> => {
     try {
         const products: (Product & { position: number, page: number, queryTime: string })[] = [];
@@ -23,7 +24,7 @@ export const fetchAndParseProducts = async (query: string, dest: string, selecte
         let page = 1;
         let hasMoreData = true;
         const baseQuery = selectedBrand === 'S.Point' ? 'Одежда S.Point' : '';
-        const searchQuery = query.toLowerCase() === '' ? `${baseQuery} ${selectedBrand}` : query;
+        const searchQuery = query.toLowerCase() === '' ? `${baseQuery} ${selectedBrand.toLowerCase()}` : query.toLowerCase(); // Приводим к нижнему регистру
 
         const processPage = async (page: number) => {
             const data = await getProducts(searchQuery, dest, page);
@@ -33,7 +34,7 @@ export const fetchAndParseProducts = async (query: string, dest: string, selecte
                 return [];
             }
             return productsRaw
-                .filter(product => product.brand === `${selectedBrand}`)
+                .filter(product => product.brand.toLowerCase() === selectedBrand.toLowerCase()) // Приводим к нижнему регистру
                 .map(product => ({
                     position: productsRaw.findIndex(p => parseInt(p.id) === product.id) + 1,
                     id: product.id,
@@ -53,7 +54,6 @@ export const fetchAndParseProducts = async (query: string, dest: string, selecte
             }
             page += maxConcurrentPages;
         }
-        // console.table(products);
         return products;
     } catch (error) {
         console.error('Error parsing products:', error);

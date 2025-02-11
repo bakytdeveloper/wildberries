@@ -27,14 +27,16 @@ function App() {
     fetchSavedQueries();
   }, []);
 
+
   useEffect(() => {
     if (searchTerm.trim() === '') {
       setFilteredQueries(allQueries);
     } else {
-      const regex = new RegExp(searchTerm, 'i');
-      setFilteredQueries(allQueries.filter(query => regex.test(query.query)));
+      const lowerCaseSearchTerm = searchTerm.toLowerCase(); // Приводим к нижнему регистру
+      setFilteredQueries(allQueries.filter(query => query.query.toLowerCase().includes(lowerCaseSearchTerm))); // Приводим к нижнему регистру
     }
   }, [searchTerm, allQueries]);
+
 
   const fetchSavedQueries = async () => {
     try {
