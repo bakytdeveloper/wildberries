@@ -18,6 +18,7 @@ const productTableSchema = new mongoose.Schema({
 });
 
 const querySchema = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Добавляем ссылку на пользователя
     query: { type: String, required: true },
     dest: { type: String, required: true },
     productTables: [productTableSchema],
