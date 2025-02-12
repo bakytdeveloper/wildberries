@@ -725,7 +725,7 @@ function App() {
                       <Button variant="link" onClick={() => setShowRegisterForm(false)}>Авторизация</Button>
                     </Form>
                 ) : showForgotPasswordForm ? (
-                    <Form onSubmit={handleForgotPassword}>
+                    <Form>
                       <h2>Восстановление пароля</h2>
                       <Form.Group controlId="email">
                         <Form.Label>Email</Form.Label>
@@ -747,8 +747,8 @@ function App() {
                             />
                           </Form.Group>
                       )}
-                      <Button type="button" onClick={handleSendOtp}>Отправить OTP</Button>
-                      <Button type="submit">Сбросить пароль</Button>
+                      {/*<Button type="button" onClick={handleSendOtp}>Отправить OTP</Button>*/}
+                      <Button type="submit" onClick={handleForgotPassword}>Обновить пароль</Button>
                       <Button variant="link" onClick={() => setShowForgotPasswordForm(false)}>Авторизация</Button>
                     </Form>
                 ) : (
