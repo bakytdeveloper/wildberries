@@ -410,8 +410,9 @@ function App() {
                         />
                       </Form.Group>
                       <Button type="submit">Войти</Button>
-                      <Button variant="link" onClick={() => setShowForgotPasswordForm(true)}>Забыли пароль?</Button>
-                      <Button variant="link" onClick={() => setShowRegisterForm(true)}>Регистрация</Button>
+
+                        <Button variant="link" onClick={() => setShowForgotPasswordForm(true)}>Забыли пароль?</Button>
+                        <Button variant="link" style={{marginLeft: "70px"}} onClick={() => setShowRegisterForm(true)}>Регистрация</Button>
                     </Form>
                 )}
               </div>
