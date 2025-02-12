@@ -105,6 +105,14 @@ function App() {
       setIsAuthenticated(true);
       setShowRegisterForm(false);
       setShowProfile(true); // Перенаправляем на личную страницу
+      Toastify({
+        text: `Здравствуйте, ${username}! 
+        Вы были успешно зарегистрированы.`,
+        duration: 3000,
+        gravity: 'top',
+        position: 'right',
+        style: { background: '#00cc00' }
+      }).showToast();
     } catch (error) {
       console.error('Registration error:', error);
       Toastify({
@@ -322,7 +330,7 @@ function App() {
           {!isAuthenticated ? (
               <div className="auth-container">
                 {showRegisterForm ? (
-                    <Form onSubmit={handleRegister}>
+                    <Form onSubmit={handleRegister} className="auth-form">
                       <h2>Регистрация</h2>
                       <Form.Group controlId="username">
                         <Form.Label>Имя пользователя</Form.Label>
@@ -355,7 +363,7 @@ function App() {
                       <Button variant="link" onClick={() => setShowRegisterForm(false)}>Авторизация</Button>
                     </Form>
                 ) : showForgotPasswordForm ? (
-                    <Form>
+                    <Form className="auth-form">
                       <h2>Восстановление пароля</h2>
                       <Form.Group controlId="email">
                         <Form.Label>Email</Form.Label>
@@ -381,7 +389,7 @@ function App() {
                       <Button variant="link" onClick={() => setShowForgotPasswordForm(false)}>Авторизация</Button>
                     </Form>
                 ) : (
-                    <Form onSubmit={handleLogin}>
+                    <Form onSubmit={handleLogin} className="auth-form">
                       <h2>Авторизация</h2>
                       <Form.Group controlId="email">
                         <Form.Label>Email</Form.Label>

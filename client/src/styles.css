@@ -25,6 +25,37 @@ header {
     border-radius: 8px;
 }
 
+.auth-form {
+    max-width: 400px;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+}
+
+.auth-form h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.auth-form .form-control {
+    margin-bottom: 15px;
+}
+
+.auth-form .btn {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.auth-form .btn-link {
+    width: auto;
+    display: inline-block;
+    margin: auto;
+    text-align: center;
+}
+
+
 .accordion {
     margin-top: 20px;
     max-height: calc(88vh - 100px);
