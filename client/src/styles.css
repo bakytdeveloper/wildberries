@@ -59,6 +59,11 @@ header {
     margin-bottom: 15px;
 }
 
+.FaEye-button {
+    height: 38px;
+    cursor: pointer;
+}
+
 .auth-form .btn {
     width: 100%;
     margin-bottom: 10px;

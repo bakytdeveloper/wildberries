@@ -9,6 +9,7 @@ import "toastify-js/src/toastify.css";
 import './styles.css';
 import axios from 'axios';
 import cityDestinations from './utils/cityDestinations';
+import { FaEye, FaEyeSlash } from 'react-icons/fa'; // Импортируем иконки
 
 
 function App() {
@@ -36,6 +37,7 @@ function App() {
   const API_HOST = process.env.REACT_APP_API_HOST;
   const accordionRef = useRef(null);
   const [showProfile, setShowProfile] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // Состояние для видимости пароля
   const [requestForms, setRequestForms] = useState([{
     id: Date.now(),
     query: '',
@@ -362,12 +364,20 @@ function App() {
                       </Form.Group>
                       <Form.Group controlId="password">
                         <Form.Label>Пароль</Form.Label>
-                        <Form.Control
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
+                        <InputGroup>
+                          <Form.Control
+                              type={showPassword ? 'text' : 'password'}
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              required
+                          />
+                          <InputGroup.Text
+                              className="FaEye-button"
+                              onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? <FaEyeSlash /> : <FaEye />}
+                          </InputGroup.Text>
+                        </InputGroup>
                       </Form.Group>
                       <Button type="submit">Зарегистрироваться</Button>
                       <Button variant="link" onClick={() => setShowRegisterForm(false)}>Авторизация</Button>
@@ -412,17 +422,24 @@ function App() {
                       </Form.Group>
                       <Form.Group controlId="password">
                         <Form.Label>Пароль</Form.Label>
-                        <Form.Control
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
+                        <InputGroup>
+                          <Form.Control
+                              type={showPassword ? 'text' : 'password'}
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              required
+                          />
+                          <InputGroup.Text
+                              className="FaEye-button"
+                              onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? <FaEyeSlash /> : <FaEye />}
+                          </InputGroup.Text>
+                        </InputGroup>
                       </Form.Group>
                       <Button type="submit">Войти</Button>
-
-                        <Button variant="link" onClick={() => setShowForgotPasswordForm(true)}>Забыли пароль?</Button>
-                        <Button variant="link" className="registration-button" onClick={() => setShowRegisterForm(true)}>Регистрация</Button>
+                      <Button variant="link" onClick={() => setShowForgotPasswordForm(true)}>Забыли пароль?</Button>
+                      <Button variant="link" className="registration-button" onClick={() => setShowRegisterForm(true)}>Регистрация</Button>
                     </Form>
                 )}
               </div>
