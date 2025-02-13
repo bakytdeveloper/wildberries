@@ -599,7 +599,7 @@ function App() {
                                                     </td>
                                                     <td className="td_table td_table_article"
                                                         onClick={() => handleProductClick(queryData.query.split('; ')[tableIndex], page)}>
-                                                      {product.id}
+                                                      {product.id}  {product.log && '⭐'}
                                                     </td>
                                                     <td className="td_table">{page}</td>
                                                     <td className="td_table">{position}</td>
