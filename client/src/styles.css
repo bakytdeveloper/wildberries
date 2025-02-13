@@ -34,6 +34,22 @@ header {
     background-color: #f9f9f9;
 }
 
+.query-form {
+    position: relative;
+}
+
+.query-form-title {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.exit-button {
+    position: absolute;
+    top: 15px;
+    right: 10px;
+}
+
+
 .auth-form h2 {
     text-align: center;
     margin-bottom: 20px;
@@ -53,6 +69,10 @@ header {
     display: inline-block;
     margin: auto;
     text-align: center;
+}
+
+.registration-button {
+    margin-left: 85px!important;
 }
 
 

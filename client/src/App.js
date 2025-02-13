@@ -44,6 +44,7 @@ function App() {
     isMain: true
   }]);
 
+
   useEffect(() => {
     if (isAuthenticated) {
       fetchSavedQueries();
@@ -196,6 +197,8 @@ function App() {
     localStorage.removeItem('token');
     setIsAuthenticated(false);
     setShowProfile(false); // Сбрасываем состояние личной страницы
+    setEmail('');
+    setPassword('');
 
   };
 
@@ -320,6 +323,13 @@ function App() {
     setIsRequesting(false);
   };
 
+  const handleProductClick = (searchQuery, page) => {
+    const url = `https://www.wildberries.ru/catalog/0/search.aspx?page=${page}&sort=popular&search=${encodeURIComponent(searchQuery)}`;
+    window.open(url, '_blank');
+  };
+
+  console.log(username)
+
 
   return (
       <div>
@@ -412,14 +422,14 @@ function App() {
                       <Button type="submit">Войти</Button>
 
                         <Button variant="link" onClick={() => setShowForgotPasswordForm(true)}>Забыли пароль?</Button>
-                        <Button variant="link" style={{marginLeft: "70px"}} onClick={() => setShowRegisterForm(true)}>Регистрация</Button>
+                        <Button variant="link" className="registration-button" onClick={() => setShowRegisterForm(true)}>Регистрация</Button>
                     </Form>
                 )}
               </div>
           ) : showProfile ? (
-              <div>
-                <Button variant="danger" onClick={handleLogout}>Выйти</Button>
-                <h2>Личная страница пользователя</h2>
+              <div className="query-form">
+                <Button variant="danger" className="exit-button" onClick={handleLogout}>Выйти</Button>
+                <h2 className="query-form-title">Личная страница пользователя</h2>
                 <div className="top-section">
                   {/* Здесь отображаем личную страницу пользователя */}
                   <div className="left-forms">
