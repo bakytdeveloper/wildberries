@@ -53,6 +53,16 @@ function App() {
     }
   }, [isAuthenticated]);
 
+
+  // Проверка токена при загрузке приложения
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      setIsAuthenticated(true);
+      setShowProfile(true);
+    }
+  }, []);
+
   useEffect(() => {
     if (searchTerm.trim() === '') {
       setFilteredQueries(allQueries);
