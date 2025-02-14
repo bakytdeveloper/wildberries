@@ -56,12 +56,16 @@ function App() {
 
   // Проверка токена при загрузке приложения
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token'); // Берем токен из sessionStorage
     if (token) {
       setIsAuthenticated(true);
       setShowProfile(true);
+    } else {
+      setIsAuthenticated(false);
+      setShowProfile(false);
     }
   }, []);
+
 
   useEffect(() => {
     if (searchTerm.trim() === '') {
@@ -75,7 +79,7 @@ function App() {
   const fetchSavedQueries = async () => {
     try {
       setLoadingMessage('Загрузка данных...');
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await fetch(`${API_HOST}/api/queries`, {
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +118,7 @@ function App() {
         email,
         password,
       });
-      localStorage.setItem('token', response.data.token);
+      sessionStorage.setItem('token', response.data.token);
       setIsAuthenticated(true);
       setShowRegisterForm(false);
       setShowProfile(true); // Перенаправляем на личную страницу
@@ -142,7 +146,7 @@ function App() {
     e.preventDefault();
     try {
       const response = await axios.post(`${API_HOST}/api/auth/login`, { email, password });
-      localStorage.setItem('token', response.data.token);
+      sessionStorage.setItem('token', response.data.token);
       setIsAuthenticated(true);
       setShowProfile(true); // Перенаправляем на личную страницу
     } catch (error) {
@@ -206,7 +210,7 @@ function App() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    sessionStorage.removeItem('token');
     setIsAuthenticated(false);
     setShowProfile(false); // Сбрасываем состояние личной страницы
     setEmail('');
@@ -283,7 +287,7 @@ function App() {
     setErrorMessage('');
     setSuccessMessage('');
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const trimmedForms = validForms.map(form => ({
         ...form,
         query: form.query.trim(),
