@@ -24,7 +24,7 @@ export const fetchAndParseProducts = async (query: string, dest: string, selecte
         let page = 1;
         let hasMoreData = true;
         const baseQuery = selectedBrand === 'S.Point' ? 'Одежда S.Point' : '';
-        const searchQuery = query.toLowerCase() === '' ? `${baseQuery} ${selectedBrand.toLowerCase()}` : query.toLowerCase(); // Приводим к нижнему регистру
+        const searchQuery = query.toLowerCase() === '' ? `${baseQuery} ${selectedBrand.toLowerCase()}` : query.toLowerCase();
 
         const processPage = async (page: number) => {
             const data = await getProducts(searchQuery, dest, page);
@@ -34,7 +34,7 @@ export const fetchAndParseProducts = async (query: string, dest: string, selecte
                 return [];
             }
             return productsRaw
-                .filter(product => product.brand.toLowerCase() === selectedBrand.toLowerCase()) // Приводим к нижнему регистру
+                .filter(product => product.brand.toLowerCase() === selectedBrand.toLowerCase())
                 .map(product => ({
                     position: productsRaw.findIndex(p => parseInt(p.id) === product.id) + 1,
                     id: product.id,
@@ -42,7 +42,8 @@ export const fetchAndParseProducts = async (query: string, dest: string, selecte
                     name: product.name,
                     page: page,
                     queryTime: queryTime,
-                    imageUrl: generateImageUrl(product.id)
+                    imageUrl: generateImageUrl(product.id),
+                    log: product.log // Добавляем лог
                 }));
         };
 

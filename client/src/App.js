@@ -588,6 +588,7 @@ function App() {
                                             </thead>
                                             <tbody>
                                             {table.products.map((product, i) => {
+                                              console.log("PRODUCTS", product)
                                               const queryTime = new Date(queryData.queryTime || queryData.createdAt);
                                               const date = queryTime.toLocaleDateString();
                                               const time = queryTime.toLocaleTimeString();
@@ -603,10 +604,10 @@ function App() {
                                                     </td>
                                                     <td className="td_table td_table_article"
                                                         onClick={() => handleProductClick(queryData.query.split('; ')[tableIndex], page)}>
-                                                      {product.id}  {product.log && '⭐'}
+                                                      {product.id}
                                                     </td>
                                                     <td className="td_table">{page}</td>
-                                                    <td className="td_table">{position}</td>
+                                                    <td className="td_table">{position}{product.log && '  ⭐'}</td>
                                                     <td className="td_table">{product.brand}</td>
                                                     <td className="td_table">{product.name}</td>
                                                     <td className="td_table">{date}</td>
