@@ -1,17 +1,16 @@
 import Accordion from 'react-bootstrap/Accordion';
-import Modal from 'react-bootstrap/Modal';
 import "toastify-js/src/toastify.css";
 import './styles.css';
 import React, { useState, useEffect, useRef } from 'react';
 import { Form, Button, InputGroup, DropdownButton, Dropdown, Alert } from 'react-bootstrap';
 import Toastify from 'toastify-js';
-import "toastify-js/src/toastify.css";
 import axios from 'axios';
 import cityDestinations from './utils/cityDestinations';
 import RegisterForm from './components/Auth/RegisterForm';
 import LoginForm from './components/Auth/LoginForm';
 import ForgotPasswordForm from './components/Auth/ForgotPasswordForm';
-import { FaEye, FaEyeSlash } from 'react-icons/fa'; // Импортируем иконки
+import ImageModal from './components/ImageModal';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const API_HOST = process.env.REACT_APP_API_HOST;
 
@@ -31,10 +30,9 @@ function App() {
   const [showRegisterForm, setShowRegisterForm] = useState(false);
   const [showForgotPasswordForm, setShowForgotPasswordForm] = useState(false);
   const [showOtpInput, setShowOtpInput] = useState(false);
-  const [forgotPasswordStep, setForgotPasswordStep] = useState(1);
   const accordionRef = useRef(null);
   const [showProfile, setShowProfile] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); // Состояние для видимости пароля
+  const [showPassword, setShowPassword] = useState(false);
   const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
 
   useEffect(() => {
@@ -359,12 +357,7 @@ function App() {
                     );
                   })}
                 </Accordion>
-                <Modal show={modalImage !== null} onHide={closeModal} centered>
-                  <Modal.Body style={{ padding: 0 }}>
-                    <img src={modalImage} alt="Product" style={{ width: '100%' }} />
-                    <Button variant="secondary" onClick={closeModal} style={{ position: 'absolute', top: 10, right: 10 }}>×</Button>
-                  </Modal.Body>
-                </Modal>
+                <ImageModal show={modalImage !== null} handleClose={closeModal} imageUrl={modalImage} />
               </div>
           ) : null}
         </div>
@@ -373,5 +366,3 @@ function App() {
 }
 
 export default App;
-
-
