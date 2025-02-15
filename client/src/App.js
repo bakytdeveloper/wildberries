@@ -194,8 +194,8 @@ function App() {
     setIsRequesting(false);
   };
 
-  const handleProductClick = (searchQuery, page) => {
-    const url = `https://www.wildberries.ru/catalog/0/search.aspx?page=${page}&sort=popular&search=${encodeURIComponent(searchQuery)}`;
+  const handleProductClick = (searchQuery, page, position) => {
+    const url = `https://www.wildberries.ru/catalog/0/search.aspx?page=${page}&sort=popular&search=${encodeURIComponent(searchQuery)}#position=${position}`;
     window.open(url, '_blank');
   };
 
@@ -320,7 +320,7 @@ function App() {
                                                     <td className="td_table">
                                                       <img className="td_table_img" src={product.imageUrl} alt={product.name} onClick={() => handleImageClick(product.imageUrl)} />
                                                     </td>
-                                                    <td className="td_table td_table_article" onClick={() => handleProductClick(queryData.query.split('; ')[tableIndex], page)}>
+                                                    <td className="td_table td_table_article" onClick={() => handleProductClick(queryData.query.split('; ')[tableIndex], page, position)}>
                                                       {product.id}
                                                     </td>
                                                     <td className="td_table">{page}</td>
