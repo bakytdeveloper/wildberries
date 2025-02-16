@@ -299,8 +299,8 @@ function App() {
                                               <th className="th_table">№</th>
                                               <th className="th_table">Картинка</th>
                                               <th className="th_table">Артикул</th>
-                                              <th className="th_table">Страница</th>
                                               <th className="th_table">Позиция</th>
+                                              <th className="th_table">Прежняя Позиция</th>
                                               <th className="th_table">Бренд</th>
                                               <th className="th_table">Наименование</th>
                                               <th className="th_table">Запрос данных</th>
@@ -323,8 +323,8 @@ function App() {
                                                     <td className="td_table td_table_article" onClick={() => handleProductClick(queryData.query.split('; ')[tableIndex], page, position)}>
                                                       {product.id}
                                                     </td>
-                                                    <td className="td_table">{page}</td>
-                                                    <td className="td_table">{position}{product.log && ' ⭐'}</td>
+                                                    <td className="td_table">{page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position}</td>
+                                                    <td className="td_table">{product.log?.position || (page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position)}</td>
                                                     <td className="td_table">{product.brand}</td>
                                                     <td className="td_table">{product.name}</td>
                                                     <td className="td_table">{date}</td>
