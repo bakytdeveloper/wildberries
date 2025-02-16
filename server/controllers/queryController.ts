@@ -50,3 +50,27 @@ export const createQuery = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Failed to save queries' });
     }
 };
+
+// queryController.ts
+
+export const deleteQuery = async (req: Request, res: Response) => {
+    try {
+        const queryId = req.params.id;
+        const userId = (req as any).userId; // Получаем идентификатор пользователя из запроса
+
+        // Удаляем запрос из базы данных
+        const deletedQuery = await QueryModel.findOneAndDelete({ _id: queryId, userId });
+
+        if (!deletedQuery) {
+            return res.status(404).json({ error: 'Запрос не найден' });
+        }
+
+        // Удаляем запрос из массива запросов пользователя
+        await UserModel.findByIdAndUpdate(userId, { $pull: { queries: queryId } });
+
+        res.json({ message: 'Запрос успешно удален' });
+    } catch (error) {
+        console.error('Ошибка удаления запроса:', error);
+        res.status(500).json({ error: 'Ошибка удаления запроса' });
+    }
+};

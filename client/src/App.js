@@ -11,7 +11,8 @@ import LoginForm from './components/Auth/LoginForm';
 import ForgotPasswordForm from './components/Auth/ForgotPasswordForm';
 import ImageModal from './components/ImageModal';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-
+import { FaTimes } from 'react-icons/fa'; // Импортируем иконку "крестик"
+import { Modal } from 'react-bootstrap';
 const API_HOST = process.env.REACT_APP_API_HOST;
 
 function App() {
@@ -34,7 +35,8 @@ function App() {
   const [showProfile, setShowProfile] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
-
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteQueryId, setDeleteQueryId] = useState(null);
   useEffect(() => {
     if (isAuthenticated) {
       fetchSavedQueries();
@@ -199,6 +201,27 @@ function App() {
     window.open(url, '_blank');
   };
 
+  const handleDeleteClick = (queryId) => {
+    setDeleteQueryId(queryId);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (deleteQueryId) {
+      try {
+        const token = sessionStorage.getItem('token');
+        await axios.delete(`${API_HOST}/api/queries/${deleteQueryId}`, { headers: { Authorization: `Bearer ${token}` } });
+        setAllQueries(allQueries.filter(query => query._id !== deleteQueryId));
+        setFilteredQueries(filteredQueries.filter(query => query._id !== deleteQueryId));
+        setShowDeleteModal(false);
+        setDeleteQueryId(null);
+        Toastify({ text: "Запрос успешно удален.", duration: 3000, gravity: "top", position: "right", style: { background: '#00c851' } }).showToast();
+      } catch (error) {
+        console.error('Ошибка удаления запроса:', error);
+        Toastify({ text: "Ошибка удаления запроса.", duration: 3000, gravity: "top", position: "right", style: { background: '#ff0000' } }).showToast();
+      }
+    }
+  };
   return (
       <div>
         <header>
@@ -281,6 +304,9 @@ function App() {
                             <div className="flex-grow-0">{index + 1})</div>
                             <div className="flex-grow-1">{headerTextItems}</div>
                             <div className="date-time">Дата: {date}, Время: {time}</div>
+                            <Button variant="danger" className="delete-button" onClick={() => handleDeleteClick(queryData._id)}>
+                              <FaTimes />
+                            </Button>
                           </Accordion.Header>
                           <Accordion.Body>
                             {hasProducts ? (
@@ -360,6 +386,17 @@ function App() {
                 <ImageModal show={modalImage !== null} handleClose={closeModal} imageUrl={modalImage} />
               </div>
           ) : null}
+
+          <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
+            <Modal.Header closeButton>
+              <Modal.Title>Подтверждение удаления</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>Вы уверены, что хотите удалить этот запрос и все связанные с ним данные?</Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Отменить</Button>
+              <Button variant="danger" onClick={handleDeleteConfirm}>Удалить</Button>
+            </Modal.Footer>
+          </Modal>
         </div>
       </div>
   );
