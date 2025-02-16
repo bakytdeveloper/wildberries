@@ -201,7 +201,8 @@ function App() {
     window.open(url, '_blank');
   };
 
-  const handleDeleteClick = (queryId) => {
+  const handleDeleteClick = (queryId, event) => {
+    event.stopPropagation(); // Останавливаем распространение события
     setDeleteQueryId(queryId);
     setShowDeleteModal(true);
   };
@@ -222,6 +223,8 @@ function App() {
       }
     }
   };
+
+
   return (
       <div>
         <header>
@@ -304,7 +307,7 @@ function App() {
                             <div className="flex-grow-0">{index + 1})</div>
                             <div className="flex-grow-1">{headerTextItems}</div>
                             <div className="date-time">Дата: {date}, Время: {time}</div>
-                            <Button variant="danger" className="delete-button" onClick={() => handleDeleteClick(queryData._id)}>
+                            <Button variant="danger" className="delete-button" onClick={(event) => handleDeleteClick(queryData._id, event)}>                            {/*<Button variant="danger" className="delete-button" onClick={() => handleDeleteClick(queryData._id)}>*/}
                               <FaTimes />
                             </Button>
                           </Accordion.Header>
