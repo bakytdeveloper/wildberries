@@ -126,3 +126,4 @@ export const fetchAndParseProductsByArticle = async (
         throw error;
     }
 };
+

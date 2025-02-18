@@ -13,6 +13,8 @@ import ImageModal from './components/ImageModal';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { FaTimes } from 'react-icons/fa'; // Импортируем иконку "крестик"
 import { Modal } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
+
 const API_HOST = process.env.REACT_APP_API_HOST;
 
 function App() {
@@ -229,6 +231,11 @@ function App() {
       <div>
         <header>
           <h1>Поиск товаров на Wildberries</h1>
+
+          <nav>
+            <Link to="/">Главная страница</Link>
+            <Link to="/search-by-article">Поиск по артикулу</Link>
+          </nav>
         </header>
         <div className="container">
           {!isAuthenticated ? (

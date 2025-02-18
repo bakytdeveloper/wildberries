@@ -33,8 +33,8 @@ const connectWithRetry = () => {
 const startServer = () => {
     app.use('/api/auth', authRoutes);
     app.use('/api/otp', otpRoutes);
-    app.use('/api', protect, queryArticleRoutes);
-    app.use('/api', protect, queryRoutes);
+    app.use('/api/article', protect, queryArticleRoutes);
+    app.use('/api/queries', protect, queryRoutes);
     app.use('/api/user', protect, userRoutes); // Добавляем маршрут для профиля пользователя
     app.listen(port, () => {
         console.log(`Server running at http://localhost:${port}`);
