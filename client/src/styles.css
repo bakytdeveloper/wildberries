@@ -363,6 +363,40 @@ header {
     text-shadow: 2px 2px 4px black, -2px -2px 4px gray;
 }
 
+.page-link {
+    text-align: center;
+}
+
+.article-brand-link {
+    display: inline-flex;
+    background: #d2d0d0;
+    font-weight: bold;
+    /*padding: 7px 20px 10px;*/
+    border-radius: 0 0 5px 5px;
+}
+
+.article-link {
+    margin-left: 10px;
+    padding: 7px 20px 10px;
+}
+
+.brand-link {
+    margin-right: 10px;
+    padding: 7px 20px 10px;
+
+}
+
+.article-link:hover {
+    background: whitesmoke;
+    color: black!important;
+}
+
+.brand-link:hover {
+    background: whitesmoke;
+    color: black;
+
+}
+
 .container {
     max-width: 90%;
     margin: 22px auto 11px;

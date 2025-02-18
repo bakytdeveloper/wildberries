@@ -235,12 +235,19 @@ function SearchByArticle() {
         <div>
             <header>
                 <h1>Поиск товаров на Wildberries</h1>
-
-                <nav>
-                    <Link to="/">Поиск по бренду</Link>
-                    <Link to="/search-by-article">Поиск по артикулу</Link>
-                </nav>
             </header>
+            <div className="page-link">
+                <nav>
+                    <div className="article-brand-link">
+                        <div className="brand-link">
+                            <Link to="/">Поиск по бренду</Link>
+                        </div>
+                        <div className="article-link">
+                            <Link to="/search-by-article">Поиск по артикулу</Link>
+                        </div>
+                    </div>
+                </nav>
+            </div>
             <div className="container">
                 {!isAuthenticated ? (
                     <div className="auth-container">
