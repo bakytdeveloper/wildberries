@@ -61,3 +61,64 @@ export const fetchAndParseProducts = async (query: string, dest: string, selecte
         throw error;
     }
 };
+
+
+
+
+
+
+export const fetchAndParseProductsByArticle = async (
+    query: string,
+    dest: string,
+    article: string, // артикул товара
+    queryTime: string
+): Promise<(Product & { position: number, page: number, queryTime: string })[]> => {
+    try {
+        const products: (Product & { position: number, page: number, queryTime: string })[] = [];
+        const maxConcurrentPages = 18;
+        let page = 1;
+        let hasMoreData = true;
+        const searchQuery = query.toLowerCase();
+
+        const processPage = async (page: number) => {
+            const data = await getProducts(searchQuery, dest, page);
+            const productsRaw: any[] = data?.data?.products;
+            if (!productsRaw || productsRaw.length === 0) {
+                hasMoreData = false;
+                return [];
+            }
+            return productsRaw.map((product, index) => ({
+                position: index + 1,
+                id: product.id,
+                brand: product.brand,
+                name: product.name,
+                page: page,
+                queryTime: queryTime,
+                imageUrl: generateImageUrl(product.id),
+                log: product.log
+            }));
+        };
+
+        while (hasMoreData) {
+            const promises = Array.from({ length: maxConcurrentPages }, (_, i) => processPage(page + i));
+            const results = await Promise.all(promises);
+            for (const result of results) {
+                products.push(...result);
+            }
+            page += maxConcurrentPages;
+        }
+
+        // Находим фактическую позицию товара по артикулу
+        const productWithArticle = products.find(product => product.id === article);
+
+        // Если товар найден, обновляем его позицию
+        if (productWithArticle) {
+            productWithArticle.position = products.findIndex(product => product.id === article) + 1;
+        }
+
+        return products;
+    } catch (error) {
+        console.error('Error parsing products:', error);
+        throw error;
+    }
+};

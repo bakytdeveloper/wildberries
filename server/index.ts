@@ -7,6 +7,7 @@ import authRoutes from './routes/authRoutes';
 import { protect } from './middleware/authMiddleware';
 import otpRoutes from "./routes/otpRoutes";
 import userRoutes from "./routes/userRoutes";
+import queryArticleRoutes from "./routes/queryArticleRoutes";
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ const connectWithRetry = () => {
 const startServer = () => {
     app.use('/api/auth', authRoutes);
     app.use('/api/otp', otpRoutes);
+    app.use('/api', protect, queryArticleRoutes);
     app.use('/api', protect, queryRoutes);
     app.use('/api/user', protect, userRoutes); // Добавляем маршрут для профиля пользователя
     app.listen(port, () => {
