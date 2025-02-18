@@ -363,6 +363,11 @@ header {
     text-shadow: 2px 2px 4px black, -2px -2px 4px gray;
 }
 
+.hidden {
+    display: none!important;
+}
+
+
 .page-link {
     text-align: center;
 }

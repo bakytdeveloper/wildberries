@@ -232,8 +232,8 @@ function App() {
         <header>
           <h1>Поиск товаров на Wildberries</h1>
         </header>
-        <div className="page-link">
-          <nav>
+        <div className={`page-link ${!isAuthenticated || showRegisterForm || showForgotPasswordForm ? 'hidden' : ''}`}>
+        <nav>
              <div className="article-brand-link">
                <div className="brand-link">
                  <Link to="/">Поиск по бренду</Link>
