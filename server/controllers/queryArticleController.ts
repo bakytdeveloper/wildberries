@@ -4,10 +4,6 @@ import { fetchAndParseProductsByArticle } from '../services/productService';
 import { UserModel } from "../models/userModel";
 
 // Создание нового запроса
-
-
-
-// Создание нового запроса
 export const createArticleQuery = async (req: Request, res: Response) => {
     const { forms } = req.body;
     const userId = (req as any).userId;

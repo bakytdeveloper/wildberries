@@ -88,17 +88,19 @@ export const fetchAndParseProductsByArticle = async (
                 return [];
             }
             return productsRaw
-                .filter(product => product.id == article)
-                .map((product, index) => ({
-                position: index + 1,
-                id: product.id,
-                brand: product.brand,
-                name: product.name,
-                page: page,
-                queryTime: queryTime,
-                imageUrl: generateImageUrl(product.id),
-                log: product.log
-            }));
+                .map((product, index) => ({ ...product, originalIndex: index + 1 })) // Добавляем оригинальную позицию
+                .filter(product => product.id == article) // Фильтруем нужный товар
+                .map((product) => ({  // Преобразуем данные
+                    position: product.originalIndex, // Используем оригинальную позицию
+                    id: product.id,
+                    brand: product.brand,
+                    name: product.name,
+                    page: page,
+                    queryTime: queryTime,
+                    imageUrl: generateImageUrl(product.id),
+                    log: product.log
+                }));
+
         };
 
         while (hasMoreData) {
