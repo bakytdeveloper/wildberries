@@ -217,7 +217,7 @@ function SearchByArticle() {
         if (deleteQueryId) {
             try {
                 const token = sessionStorage.getItem('token');
-                await axios.delete(`${API_HOST}/api/queries/${deleteQueryId}`, { headers: { Authorization: `Bearer ${token}` } });
+                await axios.delete(`${API_HOST}/api/article/${deleteQueryId}`, { headers: { Authorization: `Bearer ${token}` } });
                 setAllQueries(allQueries.filter(query => query._id !== deleteQueryId));
                 setFilteredQueries(filteredQueries.filter(query => query._id !== deleteQueryId));
                 setShowDeleteModal(false);
