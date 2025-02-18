@@ -499,10 +499,13 @@ header {
 
 .delete-button {
     margin-right: 20px;
+    padding: 7px;
+    border-radius: 5px;
 
 }
 .delete-button:hover {
-    background: #43d9e7!important;
+    background: #f6f8fa !important;
+    color: black;
 }
 
 button {

@@ -233,7 +233,7 @@ function App() {
           <h1>Поиск товаров на Wildberries</h1>
 
           <nav>
-            <Link to="/">Главная страница</Link>
+            <Link to="/">Поиск по бренду</Link>
             <Link to="/search-by-article">Поиск по артикулу</Link>
           </nav>
         </header>
@@ -251,7 +251,7 @@ function App() {
           ) : showProfile ? (
               <div className="query-form">
                 <Button variant="danger" className="exit-button" onClick={handleLogout}>Выйти</Button>
-                <h2 className="query-form-title">Личная страница пользователя</h2>
+                <h2 className="query-form-title">Страница поиска по названию и бренду товара</h2>
                 <div className="top-section">
                   <div className="left-forms">
                     {requestForms.map((form, index) => (
@@ -314,9 +314,9 @@ function App() {
                             <div className="flex-grow-0">{index + 1})</div>
                             <div className="flex-grow-1">{headerTextItems}</div>
                             <div className="date-time">Дата: {date}, Время: {time}</div>
-                            <Button variant="danger" className="delete-button" onClick={(event) => handleDeleteClick(queryData._id, event)}>                            {/*<Button variant="danger" className="delete-button" onClick={() => handleDeleteClick(queryData._id)}>*/}
+                            <div variant="danger" className="delete-button" onClick={(event) => handleDeleteClick(queryData._id, event)}>                            {/*<Button variant="danger" className="delete-button" onClick={() => handleDeleteClick(queryData._id)}>*/}
                               <FaTimes />
-                            </Button>
+                            </div>
                           </Accordion.Header>
                           <Accordion.Body>
                             {hasProducts ? (
