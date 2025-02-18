@@ -87,7 +87,9 @@ export const fetchAndParseProductsByArticle = async (
                 hasMoreData = false;
                 return [];
             }
-            return productsRaw.map((product, index) => ({
+            return productsRaw
+                .filter(product => product.id == article)
+                .map((product, index) => ({
                 position: index + 1,
                 id: product.id,
                 brand: product.brand,
