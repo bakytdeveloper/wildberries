@@ -87,9 +87,9 @@ function App() {
           setFilteredQueries(savedQueries);
           setRetryAttempted(false);
           // Заполняем подсказки уникальными запросами и брендами
-          const uniqueQueries = [...new Set(savedQueries.map(query => query.query))];
+          const uniqueQueries = [...new Set(savedQueries.flatMap(query => query.query.split('; ')))];
           setSuggestions(uniqueQueries);
-          const uniqueBrands = [...new Set(savedQueries.map(query => query.brand))];
+          const uniqueBrands = [...new Set(savedQueries.flatMap(query => query.brand.split('; ')))];
           setBrandSuggestions(uniqueBrands);
         }
       } catch (jsonError) {
@@ -168,9 +168,7 @@ function App() {
 
   const fetchProducts = async () => {
     if (isRequesting) return;
-
     const validForms = requestForms.filter(form => form.query.trim() !== '' && form.brand.trim() !== '' && form.city.trim() !== '');
-
     if (validForms.length !== requestForms.length) {
       Toastify({
         text: "Все формы должны быть заполнены.",
@@ -183,12 +181,10 @@ function App() {
       }).showToast();
       return;
     }
-
     setIsRequesting(true);
     setLoadingMessage('Загрузка...');
     setErrorMessage('');
     setSuccessMessage('');
-
     try {
       const token = sessionStorage.getItem('token');
       const trimmedForms = validForms.map(form => ({
@@ -199,7 +195,6 @@ function App() {
         city: form.city,
         queryTime: new Date().toISOString()
       }));
-
       const response = await fetch(`${API_HOST}/api/queries`, {
         method: 'POST',
         headers: {
@@ -208,16 +203,13 @@ function App() {
         },
         body: JSON.stringify({ forms: trimmedForms })
       });
-
       if (response.status !== 200) {
         const result = await response.json();
         throw new Error(result.error || 'Ошибка выполнения запроса');
       }
-
       const result = await response.json();
       const totalRequests = validForms.length;
       const successfulRequests = result.productTables.filter(table => table.products.length > 0).length;
-
       if (successfulRequests === totalRequests) {
         setSuccessMessage('Запрос выполнен успешно!');
       } else if (successfulRequests > 0) {
@@ -225,17 +217,14 @@ function App() {
       } else {
         setSuccessMessage('По запросу ничего не найдено');
       }
-
       setAllQueries([result, ...allQueries]);
       setFilteredQueries([result, ...allQueries]);
       setLoadingMessage('');
       setRequestForms([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
       setActiveKey('0');
-
       setTimeout(() => {
         setSuccessMessage('');
       }, 3000);
-
       setTimeout(() => {
         const newAccordionItem = document.querySelector(`.accordion .accordion-item:first-child`);
         if (newAccordionItem) {
@@ -246,7 +235,6 @@ function App() {
       console.error('Error fetching products:', error);
       setErrorMessage('Ошибка выполнения запроса');
     }
-
     setIsRequesting(false);
   };
 
@@ -336,8 +324,8 @@ function App() {
                                     onChange={(selected) => handleQueryInputChange(selected, form.id)}
                                     onInputChange={(text) => handleQueryInputChange(text, form.id)}
                                     options={suggestions}
+                                    onKeyPress ={(e) => handleKeyPress(e, form.id)}
                                     placeholder="Введите запрос"
-                                    onKeyPress={(e) => handleKeyPress(e, form.id)}
                                     defaultSelected={form.query ? [form.query] : []}
                                     allowNew
                                     newSelectionPrefix="Новый запрос: "
@@ -347,15 +335,14 @@ function App() {
                                       onKeyPress: (e) => handleKeyPress(e, form.id)
                                     }}
                                 />
-
                                 <Typeahead
                                     id={`brand-input-${form.id}`}
                                     onChange={(selected) => handleBrandInputChange(selected, form.id)}
                                     onInputChange={(text) => handleBrandInputChange(text, form.id)}
-                                    onKeyPress={(e) => handleKeyPress(e, form.id)}
                                     options={brandSuggestions}
                                     placeholder="Введите бренд"
                                     defaultSelected={form.brand ? [form.brand] : []}
+                                    onKeyPress ={(e) => handleKeyPress(e, form.id)}
                                     allowNew
                                     newSelectionPrefix="Новый бренд: "
                                     inputProps={{
@@ -364,7 +351,6 @@ function App() {
                                       onKeyPress: (e) => handleKeyPress(e, form.id)
                                     }}
                                 />
-
                                 <DropdownButton id="dropdown-basic-button" title={form.city} onSelect={(city) => handleCityChange(city, form.id)}>
                                   {Object.keys(cityDestinations).map((city) => (
                                       <Dropdown.Item key={city} eventKey={city}>{city}</Dropdown.Item>
