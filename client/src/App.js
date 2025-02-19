@@ -5,6 +5,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Form, Button, InputGroup, DropdownButton, Dropdown, Alert } from 'react-bootstrap';
 import Toastify from 'toastify-js';
 import axios from 'axios';
+import { Typeahead } from 'react-bootstrap-typeahead'; // Импортируем Typeahead
 import cityDestinations from './utils/cityDestinations';
 import RegisterForm from './components/Auth/RegisterForm';
 import LoginForm from './components/Auth/LoginForm';
@@ -39,6 +40,9 @@ function App() {
   const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteQueryId, setDeleteQueryId] = useState(null);
+  const [suggestions, setSuggestions] = useState([]);
+  const [brandSuggestions, setBrandSuggestions] = useState([]);
+
   useEffect(() => {
     if (isAuthenticated) {
       fetchSavedQueries();
@@ -69,7 +73,12 @@ function App() {
     try {
       setLoadingMessage('Загрузка данных...');
       const token = sessionStorage.getItem('token');
-      const response = await fetch(`${API_HOST}/api/queries`, { headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } });
+      const response = await fetch(`${API_HOST}/api/queries`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
       const text = await response.text();
       try {
         const savedQueries = JSON.parse(text);
@@ -77,6 +86,11 @@ function App() {
           setAllQueries(savedQueries);
           setFilteredQueries(savedQueries);
           setRetryAttempted(false);
+          // Заполняем подсказки уникальными запросами и брендами
+          const uniqueQueries = [...new Set(savedQueries.map(query => query.query))];
+          setSuggestions(uniqueQueries);
+          const uniqueBrands = [...new Set(savedQueries.map(query => query.brand))];
+          setBrandSuggestions(uniqueBrands);
         }
       } catch (jsonError) {
         console.error('Ошибка парсинга JSON:', jsonError);
@@ -99,16 +113,18 @@ function App() {
     setShowProfile(false);
   };
 
-  const handleQueryInputChange = (e, formId) => {
-    setRequestForms(requestForms.map(f => f.id === formId ? {...f, query: e.target.value} : f));
+  const handleQueryInputChange = (input, formId) => {
+    const value = typeof input === 'string' ? input : input.length > 0 ? input[0] : '';
+    setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: value } : f));
   };
 
-  const handleBrandInputChange = (e, formId) => {
-    setRequestForms(requestForms.map(f => f.id === formId ? {...f, brand: e.target.value} : f));
+  const handleBrandInputChange = (input, formId) => {
+    const value = typeof input === 'string' ? input : input.length > 0 ? input[0] : '';
+    setRequestForms(requestForms.map(f => f.id === formId ? { ...f, brand: value } : f));
   };
 
   const handleCityChange = (city, formId) => {
-    setRequestForms(requestForms.map(f => f.id === formId ? {...f, city: city} : f));
+    setRequestForms(requestForms.map(f => f.id === formId ? { ...f, city: city } : f));
   };
 
   const handleSortInputChange = (e) => {
@@ -122,7 +138,7 @@ function App() {
   };
 
   const clearInput = (formId) => {
-    setRequestForms(requestForms.map(f => f.id === formId ? {...f, query: '', brand: '', city: 'г.Дмитров'} : f));
+    setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: '', brand: '', city: 'г.Дмитров' } : f));
   };
 
   const handleKeyPress = (e, formId) => {
@@ -133,7 +149,7 @@ function App() {
   };
 
   const addRequestForm = () => {
-    setRequestForms([...requestForms, {id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: false}]);
+    setRequestForms([...requestForms, { id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: false }]);
   };
 
   const removeRequestForm = (formId) => {
@@ -152,26 +168,56 @@ function App() {
 
   const fetchProducts = async () => {
     if (isRequesting) return;
-    const validForms = requestForms.filter(form => form.query.trim() !== '' && form.brand.trim() !== '');
-    if (validForms.length === 0) {
-      Toastify({ text: "Все формы должны быть заполнены.", duration: 3000, gravity: "top", position: "right", style: { background: '#ff0000' } }).showToast();
+
+    const validForms = requestForms.filter(form => form.query.trim() !== '' && form.brand.trim() !== '' && form.city.trim() !== '');
+
+    if (validForms.length !== requestForms.length) {
+      Toastify({
+        text: "Все формы должны быть заполнены.",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        style: {
+          background: '#ff0000'
+        }
+      }).showToast();
       return;
     }
+
     setIsRequesting(true);
     setLoadingMessage('Загрузка...');
     setErrorMessage('');
     setSuccessMessage('');
+
     try {
       const token = sessionStorage.getItem('token');
-      const trimmedForms = validForms.map(form => ({ ...form, query: form.query.trim(), brand: form.brand.trim(), dest: cityDestinations[form.city], city: form.city, queryTime: new Date().toISOString() }));
-      const response = await fetch(`${API_HOST}/api/queries`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ forms: trimmedForms }) });
+      const trimmedForms = validForms.map(form => ({
+        ...form,
+        query: form.query.trim(),
+        brand: form.brand.trim(),
+        dest: cityDestinations[form.city],
+        city: form.city,
+        queryTime: new Date().toISOString()
+      }));
+
+      const response = await fetch(`${API_HOST}/api/queries`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ forms: trimmedForms })
+      });
+
       if (response.status !== 200) {
         const result = await response.json();
         throw new Error(result.error || 'Ошибка выполнения запроса');
       }
+
       const result = await response.json();
       const totalRequests = validForms.length;
       const successfulRequests = result.productTables.filter(table => table.products.length > 0).length;
+
       if (successfulRequests === totalRequests) {
         setSuccessMessage('Запрос выполнен успешно!');
       } else if (successfulRequests > 0) {
@@ -179,12 +225,17 @@ function App() {
       } else {
         setSuccessMessage('По запросу ничего не найдено');
       }
+
       setAllQueries([result, ...allQueries]);
       setFilteredQueries([result, ...allQueries]);
       setLoadingMessage('');
       setRequestForms([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
       setActiveKey('0');
-      setTimeout(() => { setSuccessMessage(''); }, 3000);
+
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+
       setTimeout(() => {
         const newAccordionItem = document.querySelector(`.accordion .accordion-item:first-child`);
         if (newAccordionItem) {
@@ -195,6 +246,7 @@ function App() {
       console.error('Error fetching products:', error);
       setErrorMessage('Ошибка выполнения запроса');
     }
+
     setIsRequesting(false);
   };
 
@@ -213,19 +265,32 @@ function App() {
     if (deleteQueryId) {
       try {
         const token = sessionStorage.getItem('token');
-        await axios.delete(`${API_HOST}/api/queries/${deleteQueryId}`, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.delete(`${API_HOST}/api/queries/${deleteQueryId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         setAllQueries(allQueries.filter(query => query._id !== deleteQueryId));
         setFilteredQueries(filteredQueries.filter(query => query._id !== deleteQueryId));
         setShowDeleteModal(false);
         setDeleteQueryId(null);
-        Toastify({ text: "Запрос успешно удален.", duration: 3000, gravity: "top", position: "right", style: { background: '#00c851' } }).showToast();
+        Toastify({
+          text: "Запрос успешно удален.",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          style: { background: '#00c851' }
+        }).showToast();
       } catch (error) {
         console.error('Ошибка удаления запроса:', error);
-        Toastify({ text: "Ошибка удаления запроса.", duration: 3000, gravity: "top", position: "right", style: { background: '#ff0000' } }).showToast();
+        Toastify({
+          text: "Ошибка удаления запроса.",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          style: { background: '#ff0000' }
+        }).showToast();
       }
     }
   };
-
 
   return (
       <div>
@@ -233,15 +298,15 @@ function App() {
           <h1>Поиск товаров на Wildberries</h1>
         </header>
         <div className={`page-link ${!isAuthenticated || showRegisterForm || showForgotPasswordForm ? 'hidden' : ''}`}>
-        <nav>
-             <div className="article-brand-link">
-               <div className="brand-link">
-                 <Link to="/">Поиск по бренду</Link>
-               </div>
-               <div className="article-link">
-                 <Link to="/search-by-article">Поиск по артикулу</Link>
-               </div>
-             </div>
+          <nav>
+            <div className="article-brand-link">
+              <div className="brand-link">
+                <Link to="/">Поиск по бренду</Link>
+              </div>
+              <div className="article-link">
+                <Link to="/search-by-article">Поиск по артикулу</Link>
+              </div>
+            </div>
           </nav>
         </div>
         <div className="container">
@@ -266,8 +331,40 @@ function App() {
                           <div className="search-container">
                             <div className="search-left">
                               <InputGroup className="InputGroupForm">
-                                <Form.Control type="text" value={form.query} onChange={(e) => handleQueryInputChange(e, form.id)} onKeyPress={(e) => handleKeyPress(e, form.id)} placeholder="Введите запрос" required disabled={isRequesting} />
-                                <Form.Control type="text" value={form.brand} onChange={(e) => handleBrandInputChange(e, form.id)} onKeyPress={(e) => handleKeyPress(e, form.id)} placeholder="Введите бренд" required disabled={isRequesting} />
+                                <Typeahead
+                                    id={`query-input-${form.id}`}
+                                    onChange={(selected) => handleQueryInputChange(selected, form.id)}
+                                    onInputChange={(text) => handleQueryInputChange(text, form.id)}
+                                    options={suggestions}
+                                    placeholder="Введите запрос"
+                                    onKeyPress={(e) => handleKeyPress(e, form.id)}
+                                    defaultSelected={form.query ? [form.query] : []}
+                                    allowNew
+                                    newSelectionPrefix="Новый запрос: "
+                                    inputProps={{
+                                      disabled: isRequesting,
+                                      required: true,
+                                      onKeyPress: (e) => handleKeyPress(e, form.id)
+                                    }}
+                                />
+
+                                <Typeahead
+                                    id={`brand-input-${form.id}`}
+                                    onChange={(selected) => handleBrandInputChange(selected, form.id)}
+                                    onInputChange={(text) => handleBrandInputChange(text, form.id)}
+                                    onKeyPress={(e) => handleKeyPress(e, form.id)}
+                                    options={brandSuggestions}
+                                    placeholder="Введите бренд"
+                                    defaultSelected={form.brand ? [form.brand] : []}
+                                    allowNew
+                                    newSelectionPrefix="Новый бренд: "
+                                    inputProps={{
+                                      disabled: isRequesting,
+                                      required: true,
+                                      onKeyPress: (e) => handleKeyPress(e, form.id)
+                                    }}
+                                />
+
                                 <DropdownButton id="dropdown-basic-button" title={form.city} onSelect={(city) => handleCityChange(city, form.id)}>
                                   {Object.keys(cityDestinations).map((city) => (
                                       <Dropdown.Item key={city} eventKey={city}>{city}</Dropdown.Item>
@@ -321,7 +418,7 @@ function App() {
                             <div className="flex-grow-0">{index + 1})</div>
                             <div className="flex-grow-1">{headerTextItems}</div>
                             <div className="date-time">Дата: {date}, Время: {time}</div>
-                            <div variant="danger" className="delete-button" onClick={(event) => handleDeleteClick(queryData._id, event)}>                            {/*<Button variant="danger" className="delete-button" onClick={() => handleDeleteClick(queryData._id)}>*/}
+                            <div variant="danger" className="delete-button" onClick={(event) => handleDeleteClick(queryData._id, event)}>
                               <FaTimes />
                             </div>
                           </Accordion.Header>
@@ -361,9 +458,17 @@ function App() {
                                                   <tr key={i}>
                                                     <td className="td_table">{i + 1}</td>
                                                     <td className="td_table">
-                                                      <img className="td_table_img" src={product.imageUrl} alt={product.name} onClick={() => handleImageClick(product.imageUrl)} />
+                                                      <img
+                                                          className="td_table_img"
+                                                          src={product.imageUrl}
+                                                          alt={product.name}
+                                                          onClick={() => handleImageClick(product.imageUrl)}
+                                                      />
                                                     </td>
-                                                    <td className="td_table td_table_article" onClick={() => handleProductClick(queryData.query.split('; ')[tableIndex], page, position)}>
+                                                    <td
+                                                        className="td_table td_table_article"
+                                                        onClick={() => handleProductClick(queryData.query.split('; ')[tableIndex], page, position)}
+                                                    >
                                                       {product.id}
                                                     </td>
                                                     <td className="td_table">{page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position}</td>
@@ -379,9 +484,12 @@ function App() {
                                           </table>
                                       ) : (
                                           <div className="no-products-message" style={{ backgroundColor: '#ffcccb', color: '#000000', padding: '10px', borderRadius: '5px' }}>
-                                            <strong>По Запросу:</strong> {queryData.query.split('; ')[tableIndex]} <br />
-                                            <strong>Бренд:</strong> {queryData.brand.split('; ')[tableIndex]} <br />
-                                            <strong>Город:</strong> {queryData.city.split('; ')[tableIndex]} <br />
+                                            <strong>По Запросу:</strong> {queryData.query.split('; ')[tableIndex]}
+                                            <br />
+                                            <strong>Бренд:</strong> {queryData.brand.split('; ')[tableIndex]}
+                                            <br />
+                                            <strong>Город:</strong> {queryData.city.split('; ')[tableIndex]}
+                                            <br />
                                             <strong>Товары не найдены.</strong>
                                           </div>
                                       )}
@@ -389,9 +497,12 @@ function App() {
                                 ))
                             ) : (
                                 <div className="no-products-message" style={{ backgroundColor: '#ffcccb', color: '#000000', padding: '10px', borderRadius: '5px' }}>
-                                  <strong>Запрос:</strong> {queryData.query} <br />
-                                  <strong>Бренд:</strong> {queryData.brand} <br />
-                                  <strong>Город:</strong> {queryData.city} <br />
+                                  <strong>Запрос:</strong> {queryData.query}
+                                  <br />
+                                  <strong>Бренд:</strong> {queryData.brand}
+                                  <br />
+                                  <strong>Город:</strong> {queryData.city}
+                                  <br />
                                   <strong>Товары не найдены.</strong>
                                 </div>
                             )}
@@ -403,7 +514,6 @@ function App() {
                 <ImageModal show={modalImage !== null} handleClose={closeModal} imageUrl={modalImage} />
               </div>
           ) : null}
-
           <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
             <Modal.Header closeButton>
               <Modal.Title>Подтверждение удаления</Modal.Title>
