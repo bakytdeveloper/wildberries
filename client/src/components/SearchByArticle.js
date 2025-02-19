@@ -5,6 +5,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Form, Button, InputGroup, DropdownButton, Dropdown, Alert } from 'react-bootstrap';
 import Toastify from 'toastify-js';
 import axios from 'axios';
+import { Typeahead } from 'react-bootstrap-typeahead'; // Импортируем Typeahead
 import cityDestinations from '../utils/cityDestinations';
 import RegisterForm from './Auth/RegisterForm';
 import LoginForm from './Auth/LoginForm';
@@ -13,9 +14,9 @@ import ImageModal from './ImageModal';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { FaTimes } from 'react-icons/fa'; // Импортируем иконку "крестик"
 import { Modal } from 'react-bootstrap';
-const API_HOST = process.env.REACT_APP_API_HOST;
 import { Link } from 'react-router-dom'; // Импортируем Link
 
+const API_HOST = process.env.REACT_APP_API_HOST;
 
 function SearchByArticle() {
     const [query, setQuery] = useState('');
@@ -39,7 +40,8 @@ function SearchByArticle() {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteQueryId, setDeleteQueryId] = useState(null);
     const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: true }]);
-
+    const [suggestions, setSuggestions] = useState([]);
+    const [articleSuggestions, setArticleSuggestions] = useState([]);
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -71,7 +73,12 @@ function SearchByArticle() {
         try {
             setLoadingMessage('Загрузка данных...');
             const token = sessionStorage.getItem('token');
-            const response = await fetch(`${API_HOST}/api/article`, { headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } });
+            const response = await fetch(`${API_HOST}/api/article`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             const text = await response.text();
             try {
                 const savedQueries = JSON.parse(text);
@@ -79,6 +86,11 @@ function SearchByArticle() {
                     setAllQueries(savedQueries);
                     setFilteredQueries(savedQueries);
                     setRetryAttempted(false);
+                    // Заполняем подсказки уникальными запросами и артикулом
+                    const uniqueQueries = [...new Set(savedQueries.map(query => query.query))];
+                    setSuggestions(uniqueQueries);
+                    const uniqueArticles = [...new Set(savedQueries.map(query => query.article))];
+                    setArticleSuggestions(uniqueArticles);
                 }
             } catch (jsonError) {
                 console.error('Ошибка парсинга JSON:', jsonError);
@@ -101,18 +113,18 @@ function SearchByArticle() {
         setShowProfile(false);
     };
 
-    const handleArticleInputChange = (e, formId) => {
-        setRequestForms(requestForms.map(f => f.id === formId ? { ...f, article: e.target.value } : f));
+    const handleQueryInputChange = (input, formId) => {
+        const value = typeof input === 'string' ? input : input.length > 0 ? input[0] : '';
+        setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: value } : f));
     };
 
-
-    const handleQueryInputChange = (e, formId) => {
-        setRequestForms(requestForms.map(f => f.id === formId ? {...f, query: e.target.value} : f));
+    const handleArticleInputChange = (input, formId) => {
+        const value = typeof input === 'string' ? input : input.length > 0 ? input[0] : '';
+        setRequestForms(requestForms.map(f => f.id === formId ? { ...f, article: value } : f));
     };
-
 
     const handleCityChange = (city, formId) => {
-        setRequestForms(requestForms.map(f => f.id === formId ? {...f, city: city} : f));
+        setRequestForms(requestForms.map(f => f.id === formId ? { ...f, city: city } : f));
     };
 
     const handleSortInputChange = (e) => {
@@ -126,7 +138,7 @@ function SearchByArticle() {
     };
 
     const clearInput = (formId) => {
-        setRequestForms(requestForms.map(f => f.id === formId ? {...f, query: '', article: '', city: 'г.Дмитров'} : f));
+        setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: '', article: '', city: 'г.Дмитров' } : f));
     };
 
     const handleKeyPress = (e, formId) => {
@@ -137,7 +149,7 @@ function SearchByArticle() {
     };
 
     const addRequestForm = () => {
-        setRequestForms([...requestForms, {id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: false}]);
+        setRequestForms([...requestForms, { id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: false }]);
     };
 
     const removeRequestForm = (formId) => {
@@ -158,7 +170,15 @@ function SearchByArticle() {
         if (isRequesting) return;
         const validForms = requestForms.filter(form => form.query.trim() !== '' && form.article.trim() !== '');
         if (validForms.length === 0) {
-            Toastify({ text: "Все формы должны быть заполнены.", duration: 3000, gravity: "top", position: "right", style: { background: '#ff0000' } }).showToast();
+            Toastify({
+                text: "Все формы должны быть заполнены.",
+                duration: 3000,
+                gravity: "top",
+                position: "right",
+                style: {
+                    background: '#ff0000'
+                }
+            }).showToast();
             return;
         }
         setIsRequesting(true);
@@ -167,8 +187,22 @@ function SearchByArticle() {
         setSuccessMessage('');
         try {
             const token = sessionStorage.getItem('token');
-            const trimmedForms = validForms.map(form => ({ ...form, query: form.query.trim(), article: form.article.trim(), dest: cityDestinations[form.city], city: form.city, queryTime: new Date().toISOString() }));
-            const response = await fetch(`${API_HOST}/api/article`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ forms: trimmedForms }) });
+            const trimmedForms = validForms.map(form => ({
+                ...form,
+                query: form.query.trim(),
+                article: form.article.trim(),
+                dest: cityDestinations[form.city],
+                city: form.city,
+                queryTime: new Date().toISOString()
+            }));
+            const response = await fetch(`${API_HOST}/api/article`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ forms: trimmedForms })
+            });
             if (response.status !== 200) {
                 const result = await response.json();
                 throw new Error(result.error || 'Ошибка выполнения запроса');
@@ -186,9 +220,12 @@ function SearchByArticle() {
             setAllQueries([result, ...allQueries]);
             setFilteredQueries([result, ...allQueries]);
             setLoadingMessage('');
-            setRequestForms([{ id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: true }]);
+            setRequestForms(        [{ id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: true }]
+            );
             setActiveKey('0');
-            setTimeout(() => { setSuccessMessage(''); }, 3000);
+            setTimeout(() => {
+                setSuccessMessage('');
+            }, 3000);
             setTimeout(() => {
                 const newAccordionItem = document.querySelector(`.accordion .accordion-item:first-child`);
                 if (newAccordionItem) {
@@ -217,19 +254,32 @@ function SearchByArticle() {
         if (deleteQueryId) {
             try {
                 const token = sessionStorage.getItem('token');
-                await axios.delete(`${API_HOST}/api/article/${deleteQueryId}`, { headers: { Authorization: `Bearer ${token}` } });
+                await axios.delete(`${API_HOST}/api/article/${deleteQueryId}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
                 setAllQueries(allQueries.filter(query => query._id !== deleteQueryId));
                 setFilteredQueries(filteredQueries.filter(query => query._id !== deleteQueryId));
                 setShowDeleteModal(false);
                 setDeleteQueryId(null);
-                Toastify({ text: "Запрос успешно удален.", duration: 3000, gravity: "top", position: "right", style: { background: '#00c851' } }).showToast();
+                Toastify({
+                    text: "Запрос успешно удален.",
+                    duration: 3000,
+                    gravity: "top",
+                    position: "right",
+                    style: { background: '#00c851' }
+                }).showToast();
             } catch (error) {
                 console.error('Ошибка удаления запроса:', error);
-                Toastify({ text: "Ошибка удаления запроса.", duration: 3000, gravity: "top", position: "right", style: { background: '#ff0000' } }).showToast();
+                Toastify({
+                    text: "Ошибка удаления запроса.",
+                    duration: 3000,
+                    gravity: "top",
+                    position: "right",
+                    style: { background: '#ff0000' }
+                }).showToast();
             }
         }
     };
-
 
     return (
         <div>
@@ -262,7 +312,7 @@ function SearchByArticle() {
                 ) : showProfile ? (
                     <div className="query-form">
                         <Button variant="danger" className="exit-button" onClick={handleLogout}>Выйти</Button>
-                        <h3 className="query-form-title">Страница поиска по названию и артикулу товара </h3>
+                        <h3 className="query-form-title">Страница поиска по названию и артикулу товара</h3>
                         <div className="top-section">
                             <div className="left-forms">
                                 {requestForms.map((form, index) => (
@@ -270,8 +320,36 @@ function SearchByArticle() {
                                         <div className="search-container">
                                             <div className="search-left">
                                                 <InputGroup className="InputGroupForm">
-                                                    <Form.Control type="text" value={form.query} onChange={(e) => handleQueryInputChange(e, form.id)} onKeyPress={(e) => handleKeyPress(e, form.id)} placeholder="Введите запрос" required disabled={isRequesting} />
-                                                    <Form.Control type="text" value={form.article} onChange={(e) => handleArticleInputChange(e, form.id)} onKeyPress={(e) => handleKeyPress(e, form.id)} placeholder="Введите артикул" required disabled={isRequesting} />
+                                                    <Typeahead
+                                                        id={`query-input-${form.id}`}
+                                                        onChange={(selected) => handleQueryInputChange(selected, form.id)}
+                                                        onInputChange={(text) => handleQueryInputChange(text, form.id)}
+                                                        options={suggestions}
+                                                        placeholder="Введите запрос"
+                                                        defaultSelected={form.query ? [form.query] : []}
+                                                        allowNew
+                                                        newSelectionPrefix="Новый запрос: "
+                                                        inputProps={{
+                                                            disabled: isRequesting,
+                                                            required: true,
+                                                            onKeyPress: (e) => handleKeyPress(e, form.id)
+                                                        }}
+                                                    />
+                                                    <Typeahead
+                                                        id={`article-input-${form.id}`}
+                                                        onChange={(selected) => handleArticleInputChange(selected, form.id)}
+                                                        onInputChange={(text) => handleArticleInputChange(text, form.id)}
+                                                        options={articleSuggestions}
+                                                        placeholder="Введите артикул"
+                                                        defaultSelected={form.article ? [form.article] : []}
+                                                        allowNew
+                                                        newSelectionPrefix="Новый артикул: "
+                                                        inputProps={{
+                                                            disabled: isRequesting,
+                                                            required: true,
+                                                            onKeyPress: (e) => handleKeyPress(e, form.id)
+                                                        }}
+                                                    />
                                                     <DropdownButton id="dropdown-basic-button" title={form.city} onSelect={(city) => handleCityChange(city, form.id)}>
                                                         {Object.keys(cityDestinations).map((city) => (
                                                             <Dropdown.Item key={city} eventKey={city}>{city}</Dropdown.Item>
@@ -288,7 +366,6 @@ function SearchByArticle() {
                                         </div>
                                     </Form>
                                 ))}
-
                             </div>
                             <div className="right-controls">
                                 <div className="controls">
@@ -326,7 +403,7 @@ function SearchByArticle() {
                                             <div className="flex-grow-0">{index + 1})</div>
                                             <div className="flex-grow-1">{headerTextItems}</div>
                                             <div className="date-time">Дата: {date}, Время: {time}</div>
-                                            <div variant="danger" className="delete-button" onClick={(event) => handleDeleteClick(queryData._id, event)}>                            {/*<Button variant="danger" className="delete-button" onClick={() => handleDeleteClick(queryData._id)}>*/}
+                                            <div variant="danger" className="delete-button" onClick={(event) => handleDeleteClick(queryData._id, event)}>
                                                 <FaTimes />
                                             </div>
                                         </Accordion.Header>
@@ -366,9 +443,17 @@ function SearchByArticle() {
                                                                         <tr key={i}>
                                                                             <td className="td_table">{i + 1}</td>
                                                                             <td className="td_table">
-                                                                                <img className="td_table_img" src={product.imageUrl} alt={product.name} onClick={() => handleImageClick(product.imageUrl)} />
+                                                                                <img
+                                                                                    className="td_table_img"
+                                                                                    src={product.imageUrl}
+                                                                                    alt={product.name}
+                                                                                    onClick={() => handleImageClick(product.imageUrl)}
+                                                                                />
                                                                             </td>
-                                                                            <td className="td_table td_table_article" onClick={() => handleProductClick(queryData.query.split('; ')[tableIndex], page, position)}>
+                                                                            <td
+                                                                                className="td_table td_table_article"
+                                                                                onClick={() => handleProductClick(queryData.query.split('; ')[tableIndex], page, position)}
+                                                                            >
                                                                                 {product.id}
                                                                             </td>
                                                                             <td className="td_table">{page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position}</td>
@@ -384,9 +469,12 @@ function SearchByArticle() {
                                                             </table>
                                                         ) : (
                                                             <div className="no-products-message" style={{ backgroundColor: '#ffcccb', color: '#000000', padding: '10px', borderRadius: '5px' }}>
-                                                                <strong>По Запросу:</strong> {queryData.query?.split('; ')[tableIndex]} <br />
-                                                                <strong>Артикул:</strong> {queryData.article?.split('; ')[tableIndex]} <br />
-                                                                <strong>Город:</strong> {queryData.city?.split('; ')[tableIndex]} <br />
+                                                                <strong>По Запросу:</strong> {queryData.query?.split('; ')[tableIndex]}
+                                                                <br />
+                                                                <strong>Артикул:</strong> {queryData.article?.split('; ')[tableIndex]}
+                                                                <br />
+                                                                <strong>Город:</strong> {queryData.city?.split('; ')[tableIndex]}
+                                                                <br />
                                                                 <strong>Товары не найдены.</strong>
                                                             </div>
                                                         )}
@@ -394,9 +482,12 @@ function SearchByArticle() {
                                                 ))
                                             ) : (
                                                 <div className="no-products-message" style={{ backgroundColor: '#ffcccb', color: '#000000', padding: '10px', borderRadius: '5px' }}>
-                                                    <strong>Запрос:</strong> {queryData?.query} <br />
-                                                    <strong>Артикул:</strong> {queryData?.article} <br />
-                                                    <strong>Город:</strong> {queryData?.city} <br />
+                                                    <strong>Запрос:</strong> {queryData?.query}
+                                                    <br />
+                                                    <strong>Артикул:</strong> {queryData?.article}
+                                                    <br />
+                                                    <strong>Город:</strong> {queryData?.city}
+                                                    <br />
                                                     <strong>Товары не найдены.</strong>
                                                 </div>
                                             )}
@@ -408,7 +499,6 @@ function SearchByArticle() {
                         <ImageModal show={modalImage !== null} handleClose={closeModal} imageUrl={modalImage} />
                     </div>
                 ) : null}
-
                 <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
                     <Modal.Header closeButton>
                         <Modal.Title>Подтверждение удаления</Modal.Title>
