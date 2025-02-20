@@ -86,10 +86,11 @@ function SearchByArticle() {
                     setAllQueries(savedQueries);
                     setFilteredQueries(savedQueries);
                     setRetryAttempted(false);
-                    // Заполняем подсказки уникальными запросами и артикулом
-                    const uniqueQueries = [...new Set(savedQueries.map(query => query.query))];
+
+                    // Заполняем подсказки уникальными запросами и артикулами
+                    const uniqueQueries = [...new Set(savedQueries.flatMap(query => query.query.split('; ')))];
                     setSuggestions(uniqueQueries);
-                    const uniqueArticles = [...new Set(savedQueries.map(query => query.article))];
+                    const uniqueArticles = [...new Set(savedQueries.flatMap(query => query.article.split('; ')))];
                     setArticleSuggestions(uniqueArticles);
                 }
             } catch (jsonError) {
@@ -175,9 +176,7 @@ function SearchByArticle() {
                 duration: 3000,
                 gravity: "top",
                 position: "right",
-                style: {
-                    background: '#ff0000'
-                }
+                style: { background: '#ff0000' }
             }).showToast();
             return;
         }
@@ -219,13 +218,30 @@ function SearchByArticle() {
             }
             setAllQueries([result, ...allQueries]);
             setFilteredQueries([result, ...allQueries]);
+
+            // Обновляем suggestions и articleSuggestions
+            const newQueries = validForms.map(form => form.query.trim());
+            const newSuggestions = [...suggestions];
+            newQueries.forEach(query => {
+                if (!newSuggestions.includes(query)) {
+                    newSuggestions.push(query);
+                }
+            });
+            setSuggestions(newSuggestions);
+
+            const newArticles = validForms.map(form => form.article.trim());
+            const newArticleSuggestions = [...articleSuggestions];
+            newArticles.forEach(article => {
+                if (!newArticleSuggestions.includes(article)) {
+                    newArticleSuggestions.push(article);
+                }
+            });
+            setArticleSuggestions(newArticleSuggestions);
+
             setLoadingMessage('');
-            setRequestForms(        [{ id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: true }]
-            );
+            setRequestForms([{ id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: true }]);
             setActiveKey('0');
-            setTimeout(() => {
-                setSuccessMessage('');
-            }, 3000);
+            setTimeout(() => { setSuccessMessage(''); }, 3000);
             setTimeout(() => {
                 const newAccordionItem = document.querySelector(`.accordion .accordion-item:first-child`);
                 if (newAccordionItem) {
@@ -329,11 +345,7 @@ function SearchByArticle() {
                                                         defaultSelected={form.query ? [form.query] : []}
                                                         allowNew
                                                         newSelectionPrefix="Новый запрос: "
-                                                        inputProps={{
-                                                            disabled: isRequesting,
-                                                            required: true,
-                                                            onKeyPress: (e) => handleKeyPress(e, form.id)
-                                                        }}
+                                                        onKeyDown={(e) => handleKeyPress(e, form.id)}
                                                     />
                                                     <Typeahead
                                                         id={`article-input-${form.id}`}
@@ -344,11 +356,7 @@ function SearchByArticle() {
                                                         defaultSelected={form.article ? [form.article] : []}
                                                         allowNew
                                                         newSelectionPrefix="Новый артикул: "
-                                                        inputProps={{
-                                                            disabled: isRequesting,
-                                                            required: true,
-                                                            onKeyPress: (e) => handleKeyPress(e, form.id)
-                                                        }}
+                                                        onKeyDown={(e) => handleKeyPress(e, form.id)}
                                                     />
                                                     <DropdownButton id="dropdown-basic-button" title={form.city} onSelect={(city) => handleCityChange(city, form.id)}>
                                                         {Object.keys(cityDestinations).map((city) => (
@@ -443,17 +451,9 @@ function SearchByArticle() {
                                                                         <tr key={i}>
                                                                             <td className="td_table">{i + 1}</td>
                                                                             <td className="td_table">
-                                                                                <img
-                                                                                    className="td_table_img"
-                                                                                    src={product.imageUrl}
-                                                                                    alt={product.name}
-                                                                                    onClick={() => handleImageClick(product.imageUrl)}
-                                                                                />
+                                                                                <img className="td_table_img" src={product.imageUrl} alt={product.name} onClick={() => handleImageClick(product.imageUrl)} />
                                                                             </td>
-                                                                            <td
-                                                                                className="td_table td_table_article"
-                                                                                onClick={() => handleProductClick(queryData.query.split('; ')[tableIndex], page, position)}
-                                                                            >
+                                                                            <td className="td_table td_table_article" onClick={() => handleProductClick(queryData.query.split('; ')[tableIndex], page, position)}>
                                                                                 {product.id}
                                                                             </td>
                                                                             <td className="td_table">{page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position}</td>
@@ -469,12 +469,9 @@ function SearchByArticle() {
                                                             </table>
                                                         ) : (
                                                             <div className="no-products-message" style={{ backgroundColor: '#ffcccb', color: '#000000', padding: '10px', borderRadius: '5px' }}>
-                                                                <strong>По Запросу:</strong> {queryData.query?.split('; ')[tableIndex]}
-                                                                <br />
-                                                                <strong>Артикул:</strong> {queryData.article?.split('; ')[tableIndex]}
-                                                                <br />
-                                                                <strong>Город:</strong> {queryData.city?.split('; ')[tableIndex]}
-                                                                <br />
+                                                                <strong>По Запросу:</strong> {queryData.query?.split('; ')[tableIndex]} <br />
+                                                                <strong>Артикул:</strong> {queryData.article?.split('; ')[tableIndex]} <br />
+                                                                <strong>Город:</strong> {queryData.city?.split('; ')[tableIndex]} <br />
                                                                 <strong>Товары не найдены.</strong>
                                                             </div>
                                                         )}
@@ -482,12 +479,9 @@ function SearchByArticle() {
                                                 ))
                                             ) : (
                                                 <div className="no-products-message" style={{ backgroundColor: '#ffcccb', color: '#000000', padding: '10px', borderRadius: '5px' }}>
-                                                    <strong>Запрос:</strong> {queryData?.query}
-                                                    <br />
-                                                    <strong>Артикул:</strong> {queryData?.article}
-                                                    <br />
-                                                    <strong>Город:</strong> {queryData?.city}
-                                                    <br />
+                                                    <strong>Запрос:</strong> {queryData?.query} <br />
+                                                    <strong>Артикул:</strong> {queryData?.article} <br />
+                                                    <strong>Город:</strong> {queryData?.city} <br />
                                                     <strong>Товары не найдены.</strong>
                                                 </div>
                                             )}

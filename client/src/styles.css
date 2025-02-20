@@ -19,6 +19,15 @@ header {
     display: none!important;
 }
 
+.controls_success {
+    background: #69d003!important;
+    border: none!important;
+}
+
+.controls_success:hover {
+    background: #4e9903 !important;
+}
+
 
 .page-link {
     text-align: center;
