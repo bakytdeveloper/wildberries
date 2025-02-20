@@ -175,9 +175,7 @@ function App() {
         duration: 3000,
         gravity: "top",
         position: "right",
-        style: {
-          background: '#ff0000'
-        }
+        style: { background: '#ff0000' }
       }).showToast();
       return;
     }
@@ -187,14 +185,7 @@ function App() {
     setSuccessMessage('');
     try {
       const token = sessionStorage.getItem('token');
-      const trimmedForms = validForms.map(form => ({
-        ...form,
-        query: form.query.trim(),
-        brand: form.brand.trim(),
-        dest: cityDestinations[form.city],
-        city: form.city,
-        queryTime: new Date().toISOString()
-      }));
+      const trimmedForms = validForms.map(form => ({ ...form, query: form.query.trim(), brand: form.brand.trim(), dest: cityDestinations[form.city], city: form.city, queryTime: new Date().toISOString() }));
       const response = await fetch(`${API_HOST}/api/queries`, {
         method: 'POST',
         headers: {
@@ -219,12 +210,21 @@ function App() {
       }
       setAllQueries([result, ...allQueries]);
       setFilteredQueries([result, ...allQueries]);
+
+      // Обновляем suggestions
+      const newQueries = validForms.map(form => form.query.trim());
+      const newSuggestions = [...suggestions];
+      newQueries.forEach(query => {
+        if (!newSuggestions.includes(query)) {
+          newSuggestions.push(query);
+        }
+      });
+      setSuggestions(newSuggestions);
+
       setLoadingMessage('');
       setRequestForms([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
       setActiveKey('0');
-      setTimeout(() => {
-        setSuccessMessage('');
-      }, 3000);
+      setTimeout(() => { setSuccessMessage(''); }, 3000);
       setTimeout(() => {
         const newAccordionItem = document.querySelector(`.accordion .accordion-item:first-child`);
         if (newAccordionItem) {
