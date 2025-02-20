@@ -211,7 +211,7 @@ function App() {
       setAllQueries([result, ...allQueries]);
       setFilteredQueries([result, ...allQueries]);
 
-      // Обновляем suggestions
+      // Обновляем suggestions и brandSuggestions
       const newQueries = validForms.map(form => form.query.trim());
       const newSuggestions = [...suggestions];
       newQueries.forEach(query => {
@@ -220,6 +220,15 @@ function App() {
         }
       });
       setSuggestions(newSuggestions);
+
+      const newBrands = validForms.map(form => form.brand.trim());
+      const newBrandSuggestions = [...brandSuggestions];
+      newBrands.forEach(brand => {
+        if (!newBrandSuggestions.includes(brand)) {
+          newBrandSuggestions.push(brand);
+        }
+      });
+      setBrandSuggestions(newBrandSuggestions);
 
       setLoadingMessage('');
       setRequestForms([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
