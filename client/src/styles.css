@@ -268,8 +268,16 @@ tr:hover {
     cursor: pointer;
 }
 
+.td_table_article:hover {
+    background: white;
+}
+
 .td_table_page {
     cursor: pointer;
+}
+
+.td_table_page:hover {
+    background: white;
 }
 
 .tableIndexRow {
@@ -302,6 +310,14 @@ tr:hover {
     width: 40px;
     height: 40px;
     cursor: pointer;
+}
+
+.td_table_img:hover {
+    width: 44px;
+}
+
+.td_table_image:hover {
+   background: white;
 }
 
 .flex-grow-0 {

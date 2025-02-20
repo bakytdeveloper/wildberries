@@ -260,6 +260,12 @@ function SearchByArticle() {
         window.open(url, '_blank');
     };
 
+    const handlePageRedirect = (productId) => {
+        const url = `https://www.wildberries.ru/catalog/${productId}/detail.aspx`;
+        window.open(url, '_blank'); // Открывает в новой вкладке
+    };
+
+
     const handleDeleteClick = (queryId, event) => {
         event.stopPropagation(); // Останавливаем распространение события
         setDeleteQueryId(queryId);
@@ -450,10 +456,13 @@ function SearchByArticle() {
                                                                     return (
                                                                         <tr key={i}>
                                                                             <td className="td_table">{i + 1}</td>
-                                                                            <td className="td_table">
+                                                                            <td className="td_table td_table_image">
                                                                                 <img className="td_table_img" src={product.imageUrl} alt={product.name} onClick={() => handleImageClick(product.imageUrl)} />
                                                                             </td>
-                                                                            <td className="td_table td_table_article">
+                                                                            <td
+                                                                                className="td_table td_table_article"
+                                                                                onClick={() => handlePageRedirect(product.id)}
+                                                                            >
                                                                                 {product.id}
                                                                             </td>
                                                                             <td className="td_table td_table_page"
