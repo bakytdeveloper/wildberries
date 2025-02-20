@@ -328,12 +328,13 @@ function App() {
                           <div className="search-container">
                             <div className="search-left">
                               <InputGroup className="InputGroupForm">
+
                                 <Typeahead
                                     id={`query-input-${form.id}`}
                                     onChange={(selected) => handleQueryInputChange(selected, form.id)}
                                     onInputChange={(text) => handleQueryInputChange(text, form.id)}
                                     options={suggestions}
-                                    onKeyPress ={(e) => handleKeyPress(e, form.id)}
+                                    onKeyDown={(e) => handleKeyPress(e, form.id)}
                                     placeholder="Введите запрос"
                                     defaultSelected={form.query ? [form.query] : []}
                                     allowNew
@@ -349,9 +350,9 @@ function App() {
                                     onChange={(selected) => handleBrandInputChange(selected, form.id)}
                                     onInputChange={(text) => handleBrandInputChange(text, form.id)}
                                     options={brandSuggestions}
+                                    onKeyDown={(e) => handleKeyPress(e, form.id)}
                                     placeholder="Введите бренд"
                                     defaultSelected={form.brand ? [form.brand] : []}
-                                    onKeyPress ={(e) => handleKeyPress(e, form.id)}
                                     allowNew
                                     newSelectionPrefix="Новый бренд: "
                                     inputProps={{
