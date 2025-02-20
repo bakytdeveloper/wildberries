@@ -463,11 +463,13 @@ function App() {
                                                     </td>
                                                     <td
                                                         className="td_table td_table_article"
-                                                        onClick={() => handleProductClick(queryData.query.split('; ')[tableIndex], page, position)}
+
                                                     >
                                                       {product.id}
                                                     </td>
-                                                    <td className="td_table">{page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position}</td>
+                                                    <td className="td_table td_table_page"
+                                                        onClick={() => handleProductClick(queryData.query.split('; ')[tableIndex], page, position)}
+                                                    >{page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position}</td>
                                                     <td className="td_table">{product.log?.position || (page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position)}</td>
                                                     <td className="td_table">{product.brand}</td>
                                                     <td className="td_table">{product.name}</td>
