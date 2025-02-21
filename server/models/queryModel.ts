@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const productSchema = new mongoose.Schema({
-    id: { type: String, required: true }, // Артикул товара
+    id: { type: String, required: true },
     imageUrl: String,
     page: Number,
     position: Number,
@@ -18,13 +18,26 @@ const productTableSchema = new mongoose.Schema({
 });
 
 const querySchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Добавляем ссылку на пользователя
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     query: { type: String, required: true },
     dest: { type: String, required: true },
     productTables: [productTableSchema],
-    createdAt: { type: Date, default: Date.now, expires: '1d' },
+    createdAt: { type: Date, default: Date.now, expires: '7d' },
     city: String,
     brand: String
+});
+
+// Middleware для удаления ссылки на Query из UserModel
+querySchema.pre('deleteOne', { document: true, query: false }, async function(next) {
+    const query = this;
+
+    // Удаляем ссылку на этот Query из поля queries в UserModel
+    await mongoose.model('User').updateOne(
+        { _id: query.userId },
+        { $pull: { queries: query._id } }
+    );
+
+    next();
 });
 
 const QueryModel = mongoose.model('Query', querySchema);
