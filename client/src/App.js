@@ -144,6 +144,7 @@ function App() {
   };
 
 
+
   const handleCityChange = (city, formId) => {
     setRequestForms(requestForms.map(f => f.id === formId ? { ...f, city: city } : f));
   };
@@ -390,7 +391,7 @@ function App() {
                                     id={`query-input-${form.id}`}
                                     labelKey="label"
                                     onChange={(selected) => handleQueryChange(selected, form.id)}
-                                    onInputChange={(text) => handleQueryInputChange(text, form.id)}
+                                    onInputChange={(text) => handleQueryInputChange({ target: { value: text } }, form.id)} // Передача полного текста
                                     options={suggestions}
                                     placeholder="Введите запрос"
                                     defaultSelected={form.query ? [{ label: form.query.toString() }] : []}
@@ -401,7 +402,7 @@ function App() {
                                     id={`brand-input-${form.id}`}
                                     labelKey="label"
                                     onChange={(selected) => handleBrandChange(selected, form.id)}
-                                    onInputChange={(text) => handleBrandInputChange(text, form.id)}
+                                    onInputChange={(text) => handleBrandInputChange({ target: { value: text } }, form.id)} // Передача полного текста
                                     options={brandSuggestions}
                                     placeholder="Введите бренд"
                                     defaultSelected={form.brand ? [{ label: form.brand.toString() }] : []}
@@ -409,6 +410,7 @@ function App() {
                                     newSelectionPrefix="Новый бренд: "
                                     onKeyDown={(e) => handleKeyPress(e, form.id)}
                                 />
+
                                 <DropdownButton id="dropdown-basic-button" title={form.city} onSelect={(city) => handleCityChange(city, form.id)}>
                                   {Object.keys(cityDestinations).map((city) => (
                                       <Dropdown.Item key={city} eventKey={city}>{city}</Dropdown.Item>
