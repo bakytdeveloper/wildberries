@@ -62,11 +62,6 @@ export const fetchAndParseProducts = async (query: string, dest: string, selecte
     }
 };
 
-
-
-
-
-
 export const fetchAndParseProductsByArticle = async (
     query: string,
     dest: string,

@@ -15,7 +15,7 @@ import { FaTimes } from 'react-icons/fa'; // Импортируем иконку
 import { Modal } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 
-const API_HOST = process.env.REACT_APP_API_HOST;
+const API_HOST = process.env.REACT_APP_API_HOST || "https://kiosk.kg";
 
 function App() {
   const [query, setQuery] = useState('');
