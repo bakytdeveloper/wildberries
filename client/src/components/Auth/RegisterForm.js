@@ -4,12 +4,11 @@ import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import Toastify from 'toastify-js';
 import axios from 'axios';
 
-const RegisterForm = ({ setIsAuthenticated, setShowProfile, setShowRegisterForm }) => {
+const RegisterForm = ({API_HOST, setIsAuthenticated, setShowProfile, setShowRegisterForm }) => {
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const API_HOST = process.env.REACT_APP_API_HOST;
 
     const handleRegister = async (e) => {
         e.preventDefault();

@@ -3,6 +3,8 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { UserModel } from '../models/userModel';
 import { sendOTP, verifyOTP } from '../smtp/otpService';
+import dotenv from "dotenv";
+dotenv.config();
 
 const jwtSecret = process.env.JWT_SECRET || 'yourSecretKey';
 
