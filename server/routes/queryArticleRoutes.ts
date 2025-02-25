@@ -4,7 +4,8 @@ import { createArticleQuery, getArticleQueries, deleteArticleQuery } from '../co
 
 const router = express.Router();
 
-router.route('/').post(protect, createArticleQuery).get(protect, getArticleQueries);
+router.route('/').post(protect, createArticleQuery);
+router.route('/').get(protect, getArticleQueries);
 router.route('/:id').delete(protect, deleteArticleQuery);
 
 export default router;
