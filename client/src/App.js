@@ -32,10 +32,8 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showRegisterForm, setShowRegisterForm] = useState(false);
   const [showForgotPasswordForm, setShowForgotPasswordForm] = useState(false);
-  const [showOtpInput, setShowOtpInput] = useState(false);
   const accordionRef = useRef(null);
   const [showProfile, setShowProfile] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteQueryId, setDeleteQueryId] = useState(null);
@@ -121,19 +119,22 @@ function App() {
     console.log('Query selected:', selected);
     const value = selected.length > 0 ? selected[0].label : '';
     setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: value } : f));
-  };
-
-
-  const handleQueryInputChange = (event, formId) => {
-    const text = event.target.value;
-    console.log('Query input change:', text);
-    setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: text } : f));
+    console.log('Updated form:', requestForms.find(f => f.id === formId));
   };
 
   const handleBrandChange = (selected, formId) => {
     console.log('Brand selected:', selected);
     const value = selected.length > 0 ? selected[0].label : '';
     setRequestForms(requestForms.map(f => f.id === formId ? { ...f, brand: value } : f));
+    console.log('Updated form:', requestForms.find(f => f.id === formId));
+  };
+
+
+
+  const handleQueryInputChange = (event, formId) => {
+    const text = event.target.value;
+    console.log('Query input change:', text);
+    setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: text } : f));
   };
 
   const handleBrandInputChange = (event, formId) => {
@@ -185,8 +186,6 @@ function App() {
     setModalImage(null);
     document.body.style.overflow = 'auto';
   };
-
-  
 
   const fetchProducts = async () => {
     if (isRequesting) return;
