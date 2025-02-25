@@ -111,16 +111,23 @@ function SearchByArticle() {
     };
 
     const handleQueryChange = (selected, formId) => {
-        console.log('Query selected:', selected);
-        const value = selected.length > 0 ? selected[0].label : '';
+        let value = '';
+        if (selected.length > 0) {
+            value = selected[0].customOption ? selected[0].label : selected[0];
+        }
+        console.log('Query selected:', value);
         setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: value } : f));
     };
 
     const handleArticleChange = (selected, formId) => {
-        console.log('Article selected:', selected);
-        const value = selected.length > 0 ? selected[0].label : '';
+        let value = '';
+        if (selected.length > 0) {
+            value = selected[0].customOption ? selected[0].label : selected[0];
+        }
+        console.log('Article selected:', value);
         setRequestForms(requestForms.map(f => f.id === formId ? { ...f, article: value } : f));
     };
+
 
     // const handleQueryInputChange = (event, formId) => {
     //     const text = event.nativeEvent.data;
