@@ -11,7 +11,6 @@ import RegisterForm from './components/Auth/RegisterForm';
 import LoginForm from './components/Auth/LoginForm';
 import ForgotPasswordForm from './components/Auth/ForgotPasswordForm';
 import ImageModal from './components/ImageModal';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { FaTimes } from 'react-icons/fa'; // Импортируем иконку "крестик"
 import { Modal } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
@@ -43,6 +42,7 @@ function App() {
   const [suggestions, setSuggestions] = useState([]);
   const [brandSuggestions, setBrandSuggestions] = useState([]);
 
+
   useEffect(() => {
     if (isAuthenticated) {
       fetchSavedQueries();
@@ -69,6 +69,8 @@ function App() {
     }
   }, [searchTerm, allQueries]);
 
+
+
   const fetchSavedQueries = async () => {
     try {
       setLoadingMessage('Загрузка данных...');
@@ -86,11 +88,12 @@ function App() {
           setAllQueries(savedQueries);
           setFilteredQueries(savedQueries);
           setRetryAttempted(false);
-          // Заполняем подсказки уникальными запросами и брендами
+
           const uniqueQueries = [...new Set(savedQueries.flatMap(query => query.query.split('; ')))];
-          setSuggestions(uniqueQueries);
+          setSuggestions(uniqueQueries.map(item => ({ label: item.toString() })));
+
           const uniqueBrands = [...new Set(savedQueries.flatMap(query => query.brand.split('; ')))];
-          setBrandSuggestions(uniqueBrands);
+          setBrandSuggestions(uniqueBrands.map(item => ({ label: item.toString() })));
         }
       } catch (jsonError) {
         console.error('Ошибка парсинга JSON:', jsonError);
@@ -113,15 +116,32 @@ function App() {
     setShowProfile(false);
   };
 
-  const handleQueryInputChange = (input, formId) => {
-    const value = typeof input === 'string' ? input : input.length > 0 ? input[0] : '';
+
+  const handleQueryChange = (selected, formId) => {
+    console.log('Query selected:', selected);
+    const value = selected.length > 0 ? selected[0].label : '';
     setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: value } : f));
   };
 
-  const handleBrandInputChange = (input, formId) => {
-    const value = typeof input === 'string' ? input : input.length > 0 ? input[0] : '';
+
+  const handleQueryInputChange = (event, formId) => {
+    const text = event.target.value;
+    console.log('Query input change:', text);
+    setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: text } : f));
+  };
+
+  const handleBrandChange = (selected, formId) => {
+    console.log('Brand selected:', selected);
+    const value = selected.length > 0 ? selected[0].label : '';
     setRequestForms(requestForms.map(f => f.id === formId ? { ...f, brand: value } : f));
   };
+
+  const handleBrandInputChange = (event, formId) => {
+    const text = event.target.value;
+    console.log('Brand input change:', text);
+    setRequestForms(requestForms.map(f => f.id === formId ? { ...f, brand: text } : f));
+  };
+
 
   const handleCityChange = (city, formId) => {
     setRequestForms(requestForms.map(f => f.id === formId ? { ...f, city: city } : f));
@@ -166,10 +186,20 @@ function App() {
     document.body.style.overflow = 'auto';
   };
 
+  
+
   const fetchProducts = async () => {
     if (isRequesting) return;
-    const validForms = requestForms.filter(form => form.query.trim() !== '' && form.brand.trim() !== '' && form.city.trim() !== '');
-    if (validForms.length !== requestForms.length) {
+
+    const validForms = requestForms.filter(form => {
+      const query = form.query ? form.query.trim() : '';
+      const brand = form.brand ? form.brand.trim() : '';
+      return query !== '' && brand !== '';
+    });
+
+    console.log('Valid forms after validation:', validForms);
+
+    if (validForms.length === 0) {
       Toastify({
         text: "Все формы должны быть заполнены.",
         duration: 3000,
@@ -179,13 +209,25 @@ function App() {
       }).showToast();
       return;
     }
+
     setIsRequesting(true);
     setLoadingMessage('Загрузка...');
     setErrorMessage('');
     setSuccessMessage('');
+
     try {
       const token = sessionStorage.getItem('token');
-      const trimmedForms = validForms.map(form => ({ ...form, query: form.query.trim(), brand: form.brand.trim(), dest: cityDestinations[form.city], city: form.city, queryTime: new Date().toISOString() }));
+      const trimmedForms = validForms.map(form => ({
+        ...form,
+        query: form.query ? form.query.trim() : '',
+        brand: form.brand ? form.brand.trim() : '',
+        dest: cityDestinations[form.city],
+        city: form.city,
+        queryTime: new Date().toISOString()
+      }));
+
+      console.log('Trimmed forms before sending:', trimmedForms);
+
       const response = await fetch(`${API_HOST}/api/queries`, {
         method: 'POST',
         headers: {
@@ -194,13 +236,18 @@ function App() {
         },
         body: JSON.stringify({ forms: trimmedForms })
       });
+
       if (response.status !== 200) {
         const result = await response.json();
         throw new Error(result.error || 'Ошибка выполнения запроса');
       }
+
       const result = await response.json();
+      console.log('Response from server:', result);
+
       const totalRequests = validForms.length;
       const successfulRequests = result.productTables.filter(table => table.products.length > 0).length;
+
       if (successfulRequests === totalRequests) {
         setSuccessMessage('Запрос выполнен успешно!');
       } else if (successfulRequests > 0) {
@@ -208,11 +255,11 @@ function App() {
       } else {
         setSuccessMessage('По запросу ничего не найдено');
       }
+
       setAllQueries([result, ...allQueries]);
       setFilteredQueries([result, ...allQueries]);
 
-      // Обновляем suggestions и brandSuggestions
-      const newQueries = validForms.map(form => form.query.trim());
+      const newQueries = validForms.map(form => form.query ? form.query.trim() : '');
       const newSuggestions = [...suggestions];
       newQueries.forEach(query => {
         if (!newSuggestions.includes(query)) {
@@ -221,7 +268,7 @@ function App() {
       });
       setSuggestions(newSuggestions);
 
-      const newBrands = validForms.map(form => form.brand.trim());
+      const newBrands = validForms.map(form => form.brand ? form.brand.trim() : '');
       const newBrandSuggestions = [...brandSuggestions];
       newBrands.forEach(brand => {
         if (!newBrandSuggestions.includes(brand)) {
@@ -233,7 +280,11 @@ function App() {
       setLoadingMessage('');
       setRequestForms([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
       setActiveKey('0');
-      setTimeout(() => { setSuccessMessage(''); }, 3000);
+
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+
       setTimeout(() => {
         const newAccordionItem = document.querySelector(`.accordion .accordion-item:first-child`);
         if (newAccordionItem) {
@@ -243,8 +294,9 @@ function App() {
     } catch (error) {
       console.error('Error fetching products:', error);
       setErrorMessage('Ошибка выполнения запроса');
+    } finally {
+      setIsRequesting(false);
     }
-    setIsRequesting(false);
   };
 
   const handleProductClick = (searchQuery, page, position) => {
@@ -337,35 +389,26 @@ function App() {
 
                                 <Typeahead
                                     id={`query-input-${form.id}`}
-                                    onChange={(selected) => handleQueryInputChange(selected, form.id)}
+                                    labelKey="label"
+                                    onChange={(selected) => handleQueryChange(selected, form.id)}
                                     onInputChange={(text) => handleQueryInputChange(text, form.id)}
                                     options={suggestions}
-                                    onKeyDown={(e) => handleKeyPress(e, form.id)}
                                     placeholder="Введите запрос"
-                                    defaultSelected={form.query ? [form.query] : []}
+                                    defaultSelected={form.query ? [{ label: form.query.toString() }] : []}
                                     allowNew
                                     newSelectionPrefix="Новый запрос: "
-                                    inputProps={{
-                                      disabled: isRequesting,
-                                      required: true,
-                                      onKeyPress: (e) => handleKeyPress(e, form.id)
-                                    }}
                                 />
                                 <Typeahead
                                     id={`brand-input-${form.id}`}
-                                    onChange={(selected) => handleBrandInputChange(selected, form.id)}
+                                    labelKey="label"
+                                    onChange={(selected) => handleBrandChange(selected, form.id)}
                                     onInputChange={(text) => handleBrandInputChange(text, form.id)}
                                     options={brandSuggestions}
-                                    onKeyDown={(e) => handleKeyPress(e, form.id)}
                                     placeholder="Введите бренд"
-                                    defaultSelected={form.brand ? [form.brand] : []}
+                                    defaultSelected={form.brand ? [{ label: form.brand.toString() }] : []}
                                     allowNew
                                     newSelectionPrefix="Новый бренд: "
-                                    inputProps={{
-                                      disabled: isRequesting,
-                                      required: true,
-                                      onKeyPress: (e) => handleKeyPress(e, form.id)
-                                    }}
+                                    onKeyDown={(e) => handleKeyPress(e, form.id)}
                                 />
                                 <DropdownButton id="dropdown-basic-button" title={form.city} onSelect={(city) => handleCityChange(city, form.id)}>
                                   {Object.keys(cityDestinations).map((city) => (
