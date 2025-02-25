@@ -130,19 +130,6 @@ function SearchByArticle() {
     };
 
 
-
-    // const handleQueryInputChange = (event, formId) => {
-    //     const text = event.nativeEvent.data;
-    //     console.log('Query input change:', text);
-    //     setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: text } : f));
-    // };
-    //
-    // const handleArticleInputChange = (event, formId) => {
-    //     const text = event.nativeEvent.data;
-    //     console.log('Article input change:', text);
-    //     setRequestForms(requestForms.map(f => f.id === formId ? { ...f, article: text } : f));
-    // };
-
     const handleQueryInputChange = (event, formId) => {
         const text = event.target.value;
         console.log('Query input change:', text);

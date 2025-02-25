@@ -3,10 +3,11 @@ import { Form, Button } from 'react-bootstrap';
 import Toastify from 'toastify-js';
 import axios from 'axios';
 
-const ForgotPasswordForm = ({ API_HOST, setShowForgotPasswordForm }) => {
+const ForgotPasswordForm = ({ setShowForgotPasswordForm }) => {
     const [email, setEmail] = useState('');
     const [otp, setOtp] = useState('');
     const [showOtpInput, setShowOtpInput] = useState(false);
+    const API_HOST = process.env.REACT_APP_API_HOST;
 
     const handleForgotPassword = async (e) => {
         e.preventDefault();
