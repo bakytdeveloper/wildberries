@@ -130,21 +130,6 @@ function App() {
   };
 
 
-
-  const handleQueryInputChange = (event, formId) => {
-    const text = event.target.value;
-    console.log('Query input change:', text);
-    setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: text } : f));
-  };
-
-  const handleBrandInputChange = (event, formId) => {
-    const text = event.target.value;
-    console.log('Brand input change:', text);
-    setRequestForms(requestForms.map(f => f.id === formId ? { ...f, brand: text } : f));
-  };
-
-
-
   const handleCityChange = (city, formId) => {
     setRequestForms(requestForms.map(f => f.id === formId ? { ...f, city: city } : f));
   };
@@ -188,17 +173,34 @@ function App() {
     document.body.style.overflow = 'auto';
   };
 
+  const handleQueryInputChange = (event, formId) => {
+    const text = event.target.value;
+    console.log('Query input change:', text.target.value);
+    setRequestForms(prevForms => prevForms.map(f =>
+        f.id === formId ? { ...f, query: text.target.value } : f
+    ));
+  };
+
+  const handleBrandInputChange = (event, formId) => {
+    const text = event.target.value;
+    console.log('Brand input change:', text.target.value);
+    setRequestForms(prevForms => prevForms.map(f =>
+        f.id === formId ? { ...f, brand: text.target.value } : f
+    ));
+  };
+
   const fetchProducts = async () => {
     if (isRequesting) return;
 
+    console.log('Request forms before validation:', requestForms);
+
     const validForms = requestForms.filter(form => {
-      const query = form.query ? form.query.trim() : '';
-      const brand = form.brand ? form.brand.trim() : '';
+      const query = form.query && typeof form.query === 'string' ? form.query.trim() : '';
+      const brand = form.brand && typeof form.brand === 'string' ? form.brand.trim() : '';
       return query !== '' && brand !== '';
     });
 
     console.log('Valid forms after validation:', validForms);
-
     if (validForms.length === 0) {
       Toastify({
         text: "Все формы должны быть заполнены.",
@@ -219,8 +221,8 @@ function App() {
       const token = sessionStorage.getItem('token');
       const trimmedForms = validForms.map(form => ({
         ...form,
-        query: form.query ? form.query.trim() : '',
-        brand: form.brand ? form.brand.trim() : '',
+        query: form.query && typeof form.query === 'string' ? form.query.trim() : '',
+        brand: form.brand && typeof form.brand === 'string' ? form.brand.trim() : '',
         dest: cityDestinations[form.city],
         city: form.city,
         queryTime: new Date().toISOString()
@@ -259,7 +261,7 @@ function App() {
       setAllQueries([result, ...allQueries]);
       setFilteredQueries([result, ...allQueries]);
 
-      const newQueries = validForms.map(form => form.query ? form.query.trim() : '');
+      const newQueries = validForms.map(form => form.query && typeof form.query === 'string' ? form.query.trim() : '');
       const newSuggestions = [...suggestions];
       newQueries.forEach(query => {
         if (!newSuggestions.includes(query)) {
@@ -268,7 +270,7 @@ function App() {
       });
       setSuggestions(newSuggestions);
 
-      const newBrands = validForms.map(form => form.brand ? form.brand.trim() : '');
+      const newBrands = validForms.map(form => form.brand && typeof form.brand === 'string' ? form.brand.trim() : '');
       const newBrandSuggestions = [...brandSuggestions];
       newBrands.forEach(brand => {
         if (!newBrandSuggestions.includes(brand)) {
@@ -298,6 +300,7 @@ function App() {
       setIsRequesting(false);
     }
   };
+
 
   const handleProductClick = (searchQuery, page, position) => {
     const url = `https://www.wildberries.ru/catalog/0/search.aspx?page=${page}&sort=popular&search=${encodeURIComponent(searchQuery)}#position=${position}`;
