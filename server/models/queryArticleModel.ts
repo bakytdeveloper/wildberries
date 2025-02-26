@@ -20,7 +20,7 @@ const queryArticleSchema = new mongoose.Schema({
     query: { type: String, required: true },
     article: { type: String, required: true },
     productTables: [productTableSchema],
-    createdAt: { type: Date, default: Date.now, expires: '7d' },
+    createdAt: { type: Date, default: Date.now },
     city: String
 });
 
