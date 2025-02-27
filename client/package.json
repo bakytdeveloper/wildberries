@@ -6,6 +6,7 @@
     "axios": "^1.7.9",
     "bootstrap": "^5.3.3",
     "dotenv": "^16.4.7",
+    "googleapis": "^144.0.0",
     "react": "^19.0.0",
     "react-bootstrap": "^2.10.8",
     "react-bootstrap-typeahead": "^7.0.0-rc.5",
