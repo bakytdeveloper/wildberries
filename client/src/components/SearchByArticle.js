@@ -110,20 +110,20 @@ function SearchByArticle() {
         setShowProfile(false);
     };
 
+
     const handleQueryChange = (selected, formId) => {
         let value = '';
         if (selected.length > 0) {
-            value = selected[0].customOption ? selected[0].label : selected[0].label; // Преобразуем значение в строку
+            value = selected[0].label; // Используем label из выбранного элемента
         }
         console.log('Query selected:', value);
         setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: value } : f));
     };
 
-
     const handleArticleChange = (selected, formId) => {
         let value = '';
         if (selected.length > 0) {
-            value = selected[0].customOption ? selected[0].label : selected[0].label; // Преобразуем значение в строку
+            value = selected[0].label; // Используем label из выбранного элемента
         }
         console.log('Article selected:', value);
         setRequestForms(requestForms.map(f => f.id === formId ? { ...f, article: value } : f));
@@ -186,14 +186,112 @@ function SearchByArticle() {
         document.body.style.overflow = 'auto';
     };
 
+    // const fetchProductsByArticle = async () => {
+    //     if (isRequesting) return;
+    //     console.log('Request forms before validation:', requestForms);
+    //     const validForms = requestForms.filter(form => {
+    //         const query = form.query ? form.query.trim() : '';
+    //         const article = form.article ? String(form.article).trim() : ''; // Конвертация в строку
+    //         return query !== '' && article !== '';
+    //     });
+    //     console.log('Valid forms after validation:', validForms);
+    //     if (validForms.length === 0) {
+    //         Toastify({
+    //             text: "Все формы должны быть заполнены.",
+    //             duration: 3000,
+    //             gravity: "top",
+    //             position: "right",
+    //             style: { background: '#ff0000' }
+    //         }).showToast();
+    //         return;
+    //     }
+    //     setIsRequesting(true);
+    //     setLoadingMessage('Загрузка...');
+    //     setErrorMessage('');
+    //     setSuccessMessage('');
+    //     try {
+    //         const token = sessionStorage.getItem('token');
+    //         const trimmedForms = validForms.map(form => ({
+    //             ...form,
+    //             query: form.query ? form.query.trim() : '',
+    //             article: form.article ? String(form.article).trim() : '', // Конвертация в строку
+    //             dest: cityDestinations[form.city],
+    //             city: form.city,
+    //             queryTime: new Date().toISOString()
+    //         }));
+    //         console.log('Trimmed forms before sending:', trimmedForms);
+    //         const response = await fetch(`${API_HOST}/api/article`, {
+    //             method: 'POST',
+    //             headers: {
+    //                 'Content-Type': 'application/json',
+    //                 'Authorization': `Bearer ${token}`
+    //             },
+    //             body: JSON.stringify({ forms: trimmedForms })
+    //         });
+    //         if (response.status !== 200) {
+    //             const result = await response.json();
+    //             throw new Error(result.error || 'Ошибка выполнения запроса');
+    //         }
+    //         const result = await response.json();
+    //         console.log('Response from server:', result);
+    //         const totalRequests = validForms.length;
+    //         const successfulRequests = result.productTables.filter(table => table.products.length > 0).length;
+    //         if (successfulRequests === totalRequests) {
+    //             setSuccessMessage('Запрос выполнен успешно!');
+    //         } else if (successfulRequests > 0) {
+    //             setSuccessMessage('Запрос выполнен, но не все ответы получены');
+    //         } else {
+    //             setSuccessMessage('По запросу ничего не найдено');
+    //         }
+    //         setAllQueries([result, ...allQueries]);
+    //         setFilteredQueries([result, ...allQueries]);
+    //         const newQueries = validForms.map(form => form.query ? form.query.trim() : '');
+    //         const newSuggestions = [...suggestions];
+    //         newQueries.forEach(query => {
+    //             if (!newSuggestions.includes(query)) {
+    //                 newSuggestions.push(query);
+    //             }
+    //         });
+    //         setSuggestions(newSuggestions);
+    //         const newArticles = validForms.map(form => form.article ? form.article.trim() : '');
+    //         const newArticleSuggestions = [...articleSuggestions];
+    //         newArticles.forEach(article => {
+    //             if (!newArticleSuggestions.includes(article)) {
+    //                 newArticleSuggestions.push(article);
+    //             }
+    //         });
+    //         setArticleSuggestions(newArticleSuggestions);
+    //         setLoadingMessage('');
+    //         setRequestForms([{ id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: true }]);
+    //         setActiveKey('0');
+    //         setTimeout(() => {
+    //             setSuccessMessage('');
+    //         }, 3000);
+    //         setTimeout(() => {
+    //             const newAccordionItem = document.querySelector(`.accordion .accordion-item:first-child`);
+    //             if (newAccordionItem) {
+    //                 newAccordionItem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    //             }
+    //         }, 100);
+    //     } catch (error) {
+    //         console.error('Error fetching products:', error);
+    //         setErrorMessage('Ошибка выполнения запроса');
+    //     } finally {
+    //         setIsRequesting(false);
+    //     }
+    // };
+
+
     const fetchProductsByArticle = async () => {
         if (isRequesting) return;
         console.log('Request forms before validation:', requestForms);
+
         const validForms = requestForms.filter(form => {
-            const query = form.query ? form.query.trim() : '';
-            const article = form.article ? String(form.article).trim() : ''; // Конвертация в строку
+            const query = form.query && typeof form.query === 'string' ? form.query.trim() : '';
+            const article = form.article && typeof form.article === 'string' ? form.article.trim() : '';
             return query !== '' && article !== '';
         });
+
         console.log('Valid forms after validation:', validForms);
         if (validForms.length === 0) {
             Toastify({
@@ -205,20 +303,23 @@ function SearchByArticle() {
             }).showToast();
             return;
         }
+
         setIsRequesting(true);
         setLoadingMessage('Загрузка...');
         setErrorMessage('');
         setSuccessMessage('');
+
         try {
             const token = sessionStorage.getItem('token');
             const trimmedForms = validForms.map(form => ({
                 ...form,
-                query: form.query ? form.query.trim() : '',
-                article: form.article ? String(form.article).trim() : '', // Конвертация в строку
+                query: form.query && typeof form.query === 'string' ? form.query.trim() : '',
+                article: form.article && typeof form.article === 'string' ? form.article.trim() : '',
                 dest: cityDestinations[form.city],
                 city: form.city,
                 queryTime: new Date().toISOString()
             }));
+
             console.log('Trimmed forms before sending:', trimmedForms);
             const response = await fetch(`${API_HOST}/api/article`, {
                 method: 'POST',
@@ -228,14 +329,18 @@ function SearchByArticle() {
                 },
                 body: JSON.stringify({ forms: trimmedForms })
             });
+
             if (response.status !== 200) {
                 const result = await response.json();
                 throw new Error(result.error || 'Ошибка выполнения запроса');
             }
+
             const result = await response.json();
             console.log('Response from server:', result);
+
             const totalRequests = validForms.length;
             const successfulRequests = result.productTables.filter(table => table.products.length > 0).length;
+
             if (successfulRequests === totalRequests) {
                 setSuccessMessage('Запрос выполнен успешно!');
             } else if (successfulRequests > 0) {
@@ -243,9 +348,11 @@ function SearchByArticle() {
             } else {
                 setSuccessMessage('По запросу ничего не найдено');
             }
+
             setAllQueries([result, ...allQueries]);
             setFilteredQueries([result, ...allQueries]);
-            const newQueries = validForms.map(form => form.query ? form.query.trim() : '');
+
+            const newQueries = validForms.map(form => form.query && typeof form.query === 'string' ? form.query.trim() : '');
             const newSuggestions = [...suggestions];
             newQueries.forEach(query => {
                 if (!newSuggestions.includes(query)) {
@@ -253,7 +360,8 @@ function SearchByArticle() {
                 }
             });
             setSuggestions(newSuggestions);
-            const newArticles = validForms.map(form => form.article ? form.article.trim() : '');
+
+            const newArticles = validForms.map(form => form.article && typeof form.article === 'string' ? form.article.trim() : '');
             const newArticleSuggestions = [...articleSuggestions];
             newArticles.forEach(article => {
                 if (!newArticleSuggestions.includes(article)) {
@@ -261,12 +369,15 @@ function SearchByArticle() {
                 }
             });
             setArticleSuggestions(newArticleSuggestions);
+
             setLoadingMessage('');
             setRequestForms([{ id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: true }]);
             setActiveKey('0');
+
             setTimeout(() => {
                 setSuccessMessage('');
             }, 3000);
+
             setTimeout(() => {
                 const newAccordionItem = document.querySelector(`.accordion .accordion-item:first-child`);
                 if (newAccordionItem) {
@@ -280,7 +391,6 @@ function SearchByArticle() {
             setIsRequesting(false);
         }
     };
-
 
 
     const handleProductClick = (searchQuery, page, position) => {
@@ -314,6 +424,13 @@ function SearchByArticle() {
             setAllQueries(allQueries.filter(query => query._id !== deleteQueryId));
             setFilteredQueries(filteredQueries.filter(query => query._id !== deleteQueryId));
             setShowDeleteModal(false);
+            Toastify({
+                text: "Запрос успешно удален.",
+                duration: 3000,
+                gravity: "top",
+                position: "right",
+                style: { background: '#00c851' }
+            }).showToast();
         } catch (error) {
             console.error('Error deleting query:', error);
             setErrorMessage('Ошибка удаления запроса');
@@ -483,7 +600,7 @@ function SearchByArticle() {
                                                                                 {product.id}
                                                                             </td>
                                                                             <td className="td_table td_table_page" onClick={() => handleProductClick(queryData.query.split('; ')[tableIndex], page, position)}>
-                                                                                {page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position}
+                                                                                {product.log?.promoPosition || (page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position)}
                                                                             </td>
                                                                             <td className="td_table">{product.log?.position || (page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position)}</td>
                                                                             <td className="td_table">{product.brand}</td>

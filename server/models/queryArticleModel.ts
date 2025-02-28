@@ -7,7 +7,7 @@ const productSchema = new mongoose.Schema({
     position: Number,
     brand: String,
     name: String,
-    log: { position: Number }
+    log: { promoPosition: Number, position: Number }
 });
 
 const productTableSchema = new mongoose.Schema({

@@ -400,6 +400,7 @@ function App() {
                                     defaultSelected={form.query ? [{ label: form.query.toString() }] : []}
                                     allowNew
                                     newSelectionPrefix="Новый запрос: "
+                                    onKeyDown={(e) => handleKeyPress(e, form.id)}
                                 />
                                 <Typeahead
                                     id={`brand-input-${form.id}`}
@@ -514,15 +515,12 @@ function App() {
                                                           onClick={() => handleImageClick(product.imageUrl)}
                                                       />
                                                     </td>
-                                                    <td
-                                                        className="td_table td_table_article"
-                                                        onClick={() => handlePageRedirect(product.id)}
-                                                    >
+                                                    <td className="td_table td_table_article" onClick={() => handlePageRedirect(product.id)}>
                                                       {product.id}
                                                     </td>
-                                                    <td className="td_table td_table_page"
-                                                        onClick={() => handleProductClick(queryData.query.split('; ')[tableIndex], page, position)}
-                                                    >{page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position}</td>
+                                                    <td className="td_table td_table_page" onClick={() => handleProductClick(queryData.query.split('; ')[tableIndex], page, position)}>
+                                                      {product.log?.promoPosition || (page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position)}
+                                                    </td>
                                                     <td className="td_table">{product.log?.position || (page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position)}</td>
                                                     <td className="td_table">{product.brand}</td>
                                                     <td className="td_table">{product.name}</td>

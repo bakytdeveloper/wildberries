@@ -11,6 +11,7 @@ export interface Product {
 }
 
 export interface Log {
+    promoPosition: number;
     position: number;
 }
 
