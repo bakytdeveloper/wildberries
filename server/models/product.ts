@@ -14,9 +14,3 @@ export interface Log {
     promoPosition: number;
     position: number;
 }
-
-// // Новая модель для таблиц с товарами
-// export interface ProductTable {
-//     tableId: string;
-//     products: Product[];
-// }
