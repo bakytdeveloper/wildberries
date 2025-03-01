@@ -28,9 +28,12 @@ export const getProducts = async (query: string, dest: string, page: number = 1)
         });
 
         return response.data;
-    } catch (error) {
-        if (axios.isAxiosError(error)) {
-            console.error('Error fetching products:', error.response?.data || error.message);
+    } catch (error: unknown) {
+        if (error && typeof error === 'object' && 'response' in error) {
+            const axiosError = error as any;
+            console.error('Error fetching products:', axiosError.response?.data || axiosError.message);
+        } else if (error instanceof Error) {
+            console.error('Unexpected error:', error.message);
         } else {
             console.error('Unexpected error:', error);
         }
