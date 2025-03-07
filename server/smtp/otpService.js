@@ -1,22 +1,18 @@
-import nodemailer from 'nodemailer';
-import crypto from 'crypto';
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 
-// Определяем тип для otpStorage
-interface OtpStorage {
-    [key: string]: string;
-}
-
-let otpStorage: OtpStorage = {};
+// Хранилище OTP
+let otpStorage = {};
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
         user: 'bakytdeveloper@gmail.com',
-        pass: 'vlud glov uens emlz'
+        pass: 'vlud glov uens emlz' // Обратите внимание, что для реального использования важно безопасно хранить такие данные
     }
 });
 
-export const sendOTP = (email: string): string => {
+const sendOTP = (email) => {
     const otp = crypto.randomInt(100000, 999999).toString();
     otpStorage[email] = otp;
     transporter.sendMail({
@@ -28,8 +24,8 @@ export const sendOTP = (email: string): string => {
     return otp;
 };
 
-export const verifyOTP = (email: string, otp: string): boolean => {
+const verifyOTP = (email, otp) => {
     return otpStorage[email] === otp;
 };
 
-export { transporter };
+module.exports = { sendOTP, verifyOTP, transporter };

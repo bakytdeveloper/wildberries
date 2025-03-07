@@ -1,13 +1,12 @@
-import { Request, Response } from 'express';
-import { QueryArticleModel } from '../models/queryArticleModel';
-import { fetchAndParseProductsByArticle } from '../services/productService';
-import { UserModel } from "../models/userModel";
-import { addDataToSheet } from "../services/googleSheetService";
+const { QueryArticleModel } = require('../models/queryArticleModel');
+const { fetchAndParseProductsByArticle } = require('../services/productService');
+const { UserModel } = require('../models/userModel');
+const { addDataToSheet } = require('../services/googleSheetService');
 
 // Создание нового запроса
-export const createArticleQuery = async (req: Request, res: Response) => {
+const createArticleQuery = async (req, res) => {
     const { forms } = req.body;
-    const userId = (req as any).userId;
+    const userId = req.userId;
 
     if (!forms || !Array.isArray(forms) || forms.length === 0) {
         res.status(400).json({ error: 'Invalid request format' });
@@ -38,12 +37,10 @@ export const createArticleQuery = async (req: Request, res: Response) => {
     }
 };
 
-
-
 // Получение запросов
-export const getArticleQueries = async (req: Request, res: Response) => {
+const getArticleQueries = async (req, res) => {
     try {
-        const userId = (req as any).userId;
+        const userId = req.userId;
         const queries = await QueryArticleModel.find({ userId }).sort({ createdAt: -1 });
         res.json(queries);
     } catch (error) {
@@ -53,10 +50,10 @@ export const getArticleQueries = async (req: Request, res: Response) => {
 };
 
 // Удаление запроса
-export const deleteArticleQuery = async (req: Request, res: Response) => {
+const deleteArticleQuery = async (req, res) => {
     try {
         const queryId = req.params.id;
-        const userId = (req as any).userId;
+        const userId = req.userId;
 
         const deletedQuery = await QueryArticleModel.findOneAndDelete({ _id: queryId, userId });
         if (!deletedQuery) {
@@ -71,48 +68,47 @@ export const deleteArticleQuery = async (req: Request, res: Response) => {
     }
 };
 
-export const exportToGoogleSheet = async (req: Request, res: Response) => {
-    const { queryId, sheetName } = req.body; // получаем идентификатор запроса и имя листа
-    const userId = (req as any).userId;
+// Экспорт в Google Таблицы
+const exportToGoogleSheet = async (req, res) => {
+    const { queryId, sheetName } = req.body;
+    const userId = req.userId;
+
     try {
         const query = await QueryArticleModel.findOne({ _id: queryId, userId }).populate('productTables.products');
         if (!query) {
             return res.status(404).json({ error: 'Запрос не найден' });
         }
+
         const user = await UserModel.findById(userId);
         if (!user || !user.spreadsheetId) {
             return res.status(404).json({ error: 'Пользователь или Google Таблица не найдены' });
         }
 
-        // Формируем данные для экспорта
         const data = query.productTables.flatMap((table) =>
             table.products.map((product) => {
-                // Логика для promoPosition
                 const promoPosition = product?.page && product.page > 1
                     ? `${product.page}${product.position != null && product.position < 10 ? '0' + product.position : product.position}`
                     : String(product?.position);
 
-                // Логика для position
                 const position = product?.page && product.page > 1
                     ? `${product.page}${product.position != null && product.position < 10 ? '0' + product.position : product.position}`
                     : String(product?.position);
 
                 return [
-                    String(product?.query || query.query), // Запрос (из продукта или из верхнего уровня)
-                    String(product?.id), // Артикул
-                    String(product?.city || query.city), // Город (из продукта или из верхнего уровня)
-                    String(product?.imageUrl), // Изображение
+                    String(product?.query || query.query),
+                    String(product?.id),
+                    String(product?.city || query.city),
+                    String(product?.imageUrl),
                     String(product?.brand),
-                    String(product?.name), // Наименование
-                    promoPosition, // Позиция (из page:position)
-                    position, // Прежняя позиция (из page:position)
-                    new Date(product?.queryTime || query.createdAt).toLocaleTimeString(), // Время запроса
-                    new Date(product?.queryTime || query.createdAt).toLocaleDateString(), // Дата запроса
+                    String(product?.name),
+                    promoPosition,
+                    position,
+                    new Date(product?.queryTime || query.createdAt).toLocaleTimeString(),
+                    new Date(product?.queryTime || query.createdAt).toLocaleDateString(),
                 ];
             })
         );
 
-        // Добавляем данные в Google Таблицу
         await addDataToSheet(user.spreadsheetId, sheetName, data);
         res.json({ message: 'Данные успешно выгружены' });
     } catch (error) {
@@ -121,4 +117,9 @@ export const exportToGoogleSheet = async (req: Request, res: Response) => {
     }
 };
 
-
+module.exports = {
+    createArticleQuery,
+    getArticleQueries,
+    deleteArticleQuery,
+    exportToGoogleSheet
+};

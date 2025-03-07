@@ -1,10 +1,8 @@
-// userController.ts
-import { Request, Response } from 'express';
-import { UserModel } from '../models/userModel';
+const { UserModel } = require('../models/userModel');
 
-export const getUserProfile = async (req: Request, res: Response) => {
+const getUserProfile = async (req, res) => {
     try {
-        const userId = (req as any).userId;
+        const userId = req.userId;
         const user = await UserModel.findById(userId).populate('queries');
         res.json(user);
     } catch (error) {
@@ -12,3 +10,5 @@ export const getUserProfile = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Failed to fetch user profile' });
     }
 };
+
+module.exports = { getUserProfile };

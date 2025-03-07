@@ -1,19 +1,19 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema({
     id: { type: String, required: true },
     imageUrl: String,
     page: Number,
     position: Number,
-    query: String, // Новое поле
-    city: String,  // Новое поле
-    dest: String,  // Новое поле
+    query: String,
+    city: String,
+    dest: String,
     brand: String,
     queryTime: String,
     name: String,
     log: {
-        promoPosition: { type: Number, required: false }, // Не обязательное поле
-        position: { type: Number, required: false }       // Не обязательное поле
+        promoPosition: { type: Number, required: false },
+        position: { type: Number, required: false }
     }
 });
 
@@ -27,7 +27,7 @@ const querySchema = new mongoose.Schema({
     query: { type: String, required: true },
     dest: { type: String, required: true },
     productTables: [productTableSchema],
-    createdAt: { type: Date, default: Date.now, expires: 604800 }, // 7 дней в секундах
+    createdAt: { type: Date, default: Date.now, expires: 604800 },
     city: String,
     brand: String
 });
@@ -36,7 +36,6 @@ const querySchema = new mongoose.Schema({
 querySchema.pre('deleteOne', { document: true, query: false }, async function(next) {
     const query = this;
 
-    // Удаляем ссылку на этот Query из поля queries в UserModel
     await mongoose.model('User').updateOne(
         { _id: query.userId },
         { $pull: { queries: query._id } }
@@ -47,4 +46,4 @@ querySchema.pre('deleteOne', { document: true, query: false }, async function(ne
 
 const QueryModel = mongoose.model('Query', querySchema);
 
-export { QueryModel };
+module.exports = { QueryModel };

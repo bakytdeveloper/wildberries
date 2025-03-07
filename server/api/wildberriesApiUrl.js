@@ -1,14 +1,18 @@
-import axios from 'axios';
-import axiosRetry from 'axios-retry';
+const axios = require('axios');
+const axiosRetry = require('axios-retry');
 const apiUrl = 'https://search.wb.ru/exactmatch/sng/common/v9/search';
 
 // Настраиваем axios для повторных попыток в случае ошибки
-axiosRetry(axios, { retries: 3, retryDelay: (retryCount) => retryCount * 100, retryCondition: (error) => axiosRetry.isNetworkOrIdempotentRequestError(error) });
+axiosRetry.default(axios, {
+    retries: 3,
+    retryDelay: (retryCount) => retryCount * 100,
+    retryCondition: (error) => axiosRetry.isNetworkOrIdempotentRequestError(error)
+});
 
-export const getProducts = async (query: string, dest: string, page: number = 1): Promise<any> => {
+const getProducts = async (query, dest, page = 1) => {
     try {
         const url = apiUrl;
-        const params: any = {
+        const params = {
             'ab_testid': 'false',
             'appType': '1',
             'curr': 'rub',
@@ -23,15 +27,11 @@ export const getProducts = async (query: string, dest: string, page: number = 1)
             'suppressSpellcheck': 'false'
         };
 
-        const response = await axios.get(url, {
-            params: params,
-        });
-
+        const response = await axios.get(url, { params });
         return response.data;
-    } catch (error: unknown) {
-        if (error && typeof error === 'object' && 'response' in error) {
-            const axiosError = error as any;
-            console.error('Error fetching products:', axiosError.response?.data || axiosError.message);
+    } catch (error) {
+        if (error && typeof error === 'object' && error.response) {
+            console.error('Error fetching products:', error.response?.data || error.message);
         } else if (error instanceof Error) {
             console.error('Unexpected error:', error.message);
         } else {
@@ -40,3 +40,5 @@ export const getProducts = async (query: string, dest: string, page: number = 1)
         throw error;
     }
 };
+
+module.exports = { getProducts };

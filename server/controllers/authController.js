@@ -1,15 +1,14 @@
-import { Request, Response } from 'express';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import { UserModel } from '../models/userModel';
-import { sendOTP, verifyOTP } from '../smtp/otpService';
-import dotenv from "dotenv";
-import {createSpreadsheetForUser} from "../services/googleSheetService";
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const dotenv = require('dotenv');
+const { UserModel } = require('../models/userModel');
+const { sendOTP } = require('../smtp/otpService');
+const { createSpreadsheetForUser } = require('../services/googleSheetService');
 dotenv.config();
 
 const jwtSecret = process.env.JWT_SECRET || 'yourSecretKey';
 
-export const registerUser = async (req: Request, res: Response) => {
+const registerUser = async (req, res) => {
     console.log('Received request body:', req.body); // Логирование запроса
     const { username, password, email } = req.body;
 
@@ -41,9 +40,7 @@ export const registerUser = async (req: Request, res: Response) => {
     }
 };
 
-
-
-export const loginUser = async (req: Request, res: Response) => {
+const loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     try {
@@ -64,7 +61,7 @@ export const loginUser = async (req: Request, res: Response) => {
     }
 };
 
-export const forgotPassword = async (req: Request, res: Response) => {
+const forgotPassword = async (req, res) => {
     const { email } = req.body;
 
     try {
@@ -83,3 +80,5 @@ export const forgotPassword = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Password reset failed' });
     }
 };
+
+module.exports = { registerUser, loginUser, forgotPassword };

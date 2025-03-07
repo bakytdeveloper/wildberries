@@ -1,13 +1,13 @@
-import express from 'express';
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-import cors from 'cors';
-import queryRoutes from './routes/queryRoutes';
-import authRoutes from './routes/authRoutes';
-import { protect } from './middleware/authMiddleware';
-import otpRoutes from "./routes/otpRoutes";
-import userRoutes from "./routes/userRoutes";
-import queryArticleRoutes from "./routes/queryArticleRoutes";
+const express = require('express');
+const mongoose = require('mongoose');
+const dotenv = require('dotenv');
+const cors = require('cors');
+const queryRoutes = require('./routes/queryRoutes');
+const authRoutes = require('./routes/authRoutes');
+const { protect } = require('./middleware/authMiddleware');
+const otpRoutes = require('./routes/otpRoutes');
+const userRoutes = require('./routes/userRoutes');
+const queryArticleRoutes = require('./routes/queryArticleRoutes');
 
 dotenv.config();
 
@@ -19,7 +19,6 @@ app.use(cors());
 app.use(express.json());
 
 console.log('MONGODB_URI:', process.env.MONGODB_URI); // Логирование строки подключения
-
 
 const connectWithRetry = () => {
     mongoose.connect(urlMongo, { serverSelectionTimeoutMS: 5000 })

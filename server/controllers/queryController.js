@@ -1,24 +1,24 @@
-import { Request, Response } from 'express';
-import { QueryModel } from '../models/queryModel';
-import { fetchAndParseProducts } from '../services/productService';
-import {UserModel} from "../models/userModel";
-import {logging_v2} from "googleapis";
-import {addDataToSheet} from "../services/googleSheetService";
+const { QueryModel } = require('../models/queryModel');
+const { fetchAndParseProducts } = require('../services/productService');
+const { UserModel } = require('../models/userModel');
+const { addDataToSheet } = require('../services/googleSheetService');
 
-export const getQueries = async (req: Request, res: Response) => {
+// Получение всех запросов
+const getQueries = async (req, res) => {
     try {
-        const userId = (req as any).userId; // Получаем идентификатор пользователя из запроса
+        const userId = req.userId; // Получаем идентификатор пользователя из запроса
         const queries = await QueryModel.find({ userId }).sort({ createdAt: -1 });
-        res.json(queries);  // Отправляем JSON ответ
+        res.json(queries); // Отправляем JSON ответ
     } catch (error) {
         console.error('Error fetching queries:', error);
         res.status(500).json({ error: 'Failed to fetch queries' });
     }
 };
 
-export const createQuery = async (req: Request, res: Response) => {
+// Создание нового запроса
+const createQuery = async (req, res) => {
     const { forms } = req.body;
-    const userId = (req as any).userId; // Получаем идентификатор пользователя из запроса
+    const userId = req.userId; // Получаем идентификатор пользователя из запроса
 
     if (!forms || !Array.isArray(forms) || forms.length === 0) {
         res.status(400).json({ error: 'Invalid request format' });
@@ -32,7 +32,7 @@ export const createQuery = async (req: Request, res: Response) => {
         }));
 
         const newQuery = new QueryModel({
-            userId, // Сохраняем идентификатор пользователя
+            userId,
             query: forms.map(form => form.query).join('; '),
             dest: forms.map(form => form.dest).join('; '),
             productTables,
@@ -42,8 +42,6 @@ export const createQuery = async (req: Request, res: Response) => {
         });
 
         await newQuery.save();
-
-        // Добавляем запрос в массив запросов пользователя
         await UserModel.findByIdAndUpdate(userId, { $push: { queries: newQuery._id } });
 
         res.json(newQuery);
@@ -53,23 +51,18 @@ export const createQuery = async (req: Request, res: Response) => {
     }
 };
 
-// queryController.ts
-
-export const deleteQuery = async (req: Request, res: Response) => {
+// Удаление запроса
+const deleteQuery = async (req, res) => {
     try {
         const queryId = req.params.id;
-        const userId = (req as any).userId; // Получаем идентификатор пользователя из запроса
+        const userId = req.userId;
 
-        // Удаляем запрос из базы данных
         const deletedQuery = await QueryModel.findOneAndDelete({ _id: queryId, userId });
-
         if (!deletedQuery) {
             return res.status(404).json({ error: 'Запрос не найден' });
         }
 
-        // Удаляем запрос из массива запросов пользователя
         await UserModel.findByIdAndUpdate(userId, { $pull: { queries: queryId } });
-
         res.json({ message: 'Запрос успешно удален' });
     } catch (error) {
         console.error('Ошибка удаления запроса:', error);
@@ -77,59 +70,60 @@ export const deleteQuery = async (req: Request, res: Response) => {
     }
 };
 
-
 // Экспорт данных в Google Таблицу
-export const exportToGoogleSheet = async (req: Request, res: Response) => {
-    const { queryId, sheetName } = req.body; // получаем идентификатор запроса и имя листа
-    const userId = (req as any).userId;
+const exportToGoogleSheet = async (req, res) => {
+    const { queryId, sheetName } = req.body;
+    const userId = req.userId;
+
     try {
         const query = await QueryModel.findOne({ _id: queryId, userId }).populate('productTables.products');
         if (!query) {
             return res.status(404).json({ error: 'Запрос не найден' });
         }
+
         const user = await UserModel.findById(userId);
         if (!user || !user.spreadsheetId) {
             return res.status(404).json({ error: 'Пользователь или Google Таблица не найдены' });
         }
 
-        // Формируем данные для экспорта
         const data = query.productTables.flatMap((table) =>
             table.products.map((product) => {
-                // Логика для promoPosition
                 const promoPosition = product?.log?.promoPosition ??
                     (product?.page && product.page > 1
                         ? `${product.page}${product.position != null && product.position < 10 ? '0' + product.position : product.position}`
                         : String(product?.position));
 
-                // Логика для position
                 const position = product?.log?.position ??
                     (product?.page && product.page > 1
                         ? `${product.page}${product.position != null && product.position < 10 ? '0' + product.position : product.position}`
                         : String(product?.position));
 
                 return [
-                    String(product?.query || query.query), // Запрос (из продукта или из верхнего уровня)
-                    String(product?.brand || query.brand), // Бренд (из продукта или из верхнего уровня)
-                    String(product?.city || query.city), // Город (из продукта или из верхнего уровня)
-                    String(product?.imageUrl), // Изображение
+                    String(product?.query || query.query),
+                    String(product?.brand || query.brand),
+                    String(product?.city || query.city),
+                    String(product?.imageUrl),
                     String(product?.id),
-                    String(product?.name), // Наименование
-                    promoPosition, // Позиция (из log или page:position)
-                    position, // Прежняя позиция (из log или page:position)
-                    new Date(product?.queryTime || query.createdAt).toLocaleTimeString(), // Время запроса
-                    new Date(product?.queryTime || query.createdAt).toLocaleDateString(), // Дата запроса
+                    String(product?.name),
+                    promoPosition,
+                    position,
+                    new Date(product?.queryTime || query.createdAt).toLocaleTimeString(),
+                    new Date(product?.queryTime || query.createdAt).toLocaleDateString(),
                 ];
             })
         );
 
-        // Логируем данные перед отправкой
-        console.log('DATA:', data);
-
-        // Добавляем данные в Google Таблицу
         await addDataToSheet(user.spreadsheetId, sheetName, data);
         res.json({ message: 'Данные успешно выгружены' });
     } catch (error) {
         console.error('Ошибка выгрузки данных:', error);
         res.status(500).json({ error: 'Ошибка выгрузки данных' });
     }
+};
+
+module.exports = {
+    getQueries,
+    createQuery,
+    deleteQuery,
+    exportToGoogleSheet
 };

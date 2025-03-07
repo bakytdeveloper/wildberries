@@ -1,7 +1,6 @@
-import { Request, Response } from 'express';
-import { sendOTP } from '../smtp/otpService';
+const { sendOTP } = require('../smtp/otpService');
 
-export const sendOTPController = (req: Request, res: Response) => {
+const sendOTPController = (req, res) => {
     const { email } = req.body;
 
     if (!email) {
@@ -16,3 +15,5 @@ export const sendOTPController = (req: Request, res: Response) => {
         res.status(500).json({ message: 'Error sending OTP' });
     }
 };
+
+module.exports = { sendOTPController };

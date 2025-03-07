@@ -1,5 +1,5 @@
-import { google } from 'googleapis';
-import dotenv from 'dotenv';
+const { google } = require('googleapis');
+const dotenv = require('dotenv');
 
 dotenv.config();
 
@@ -25,7 +25,7 @@ const getDriveInstance = () => google.drive({ version: 'v3', auth });
 
 const TEMPLATE_SPREADSHEET_ID = '1SARDBpZGJnHAIw6al034_ZGsrplWCHCe1MqxaVszwyc';
 
-export async function createSpreadsheetForUser(email: string) {
+async function createSpreadsheetForUser(email) {
     const drive = getDriveInstance();
     try {
         const copyResponse = await drive.files.copy({
@@ -57,7 +57,7 @@ export async function createSpreadsheetForUser(email: string) {
     }
 }
 
-export async function getLastRow(sheetId: string, sheetName: string): Promise<number> {
+async function getLastRow(sheetId, sheetName) {
     const sheets = getSheetsInstance();
     try {
         const response = await sheets.spreadsheets.values.get({
@@ -73,7 +73,7 @@ export async function getLastRow(sheetId: string, sheetName: string): Promise<nu
     }
 }
 
-export async function addDataToSheet(sheetId: string, sheetName: string, data: any[]) {
+async function addDataToSheet(sheetId, sheetName, data) {
     const sheets = getSheetsInstance();
     console.log("DATA:", data);
     try {
@@ -114,3 +114,9 @@ export async function addDataToSheet(sheetId: string, sheetName: string, data: a
         throw error;
     }
 }
+
+module.exports = {
+    createSpreadsheetForUser,
+    getLastRow,
+    addDataToSheet
+};
