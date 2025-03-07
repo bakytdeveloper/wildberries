@@ -2,7 +2,7 @@ import Accordion from 'react-bootstrap/Accordion';
 import "toastify-js/src/toastify.css";
 import '../styles.css';
 import React, { useState, useEffect, useRef } from 'react';
-import { Form, Button, InputGroup, DropdownButton, Dropdown, Alert } from 'react-bootstrap';
+import { Form, Button, InputGroup, DropdownButton, Dropdown, Alert, Spinner } from 'react-bootstrap';
 import Toastify from 'toastify-js';
 import { Typeahead } from 'react-bootstrap-typeahead';
 import cityDestinations from '../utils/cityDestinations';
@@ -39,6 +39,7 @@ function SearchByArticle() {
     const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: true }]);
     const [suggestions, setSuggestions] = useState([]);
     const [articleSuggestions, setArticleSuggestions] = useState([]);
+    const [exportingStates, setExportingStates] = useState({}); // Новое состояние для отслеживания выгрузки
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -111,7 +112,6 @@ function SearchByArticle() {
         setShowProfile(false);
     };
 
-
     const handleQueryChange = (selected, formId) => {
         let value = '';
         if (selected.length > 0) {
@@ -130,7 +130,6 @@ function SearchByArticle() {
         setRequestForms(requestForms.map(f => f.id === formId ? { ...f, article: value } : f));
     };
 
-
     const handleQueryInputChange = (event, formId) => {
         const text = event.target.value;
         console.log('Query input change:', text);
@@ -142,7 +141,6 @@ function SearchByArticle() {
         console.log('Article input change:', text);
         setRequestForms(requestForms.map(f => f.id === formId ? { ...f, article: text } : f));
     };
-
 
     const handleCityChange = (city, formId) => {
         setRequestForms(requestForms.map(f => f.id === formId ? { ...f, city: city } : f));
@@ -186,7 +184,6 @@ function SearchByArticle() {
         setModalImage(null);
         document.body.style.overflow = 'auto';
     };
-
 
     const fetchProductsByArticle = async () => {
         if (isRequesting) return;
@@ -298,7 +295,6 @@ function SearchByArticle() {
         }
     };
 
-
     const handleProductClick = (searchQuery, page, position) => {
         const url = `https://www.wildberries.ru/catalog/0/search.aspx?page=${page}&sort=popular&search=${encodeURIComponent(searchQuery)}#position=${position}`;
         window.open(url, '_blank');
@@ -344,6 +340,9 @@ function SearchByArticle() {
     };
 
     const handleExportClick = async (queryId, sheetName) => {
+        if (exportingStates[queryId]) return; // Блокируем повторные клики
+        setExportingStates((prev) => ({ ...prev, [queryId]: true })); // Устанавливаем состояние "выгрузка в процессе" для конкретной кнопки
+
         try {
             const token = sessionStorage.getItem('token');
             const response = await axios.post(`${API_HOST}/api/article/export`, { queryId, sheetName }, {
@@ -369,6 +368,8 @@ function SearchByArticle() {
                 position: 'right',
                 style: { background: '#ff0000' }
             }).showToast();
+        } finally {
+            setExportingStates((prev) => ({ ...prev, [queryId]: false })); // Сбрасываем состояние после завершения
         }
     };
 
@@ -489,13 +490,28 @@ function SearchByArticle() {
                                             <div className="flex-grow-0">{index + 1})</div>
                                             <div className="flex-grow-1">{headerTextItems}</div>
                                             <div className="date-time">Дата: {date}, Время: {time}</div>
-                                            <div className="upload-to-google-spreadsheet"
-                                                 onClick={(event) => {
-                                                     event.stopPropagation(); // Останавливаем всплытие события
-                                                     handleExportClick(queryData._id, 'Артикул').then(r => r);
-                                                 }}
+                                            <div
+                                                className="upload-to-google-spreadsheet"
+                                                onClick={(event) => {
+                                                    if (exportingStates[queryData._id]) return; // Блокируем клики, если выгрузка в процессе
+                                                    event.stopPropagation(); // Останавливаем всплытие события
+                                                    handleExportClick(queryData._id, 'Артикул').then(r => r);
+                                                }}
+                                                style={{ cursor: exportingStates[queryData._id] ? 'not-allowed' : 'pointer' }} // Меняем курсор, если выгрузка в процессе
+                                                title={exportingStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Google Таблицу'}
                                             >
-                                                <span>Выгрузить</span>
+                                                {exportingStates[queryData._id] ? (
+                                                    <Spinner
+                                                        as="span"
+                                                        animation="border"
+                                                        size="sm"
+                                                        role="status"
+                                                        aria-hidden="true"
+                                                        style={{ width: '1rem', height: '1rem' }} // Фиксируем размер спиннера
+                                                    />
+                                                ) : (
+                                                    <span>Выгрузить</span>
+                                                )}
                                             </div>
                                             <div variant="danger" className="delete-button" onClick={(event) => handleDeleteClick(queryData._id, event)}>
                                                 <FaTimes />
@@ -603,13 +619,3 @@ function SearchByArticle() {
 }
 
 export default SearchByArticle;
-
-
-
-
-
-
-
-
-
-

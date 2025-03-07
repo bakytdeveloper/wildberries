@@ -385,6 +385,30 @@ tr:hover {
     border-radius: 10px;
 }
 
+.upload-to-google-spreadsheet {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100px; /* Фиксированная ширина кнопки */
+    height: 30px; /* Фиксированная высота кнопки */
+    padding: 0 10px; /* Отступы внутри кнопки */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #07a6ee;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.upload-to-google-spreadsheet:hover {
+    background-color: #e9ecef;
+    color: black;
+}
+
+.upload-to-google-spreadsheet:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .close {
     position: absolute;
     top: 10px;

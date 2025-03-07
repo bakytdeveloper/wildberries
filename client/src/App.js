@@ -2,7 +2,7 @@ import Accordion from 'react-bootstrap/Accordion';
 import "toastify-js/src/toastify.css";
 import './styles.css';
 import React, { useState, useEffect, useRef } from 'react';
-import { Form, Button, InputGroup, DropdownButton, Dropdown, Alert } from 'react-bootstrap';
+import { Form, Button, InputGroup, DropdownButton, Dropdown, Alert, Spinner } from 'react-bootstrap'; // Добавлен Spinner
 import Toastify from 'toastify-js';
 import axios from 'axios';
 import { Typeahead } from 'react-bootstrap-typeahead'; // Импортируем Typeahead
@@ -39,7 +39,8 @@ function App() {
   const [deleteQueryId, setDeleteQueryId] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
   const [brandSuggestions, setBrandSuggestions] = useState([]);
-
+  const [isExporting, setIsExporting] = useState(false); // Новое состояние для отслеживания выгрузки
+  const [exportingStates, setExportingStates] = useState({});
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -66,8 +67,6 @@ function App() {
       setFilteredQueries(allQueries.filter(query => query.query.toLowerCase().includes(lowerCaseSearchTerm)));
     }
   }, [searchTerm, allQueries]);
-
-
 
   const fetchSavedQueries = async () => {
     try {
@@ -114,7 +113,6 @@ function App() {
     setShowProfile(false);
   };
 
-
   const handleQueryChange = (selected, formId) => {
     console.log('Query selected:', selected);
     const value = selected.length > 0 ? selected[0].label : '';
@@ -140,7 +138,6 @@ function App() {
 
     console.log('Updated form:', requestForms.find(f => f.id === formId));
   };
-
 
   const handleCityChange = (city, formId) => {
     setRequestForms(requestForms.map(f => f.id === formId ? { ...f, city: city } : f));
@@ -199,7 +196,6 @@ function App() {
     setRequestForms(prevForms => prevForms.map(f =>
         f.id === formId ? { ...f, brand: text.target.value } : f ));
   };
-
 
   const fetchProducts = async () => {
     if (isRequesting) return;
@@ -315,7 +311,6 @@ function App() {
     window.open(url, '_blank'); // Открывает в новой вкладке
   };
 
-
   const handleDeleteClick = (queryId, event) => {
     event.stopPropagation(); // Останавливаем распространение события
     setDeleteQueryId(queryId);
@@ -354,6 +349,9 @@ function App() {
   };
 
   const handleExportClick = async (queryId, sheetName) => {
+    if (exportingStates[queryId]) return; // Блокируем повторные клики
+    setExportingStates((prev) => ({ ...prev, [queryId]: true })); // Устанавливаем состояние "выгрузка в процессе" для конкретной кнопки
+
     try {
       const token = sessionStorage.getItem('token');
       const response = await axios.post(`${API_HOST}/api/queries/export`, { queryId, sheetName }, {
@@ -379,6 +377,8 @@ function App() {
         position: 'right',
         style: { background: '#ff0000' }
       }).showToast();
+    } finally {
+      setExportingStates((prev) => ({ ...prev, [queryId]: false })); // Сбрасываем состояние после завершения
     }
   };
 
@@ -500,13 +500,28 @@ function App() {
                             <div className="flex-grow-0">{index + 1})</div>
                             <div className="flex-grow-1">{headerTextItems}</div>
                             <div className="date-time">Дата: {date}, Время: {time}</div>
-                            <div className="upload-to-google-spreadsheet"
-                                 onClick={(event) => {
-                                   event.stopPropagation(); // Останавливаем всплытие события
-                                   handleExportClick(queryData._id, 'Бренд').then(r => r);
-                                 }}
+                            <div
+                                className="upload-to-google-spreadsheet"
+                                onClick={(event) => {
+                                  if (exportingStates[queryData._id]) return; // Блокируем клики, если выгрузка в процессе
+                                  event.stopPropagation(); // Останавливаем всплытие события
+                                  handleExportClick(queryData._id, 'Бренд').then(r => r);
+                                }}
+                                style={{ cursor: exportingStates[queryData._id] ? 'not-allowed' : 'pointer' }} // Меняем курсор, если выгрузка в процессе
+                                title={exportingStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Google Таблицу'}
                             >
-                              <span>Выгрузить</span>
+                              {exportingStates[queryData._id] ? (
+                                  <Spinner
+                                      as="span"
+                                      animation="border"
+                                      size="sm"
+                                      role="status"
+                                      aria-hidden="true"
+                                      style={{ width: '1rem', height: '1rem' }} // Фиксируем размер спиннера
+                                  />
+                              ) : (
+                                  <span>Выгрузить</span>
+                              )}
                             </div>
                             <div variant="danger" className="delete-button" onClick={(event) => handleDeleteClick(queryData._id, event)}>
                               <FaTimes />
