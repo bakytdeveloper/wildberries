@@ -18,6 +18,11 @@ const LoginForm = ({ API_HOST, setIsAuthenticated, setShowProfile, setShowForgot
             sessionStorage.setItem('token', response.data.token);
             setIsAuthenticated(true);
             setShowProfile(true);
+
+            // Программная перезагрузка страницы через 100 мс
+            setTimeout(() => {
+                window.location.reload();
+            }, 100);
         } catch (error) {
             Toastify({
                 text: 'Ошибка авторизации',
@@ -30,6 +35,7 @@ const LoginForm = ({ API_HOST, setIsAuthenticated, setShowProfile, setShowForgot
             setLoading(false); // Разблокируем форму
         }
     };
+
 
     return (
         <Form onSubmit={handleLogin} className="auth-form">
