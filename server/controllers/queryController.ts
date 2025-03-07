@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { QueryModel } from '../models/queryModel';
 import { fetchAndParseProducts } from '../services/productService';
 import {UserModel} from "../models/userModel";
+import {logging_v2} from "googleapis";
+import {addDataToSheet} from "../services/googleSheetService";
 
 export const getQueries = async (req: Request, res: Response) => {
     try {
@@ -72,5 +74,62 @@ export const deleteQuery = async (req: Request, res: Response) => {
     } catch (error) {
         console.error('Ошибка удаления запроса:', error);
         res.status(500).json({ error: 'Ошибка удаления запроса' });
+    }
+};
+
+
+// Экспорт данных в Google Таблицу
+export const exportToGoogleSheet = async (req: Request, res: Response) => {
+    const { queryId, sheetName } = req.body; // получаем идентификатор запроса и имя листа
+    const userId = (req as any).userId;
+    try {
+        const query = await QueryModel.findOne({ _id: queryId, userId }).populate('productTables.products');
+        if (!query) {
+            return res.status(404).json({ error: 'Запрос не найден' });
+        }
+        const user = await UserModel.findById(userId);
+        if (!user || !user.spreadsheetId) {
+            return res.status(404).json({ error: 'Пользователь или Google Таблица не найдены' });
+        }
+
+        // Формируем данные для экспорта
+        const data = query.productTables.flatMap((table) =>
+            table.products.map((product) => {
+                // Логика для promoPosition
+                const promoPosition = product?.log?.promoPosition ??
+                    (product?.page && product.page > 1
+                        ? `${product.page}${product.position != null && product.position < 10 ? '0' + product.position : product.position}`
+                        : String(product?.position));
+
+                // Логика для position
+                const position = product?.log?.position ??
+                    (product?.page && product.page > 1
+                        ? `${product.page}${product.position != null && product.position < 10 ? '0' + product.position : product.position}`
+                        : String(product?.position));
+
+                return [
+                    String(product?.query || query.query), // Запрос (из продукта или из верхнего уровня)
+                    String(product?.brand || query.brand), // Бренд (из продукта или из верхнего уровня)
+                    String(product?.city || query.city), // Город (из продукта или из верхнего уровня)
+                    String(product?.imageUrl), // Изображение
+                    String(product?.id),
+                    String(product?.name), // Наименование
+                    promoPosition, // Позиция (из log или page:position)
+                    position, // Прежняя позиция (из log или page:position)
+                    new Date(product?.queryTime || query.createdAt).toLocaleTimeString(), // Время запроса
+                    new Date(product?.queryTime || query.createdAt).toLocaleDateString(), // Дата запроса
+                ];
+            })
+        );
+
+        // Логируем данные перед отправкой
+        console.log('DATA:', data);
+
+        // Добавляем данные в Google Таблицу
+        await addDataToSheet(user.spreadsheetId, sheetName, data);
+        res.json({ message: 'Данные успешно выгружены' });
+    } catch (error) {
+        console.error('Ошибка выгрузки данных:', error);
+        res.status(500).json({ error: 'Ошибка выгрузки данных' });
     }
 };

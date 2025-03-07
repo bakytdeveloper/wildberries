@@ -119,6 +119,12 @@ function App() {
     console.log('Query selected:', selected);
     const value = selected.length > 0 ? selected[0].label : '';
     setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: value } : f));
+
+    // Обновляем список suggestions
+    if (value && !suggestions.some(suggestion => suggestion.label === value)) {
+      setSuggestions(prevSuggestions => [...prevSuggestions, { label: value }]);
+    }
+
     console.log('Updated form:', requestForms.find(f => f.id === formId));
   };
 
@@ -126,6 +132,12 @@ function App() {
     console.log('Brand selected:', selected);
     const value = selected.length > 0 ? selected[0].label : '';
     setRequestForms(requestForms.map(f => f.id === formId ? { ...f, brand: value } : f));
+
+    // Обновляем список brandSuggestions
+    if (value && !brandSuggestions.some(brand => brand.label === value)) {
+      setBrandSuggestions(prevBrandSuggestions => [...prevBrandSuggestions, { label: value }]);
+    }
+
     console.log('Updated form:', requestForms.find(f => f.id === formId));
   };
 
@@ -183,23 +195,20 @@ function App() {
 
   const handleBrandInputChange = (event, formId) => {
     const text = event.target.value;
-    console.log('Brand input change:', text.target.value);
+    console.log('Brand input change:', text);
     setRequestForms(prevForms => prevForms.map(f =>
-        f.id === formId ? { ...f, brand: text.target.value } : f
-    ));
+        f.id === formId ? { ...f, brand: text.target.value } : f ));
   };
+
 
   const fetchProducts = async () => {
     if (isRequesting) return;
-
     console.log('Request forms before validation:', requestForms);
-
     const validForms = requestForms.filter(form => {
       const query = form.query && typeof form.query === 'string' ? form.query.trim() : '';
       const brand = form.brand && typeof form.brand === 'string' ? form.brand.trim() : '';
       return query !== '' && brand !== '';
     });
-
     console.log('Valid forms after validation:', validForms);
     if (validForms.length === 0) {
       Toastify({
@@ -211,25 +220,21 @@ function App() {
       }).showToast();
       return;
     }
-
     setIsRequesting(true);
     setLoadingMessage('Загрузка...');
     setErrorMessage('');
     setSuccessMessage('');
-
     try {
       const token = sessionStorage.getItem('token');
       const trimmedForms = validForms.map(form => ({
         ...form,
-        query: form.query && typeof form.query === 'string' ? form.query.trim() : '',
-        brand: form.brand && typeof form.brand === 'string' ? form.brand.trim() : '',
+        query: form.query.trim(),
+        brand: form.brand.trim(),
         dest: cityDestinations[form.city],
         city: form.city,
         queryTime: new Date().toISOString()
       }));
-
       console.log('Trimmed forms before sending:', trimmedForms);
-
       const response = await fetch(`${API_HOST}/api/queries`, {
         method: 'POST',
         headers: {
@@ -238,18 +243,14 @@ function App() {
         },
         body: JSON.stringify({ forms: trimmedForms })
       });
-
       if (response.status !== 200) {
         const result = await response.json();
         throw new Error(result.error || 'Ошибка выполнения запроса');
       }
-
       const result = await response.json();
       console.log('Response from server:', result);
-
       const totalRequests = validForms.length;
       const successfulRequests = result.productTables.filter(table => table.products.length > 0).length;
-
       if (successfulRequests === totalRequests) {
         setSuccessMessage('Запрос выполнен успешно!');
       } else if (successfulRequests > 0) {
@@ -257,36 +258,39 @@ function App() {
       } else {
         setSuccessMessage('По запросу ничего не найдено');
       }
-
       setAllQueries([result, ...allQueries]);
       setFilteredQueries([result, ...allQueries]);
 
-      const newQueries = validForms.map(form => form.query && typeof form.query === 'string' ? form.query.trim() : '');
-      const newSuggestions = [...suggestions];
-      newQueries.forEach(query => {
-        if (!newSuggestions.includes(query)) {
-          newSuggestions.push(query);
-        }
-      });
-      setSuggestions(newSuggestions);
+      // Обновляем списки suggestions и brandSuggestions
+      const newQueries = validForms.map(form => form.query.trim());
+      const newBrands = validForms.map(form => form.brand.trim());
 
-      const newBrands = validForms.map(form => form.brand && typeof form.brand === 'string' ? form.brand.trim() : '');
-      const newBrandSuggestions = [...brandSuggestions];
-      newBrands.forEach(brand => {
-        if (!newBrandSuggestions.includes(brand)) {
-          newBrandSuggestions.push(brand);
-        }
+      setSuggestions(prevSuggestions => {
+        const updatedSuggestions = [...prevSuggestions];
+        newQueries.forEach(query => {
+          if (!updatedSuggestions.some(suggestion => suggestion.label === query)) {
+            updatedSuggestions.push({ label: query });
+          }
+        });
+        return updatedSuggestions;
       });
-      setBrandSuggestions(newBrandSuggestions);
+
+      setBrandSuggestions(prevBrandSuggestions => {
+        const updatedBrandSuggestions = [...prevBrandSuggestions];
+        newBrands.forEach(brand => {
+          if (!updatedBrandSuggestions.some(brandSuggestion => brandSuggestion.label === brand)) {
+            updatedBrandSuggestions.push({ label: brand });
+          }
+        });
+        return updatedBrandSuggestions;
+      });
 
       setLoadingMessage('');
       setRequestForms([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
       setActiveKey('0');
-
       setTimeout(() => {
         setSuccessMessage('');
       }, 3000);
-
       setTimeout(() => {
         const newAccordionItem = document.querySelector(`.accordion .accordion-item:first-child`);
         if (newAccordionItem) {
@@ -300,7 +304,6 @@ function App() {
       setIsRequesting(false);
     }
   };
-
 
   const handleProductClick = (searchQuery, page, position) => {
     const url = `https://www.wildberries.ru/catalog/0/search.aspx?page=${page}&sort=popular&search=${encodeURIComponent(searchQuery)}#position=${position}`;
@@ -347,6 +350,35 @@ function App() {
           style: { background: '#ff0000' }
         }).showToast();
       }
+    }
+  };
+
+  const handleExportClick = async (queryId, sheetName) => {
+    try {
+      const token = sessionStorage.getItem('token');
+      const response = await axios.post(`${API_HOST}/api/queries/export`, { queryId, sheetName }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('Выгрузка данных:', response.data);
+      Toastify({
+        text: 'Данные успешно выгружены в Google Таблицу.',
+        duration: 3000,
+        gravity: 'top',
+        position: 'right',
+        style: { background: '#00cc00' }
+      }).showToast();
+    } catch (error) {
+      console.error('Ошибка выгрузки данных:', error);
+      Toastify({
+        text: 'Ошибка выгрузки данных.',
+        duration: 3000,
+        gravity: 'top',
+        position: 'right',
+        style: { background: '#ff0000' }
+      }).showToast();
     }
   };
 
@@ -468,6 +500,14 @@ function App() {
                             <div className="flex-grow-0">{index + 1})</div>
                             <div className="flex-grow-1">{headerTextItems}</div>
                             <div className="date-time">Дата: {date}, Время: {time}</div>
+                            <div className="upload-to-google-spreadsheet"
+                                 onClick={(event) => {
+                                   event.stopPropagation(); // Останавливаем всплытие события
+                                   handleExportClick(queryData._id, 'Бренд').then(r => r);
+                                 }}
+                            >
+                              <span>Выгрузить</span>
+                            </div>
                             <div variant="danger" className="delete-button" onClick={(event) => handleDeleteClick(queryData._id, event)}>
                               <FaTimes />
                             </div>
@@ -488,10 +528,10 @@ function App() {
                                             <tr>
                                               <th className="th_table">№</th>
                                               <th className="th_table">Картинка</th>
-                                              <th className="th_table">Артикул</th>
+                                              <th className="th_table">Бренд</th>
                                               <th className="th_table">Позиция</th>
                                               <th className="th_table">Прежняя Позиция</th>
-                                              <th className="th_table">Бренд</th>
+                                              <th className="th_table">Артикул</th>
                                               <th className="th_table">Наименование</th>
                                               <th className="th_table">Запрос данных</th>
                                               <th className="th_table">Время запроса</th>
@@ -515,14 +555,15 @@ function App() {
                                                           onClick={() => handleImageClick(product.imageUrl)}
                                                       />
                                                     </td>
+                                                    <td className="td_table">{product.brand}</td>
                                                     <td className="td_table td_table_article" onClick={() => handlePageRedirect(product.id)}>
                                                       {product.id}
                                                     </td>
+
                                                     <td className="td_table td_table_page" onClick={() => handleProductClick(queryData.query.split('; ')[tableIndex], page, position)}>
                                                       {product.log?.promoPosition || (page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position)}
                                                     </td>
                                                     <td className="td_table">{product.log?.position || (page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position)}</td>
-                                                    <td className="td_table">{product.brand}</td>
                                                     <td className="td_table">{product.name}</td>
                                                     <td className="td_table">{date}</td>
                                                     <td className="td_table">{time}</td>

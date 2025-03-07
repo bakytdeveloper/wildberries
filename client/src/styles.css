@@ -234,6 +234,21 @@ table {
     border-collapse: collapse;
 }
 
+.upload-to-google-spreadsheet {
+    background: #35cbfa;
+    border: 2px solid #35cbfa;
+    border-radius: 4px;
+    padding: 4px 7px;
+    font-weight: bold;
+    margin-right: 10px;
+
+}
+
+.upload-to-google-spreadsheet:hover {
+    border: 2px solid bisque;
+    background: #0e9fcb;
+}
+
 th, td {
     border: 1px solid #c3bfbf !important;
     padding: 8px;
@@ -317,7 +332,7 @@ tr:hover {
 }
 
 .td_table_image:hover {
-   background: white;
+    background: white;
 }
 
 .flex-grow-0 {

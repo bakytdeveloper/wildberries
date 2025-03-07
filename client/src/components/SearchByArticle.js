@@ -13,6 +13,7 @@ import ImageModal from './ImageModal';
 import { FaTimes } from 'react-icons/fa';
 import { Modal } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
+import axios from "axios";
 
 const API_HOST = process.env.REACT_APP_API_HOST;
 
@@ -186,101 +187,6 @@ function SearchByArticle() {
         document.body.style.overflow = 'auto';
     };
 
-    // const fetchProductsByArticle = async () => {
-    //     if (isRequesting) return;
-    //     console.log('Request forms before validation:', requestForms);
-    //     const validForms = requestForms.filter(form => {
-    //         const query = form.query ? form.query.trim() : '';
-    //         const article = form.article ? String(form.article).trim() : ''; // Конвертация в строку
-    //         return query !== '' && article !== '';
-    //     });
-    //     console.log('Valid forms after validation:', validForms);
-    //     if (validForms.length === 0) {
-    //         Toastify({
-    //             text: "Все формы должны быть заполнены.",
-    //             duration: 3000,
-    //             gravity: "top",
-    //             position: "right",
-    //             style: { background: '#ff0000' }
-    //         }).showToast();
-    //         return;
-    //     }
-    //     setIsRequesting(true);
-    //     setLoadingMessage('Загрузка...');
-    //     setErrorMessage('');
-    //     setSuccessMessage('');
-    //     try {
-    //         const token = sessionStorage.getItem('token');
-    //         const trimmedForms = validForms.map(form => ({
-    //             ...form,
-    //             query: form.query ? form.query.trim() : '',
-    //             article: form.article ? String(form.article).trim() : '', // Конвертация в строку
-    //             dest: cityDestinations[form.city],
-    //             city: form.city,
-    //             queryTime: new Date().toISOString()
-    //         }));
-    //         console.log('Trimmed forms before sending:', trimmedForms);
-    //         const response = await fetch(`${API_HOST}/api/article`, {
-    //             method: 'POST',
-    //             headers: {
-    //                 'Content-Type': 'application/json',
-    //                 'Authorization': `Bearer ${token}`
-    //             },
-    //             body: JSON.stringify({ forms: trimmedForms })
-    //         });
-    //         if (response.status !== 200) {
-    //             const result = await response.json();
-    //             throw new Error(result.error || 'Ошибка выполнения запроса');
-    //         }
-    //         const result = await response.json();
-    //         console.log('Response from server:', result);
-    //         const totalRequests = validForms.length;
-    //         const successfulRequests = result.productTables.filter(table => table.products.length > 0).length;
-    //         if (successfulRequests === totalRequests) {
-    //             setSuccessMessage('Запрос выполнен успешно!');
-    //         } else if (successfulRequests > 0) {
-    //             setSuccessMessage('Запрос выполнен, но не все ответы получены');
-    //         } else {
-    //             setSuccessMessage('По запросу ничего не найдено');
-    //         }
-    //         setAllQueries([result, ...allQueries]);
-    //         setFilteredQueries([result, ...allQueries]);
-    //         const newQueries = validForms.map(form => form.query ? form.query.trim() : '');
-    //         const newSuggestions = [...suggestions];
-    //         newQueries.forEach(query => {
-    //             if (!newSuggestions.includes(query)) {
-    //                 newSuggestions.push(query);
-    //             }
-    //         });
-    //         setSuggestions(newSuggestions);
-    //         const newArticles = validForms.map(form => form.article ? form.article.trim() : '');
-    //         const newArticleSuggestions = [...articleSuggestions];
-    //         newArticles.forEach(article => {
-    //             if (!newArticleSuggestions.includes(article)) {
-    //                 newArticleSuggestions.push(article);
-    //             }
-    //         });
-    //         setArticleSuggestions(newArticleSuggestions);
-    //         setLoadingMessage('');
-    //         setRequestForms([{ id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: true }]);
-    //         setActiveKey('0');
-    //         setTimeout(() => {
-    //             setSuccessMessage('');
-    //         }, 3000);
-    //         setTimeout(() => {
-    //             const newAccordionItem = document.querySelector(`.accordion .accordion-item:first-child`);
-    //             if (newAccordionItem) {
-    //                 newAccordionItem.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    //             }
-    //         }, 100);
-    //     } catch (error) {
-    //         console.error('Error fetching products:', error);
-    //         setErrorMessage('Ошибка выполнения запроса');
-    //     } finally {
-    //         setIsRequesting(false);
-    //     }
-    // };
-
 
     const fetchProductsByArticle = async () => {
         if (isRequesting) return;
@@ -437,6 +343,35 @@ function SearchByArticle() {
         }
     };
 
+    const handleExportClick = async (queryId, sheetName) => {
+        try {
+            const token = sessionStorage.getItem('token');
+            const response = await axios.post(`${API_HOST}/api/article/export`, { queryId, sheetName }, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            console.log('Выгрузка данных:', response.data);
+            Toastify({
+                text: 'Данные успешно выгружены в Google Таблицу.',
+                duration: 3000,
+                gravity: 'top',
+                position: 'right',
+                style: { background: '#00cc00' }
+            }).showToast();
+        } catch (error) {
+            console.error('Ошибка выгрузки данных:', error);
+            Toastify({
+                text: 'Ошибка выгрузки данных.',
+                duration: 3000,
+                gravity: 'top',
+                position: 'right',
+                style: { background: '#ff0000' }
+            }).showToast();
+        }
+    };
+
     return (
         <div>
             <header>
@@ -554,6 +489,14 @@ function SearchByArticle() {
                                             <div className="flex-grow-0">{index + 1})</div>
                                             <div className="flex-grow-1">{headerTextItems}</div>
                                             <div className="date-time">Дата: {date}, Время: {time}</div>
+                                            <div className="upload-to-google-spreadsheet"
+                                                 onClick={(event) => {
+                                                     event.stopPropagation(); // Останавливаем всплытие события
+                                                     handleExportClick(queryData._id, 'Артикул').then(r => r);
+                                                 }}
+                                            >
+                                                <span>Выгрузить</span>
+                                            </div>
                                             <div variant="danger" className="delete-button" onClick={(event) => handleDeleteClick(queryData._id, event)}>
                                                 <FaTimes />
                                             </div>

@@ -5,6 +5,7 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     queries: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Query' }],
+    spreadsheetId: { type: String }, // иидентификатора Google Таблицы
     createdAt: { type: Date, default: Date.now }
 });
 

@@ -18,6 +18,9 @@ const port = process.env.PORT || 5505;
 app.use(cors());
 app.use(express.json());
 
+console.log('MONGODB_URI:', process.env.MONGODB_URI); // Логирование строки подключения
+
+
 const connectWithRetry = () => {
     mongoose.connect(urlMongo, { serverSelectionTimeoutMS: 5000 })
         .then(() => {

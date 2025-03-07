@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { UserModel } from '../models/userModel';
 import { sendOTP, verifyOTP } from '../smtp/otpService';
 import dotenv from "dotenv";
+import {createSpreadsheetForUser} from "../services/googleSheetService";
 dotenv.config();
 
 const jwtSecret = process.env.JWT_SECRET || 'yourSecretKey';
@@ -24,6 +25,12 @@ export const registerUser = async (req: Request, res: Response) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = new UserModel({ username, email, password: hashedPassword });
+
+        // Создание Google Таблицы для пользователя
+        const spreadsheetId = await createSpreadsheetForUser(email);
+        console.log('Spreadsheet ID:', spreadsheetId); // Логирование Spreadsheet ID
+        newUser.spreadsheetId = spreadsheetId;
+
         await newUser.save();
 
         const token = jwt.sign({ userId: newUser._id }, jwtSecret, { expiresIn: '24h' });
@@ -33,6 +40,8 @@ export const registerUser = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Registration failed' });
     }
 };
+
+
 
 export const loginUser = async (req: Request, res: Response) => {
     const { email, password } = req.body;

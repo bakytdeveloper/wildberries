@@ -17,7 +17,9 @@ const RegisterForm = ({API_HOST, setIsAuthenticated, setShowProfile, setShowRegi
             sessionStorage.setItem('token', response.data.token);
             setIsAuthenticated(true);
             setShowProfile(true);
-            Toastify({ text: `Здравствуйте, ${username}! Вы были успешно зарегистрированы.`, duration: 3000, gravity: 'top', position: 'right', style: { background: '#00cc00' } }).showToast();
+            Toastify({ text: `Здравствуйте, ${username}! 
+                            Вы были успешно зарегистрированы.
+                          И отправили таблицу на Вашу эл.почту`, duration: 3000, gravity: 'top', position: 'right', style: { background: '#00cc00' } }).showToast();
         } catch (error) {
             Toastify({ text: error.response?.data?.message || 'Ошибка регистрации', duration: 3000, gravity: 'top', position: 'right', style: { background: '#ff0000' } }).showToast();
         }

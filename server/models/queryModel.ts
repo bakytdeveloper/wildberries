@@ -5,10 +5,15 @@ const productSchema = new mongoose.Schema({
     imageUrl: String,
     page: Number,
     position: Number,
+    query: String, // Новое поле
+    city: String,  // Новое поле
+    dest: String,  // Новое поле
     brand: String,
+    queryTime: String,
     name: String,
     log: {
-        promoPosition: Number, position: Number
+        promoPosition: { type: Number, required: false }, // Не обязательное поле
+        position: { type: Number, required: false }       // Не обязательное поле
     }
 });
 
