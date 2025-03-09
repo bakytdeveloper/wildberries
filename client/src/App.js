@@ -34,7 +34,7 @@ function App() {
   const [showForgotPasswordForm, setShowForgotPasswordForm] = useState(false);
   const accordionRef = useRef(null);
   const [showProfile, setShowProfile] = useState(false);
-  const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
+  // const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteQueryId, setDeleteQueryId] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
@@ -42,6 +42,30 @@ function App() {
   const [isExporting, setIsExporting] = useState(false); // Новое состояние для отслеживания выгрузки
   const [exportingStates, setExportingStates] = useState({});
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
+  const queryTypeaheadRefs = useRef([]);
+  const brandTypeaheadRefs = useRef([]);
+
+  // Инициализируем refs для каждого Typeahead
+  useEffect(() => {
+    queryTypeaheadRefs.current = queryTypeaheadRefs.current.slice(0, requestForms.length);
+    brandTypeaheadRefs.current = brandTypeaheadRefs.current.slice(0, requestForms.length);
+  }, [requestForms]);
+
+  const clearInput = (formId) => {
+    setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: '', brand: '', city: 'г.Дмитров' } : f));
+
+    // Очищаем Typeahead
+    const formIndex = requestForms.findIndex(f => f.id === formId);
+    if (queryTypeaheadRefs.current[formIndex]) {
+      queryTypeaheadRefs.current[formIndex].clear();
+    }
+    if (brandTypeaheadRefs.current[formIndex]) {
+      brandTypeaheadRefs.current[formIndex].clear();
+    }
+  };
+
+
 
   useEffect(() => {
     const handleResize = () => {
@@ -170,9 +194,9 @@ function App() {
     }
   };
 
-  const clearInput = (formId) => {
-    setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: '', brand: '', city: 'г.Дмитров' } : f));
-  };
+  // const clearInput = (formId) => {
+  //   setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: '', brand: '', city: 'г.Дмитров' } : f));
+  // };
 
   const handleKeyPress = (e, formId) => {
     if (e.key === 'Enter') {
@@ -449,6 +473,7 @@ function App() {
                                     allowNew
                                     newSelectionPrefix="Новый запрос: "
                                     onKeyDown={(e) => handleKeyPress(e, form.id)}
+                                    ref={(ref) => (queryTypeaheadRefs.current[index] = ref)} // Сохраняем ref
                                 />
                                 <Typeahead
                                     id={`brand-input-${form.id}`}
@@ -461,6 +486,7 @@ function App() {
                                     allowNew
                                     newSelectionPrefix="Новый бренд: "
                                     onKeyDown={(e) => handleKeyPress(e, form.id)}
+                                    ref={(ref) => (brandTypeaheadRefs.current[index] = ref)} // Сохраняем ref
                                 />
                                 <DropdownButton id="dropdown-basic-button" title={form.city} onSelect={(city) => handleCityChange(city, form.id)}>
                                   {Object.keys(cityDestinations).map((city) => (
@@ -600,12 +626,12 @@ function App() {
                                               <th className="th_table">№</th>
                                               <th className="th_table">Картинка</th>
                                               <th className="th_table">Бренд</th>
+                                              <th className="th_table">Артикул</th>
                                               <th className="th_table">Позиция</th>
                                               <th className="th_table">Прежняя Позиция</th>
-                                              <th className="th_table">Артикул</th>
                                               <th className="th_table">Наименование</th>
-                                              <th className="th_table">Запрос данных</th>
                                               <th className="th_table">Время запроса</th>
+                                              <th className="th_table">Дата запроса</th>
                                             </tr>
                                             </thead>
                                             <tbody>
@@ -635,8 +661,8 @@ function App() {
                                                     </td>
                                                     <td className="td_table">{product.log?.position || (page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position)}</td>
                                                     <td className="td_table">{product.name}</td>
-                                                    <td className="td_table">{date}</td>
                                                     <td className="td_table">{time}</td>
+                                                    <td className="td_table">{date}</td>
                                                   </tr>
                                               );
                                             })}

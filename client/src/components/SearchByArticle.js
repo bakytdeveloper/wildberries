@@ -36,11 +36,14 @@ function SearchByArticle() {
     const [showProfile, setShowProfile] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteQueryId, setDeleteQueryId] = useState(null);
-    const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: true }]);
+    // const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: true }]);
     const [suggestions, setSuggestions] = useState([]);
     const [articleSuggestions, setArticleSuggestions] = useState([]);
     const [exportingStates, setExportingStates] = useState({}); // Новое состояние для отслеживания выгрузки
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+    const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: true }]);
+    const queryTypeaheadRefs = useRef([]);
+    const articleTypeaheadRefs = useRef([]);
 
     useEffect(() => {
         const handleResize = () => {
@@ -174,8 +177,27 @@ function SearchByArticle() {
         }
     };
 
+    // const clearInput = (formId) => {
+    //     setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: '', article: '', city: 'г.Дмитров' } : f));
+    // };
+
+    // Инициализируем refs для каждого Typeahead
+    useEffect(() => {
+        queryTypeaheadRefs.current = queryTypeaheadRefs.current.slice(0, requestForms.length);
+        articleTypeaheadRefs.current = articleTypeaheadRefs.current.slice(0, requestForms.length);
+    }, [requestForms]);
+
     const clearInput = (formId) => {
         setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: '', article: '', city: 'г.Дмитров' } : f));
+
+        // Очищаем Typeahead
+        const formIndex = requestForms.findIndex(f => f.id === formId);
+        if (queryTypeaheadRefs.current[formIndex]) {
+            queryTypeaheadRefs.current[formIndex].clear();
+        }
+        if (articleTypeaheadRefs.current[formIndex]) {
+            articleTypeaheadRefs.current[formIndex].clear();
+        }
     };
 
     const handleKeyPress = (e, formId) => {
@@ -441,8 +463,8 @@ function SearchByArticle() {
                                                         allowNew
                                                         newSelectionPrefix="Новый запрос: "
                                                         onKeyDown={(e) => handleKeyPress(e, form.id)}
+                                                        ref={(ref) => (queryTypeaheadRefs.current[index] = ref)} // Сохраняем ref
                                                     />
-
                                                     <Typeahead
                                                         id={`article-input-${form.id}`}
                                                         labelKey="label"
@@ -454,6 +476,7 @@ function SearchByArticle() {
                                                         allowNew
                                                         newSelectionPrefix="Новый артикул: "
                                                         onKeyDown={(e) => handleKeyPress(e, form.id)}
+                                                        ref={(ref) => (articleTypeaheadRefs.current[index] = ref)} // Сохраняем ref
                                                     />
                                                     <DropdownButton id="dropdown-basic-button" title={form.city} onSelect={(city) => handleCityChange(city, form.id)}>
                                                         {Object.keys(cityDestinations).map((city) => (

@@ -458,6 +458,7 @@ tr:hover {
 @media (max-width: 768px) {
     .container {
         padding: 2px;
+
     }
 
     .rbt-input-main form-control rbt-input {
@@ -465,7 +466,7 @@ tr:hover {
     }
 
     .accordion {
-        height: 310px;
+        height: 270px;
     }
 
     .top-section {
@@ -522,8 +523,9 @@ tr:hover {
     }
 
     .accordion-body {
-        padding: 10px;
+        padding: 30px 10px;
         overflow-x: auto; /* Включаем горизонтальный скроллинг */
+        overflow-y: auto; /* Включаем горизонтальный скроллинг */
         white-space: nowrap; /* Запрещаем перенос текста на новую строку */
         max-width: 100%; /* Убедитесь, что ширина не превышает родительский контейнер */
     }
