@@ -41,6 +41,23 @@ function App() {
   const [brandSuggestions, setBrandSuggestions] = useState([]);
   const [isExporting, setIsExporting] = useState(false); // Новое состояние для отслеживания выгрузки
   const [exportingStates, setExportingStates] = useState({});
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  const truncateText = (text, maxLength) => {
+    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+  };
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -421,12 +438,11 @@ function App() {
                           <div className="search-container">
                             <div className="search-left">
                               <InputGroup className="InputGroupForm">
-
                                 <Typeahead
                                     id={`query-input-${form.id}`}
                                     labelKey="label"
                                     onChange={(selected) => handleQueryChange(selected, form.id)}
-                                    onInputChange={(text) => handleQueryInputChange({ target: { value: text } }, form.id)} // Передача полного текста
+                                    onInputChange={(text) => handleQueryInputChange({ target: { value: text } }, form.id)}
                                     options={suggestions}
                                     placeholder="Введите запрос"
                                     defaultSelected={form.query ? [{ label: form.query.toString() }] : []}
@@ -438,7 +454,7 @@ function App() {
                                     id={`brand-input-${form.id}`}
                                     labelKey="label"
                                     onChange={(selected) => handleBrandChange(selected, form.id)}
-                                    onInputChange={(text) => handleBrandInputChange({ target: { value: text } }, form.id)} // Передача полного текста
+                                    onInputChange={(text) => handleBrandInputChange({ target: { value: text } }, form.id)}
                                     options={brandSuggestions}
                                     placeholder="Введите бренд"
                                     defaultSelected={form.brand ? [{ label: form.brand.toString() }] : []}
@@ -446,7 +462,6 @@ function App() {
                                     newSelectionPrefix="Новый бренд: "
                                     onKeyDown={(e) => handleKeyPress(e, form.id)}
                                 />
-
                                 <DropdownButton id="dropdown-basic-button" title={form.city} onSelect={(city) => handleCityChange(city, form.id)}>
                                   {Object.keys(cityDestinations).map((city) => (
                                       <Dropdown.Item key={city} eventKey={city}>{city}</Dropdown.Item>
@@ -491,41 +506,82 @@ function App() {
                     const createdAt = new Date(queryData.createdAt);
                     const date = createdAt.toLocaleDateString();
                     const time = createdAt.toLocaleTimeString();
-                    const headerTextItems = queryData.query.split('; ').map((query, i) => (
-                        <div key={i}>{query} - {queryData.brand.split('; ')[i]} ({queryData.city.split('; ')[i]})</div>
-                    ));
+                    const headerTextItems = queryData.query.split('; ').map((query, i) => {
+                      const brand = queryData.brand.split('; ')[i] || '';
+                      const city = queryData.city.split('; ')[i] || '';
+                      const fullText = `${query} - ${brand} (${city})`;
+                      const truncatedText = windowWidth < 768 ? truncateText(fullText, 29) : fullText; // Обрезаем текст для мобильных устройств
+                      return <div key={i}>{truncatedText}</div>;
+                    });
+
                     return (
                         <Accordion.Item eventKey={index.toString()} key={index}>
                           <Accordion.Header>
                             <div className="flex-grow-0">{index + 1})</div>
-                            <div className="flex-grow-1">{headerTextItems}</div>
-                            <div className="date-time">Дата: {date}, Время: {time}</div>
-                            <div
-                                className="upload-to-google-spreadsheet"
-                                onClick={(event) => {
-                                  if (exportingStates[queryData._id]) return; // Блокируем клики, если выгрузка в процессе
-                                  event.stopPropagation(); // Останавливаем всплытие события
-                                  handleExportClick(queryData._id, 'Бренд').then(r => r);
-                                }}
-                                style={{ cursor: exportingStates[queryData._id] ? 'not-allowed' : 'pointer' }} // Меняем курсор, если выгрузка в процессе
-                                title={exportingStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Google Таблицу'}
-                            >
-                              {exportingStates[queryData._id] ? (
-                                  <Spinner
-                                      as="span"
-                                      animation="border"
-                                      size="sm"
-                                      role="status"
-                                      aria-hidden="true"
-                                      style={{ width: '1rem', height: '1rem' }} // Фиксируем размер спиннера
-                                  />
-                              ) : (
-                                  <span>Выгрузить</span>
-                              )}
-                            </div>
-                            <div variant="danger" className="delete-button" onClick={(event) => handleDeleteClick(queryData._id, event)}>
-                              <FaTimes />
-                            </div>
+                            {windowWidth < 768 ? ( // Условие для маленьких экранов
+                                <div className="accordion-header-small">
+                                  <span variant="danger" className="delete-button delete-button-small" onClick={(event) => handleDeleteClick(queryData._id, event)}>
+                                    <FaTimes />
+                                  </span>
+                                  <div className="flex-grow-1">{headerTextItems}</div>
+                                  <div className="date-time date-time-small">{time} {date}</div>
+                                  <div
+                                      className="upload-to-google-spreadsheet"
+                                      onClick={(event) => {
+                                        if (exportingStates[queryData._id]) return;
+                                        event.stopPropagation();
+                                        handleExportClick(queryData._id, 'Бренд').then(r => r);
+                                      }}
+                                      style={{ cursor: exportingStates[queryData._id] ? 'not-allowed' : 'pointer' }}
+                                      title={exportingStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Google Таблицу'}
+                                  >
+                                    {exportingStates[queryData._id] ? (
+                                        <Spinner
+                                            as="span"
+                                            animation="border"
+                                            size="sm"
+                                            role="status"
+                                            aria-hidden="true"
+                                            style={{ width: '1rem', height: '1rem' }}
+                                        />
+                                    ) : (
+                                        <span>Выгрузить</span>
+                                    )}
+                                  </div>
+                                </div>
+                            ) : (
+                                <>
+                                  <div className="flex-grow-1">{headerTextItems}</div>
+                                  <div className="date-time">Дата: {date}, Время: {time}</div>
+                                  <div
+                                      className="upload-to-google-spreadsheet"
+                                      onClick={(event) => {
+                                        if (exportingStates[queryData._id]) return;
+                                        event.stopPropagation();
+                                        handleExportClick(queryData._id, 'Бренд').then(r => r);
+                                      }}
+                                      style={{ cursor: exportingStates[queryData._id] ? 'not-allowed' : 'pointer' }}
+                                      title={exportingStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Google Таблицу'}
+                                  >
+                                    {exportingStates[queryData._id] ? (
+                                        <Spinner
+                                            as="span"
+                                            animation="border"
+                                            size="sm"
+                                            role="status"
+                                            aria-hidden="true"
+                                            style={{ width: '1rem', height: '1rem' }}
+                                        />
+                                    ) : (
+                                        <span>Выгрузить</span>
+                                    )}
+                                  </div>
+                                  <div variant="danger" className="delete-button" onClick={(event) => handleDeleteClick(queryData._id, event)}>
+                                    <FaTimes />
+                                  </div>
+                                </>
+                            )}
+
                           </Accordion.Header>
                           <Accordion.Body>
                             {hasProducts ? (
@@ -574,7 +630,6 @@ function App() {
                                                     <td className="td_table td_table_article" onClick={() => handlePageRedirect(product.id)}>
                                                       {product.id}
                                                     </td>
-
                                                     <td className="td_table td_table_page" onClick={() => handleProductClick(queryData.query.split('; ')[tableIndex], page, position)}>
                                                       {product.log?.promoPosition || (page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position)}
                                                     </td>

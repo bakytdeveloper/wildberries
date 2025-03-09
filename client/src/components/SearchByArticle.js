@@ -40,6 +40,24 @@ function SearchByArticle() {
     const [suggestions, setSuggestions] = useState([]);
     const [articleSuggestions, setArticleSuggestions] = useState([]);
     const [exportingStates, setExportingStates] = useState({}); // Новое состояние для отслеживания выгрузки
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setWindowWidth(window.innerWidth);
+        };
+
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
+    }, []);
+
+    const truncateText = (text, maxLength) => {
+        return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+    };
+
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -481,41 +499,81 @@ function SearchByArticle() {
                                 const createdAt = new Date(queryData.createdAt);
                                 const date = createdAt.toLocaleDateString();
                                 const time = createdAt.toLocaleTimeString();
-                                const headerTextItems = queryData.query?.split('; ').map((query, i) => (
-                                    <div key={i}>{query} - {queryData.article?.split('; ')[i]} ({queryData.city.split('; ')[i]})</div>
-                                ));
+                                const headerTextItems = queryData.query?.split('; ').map((query, i) => {
+                                    const article = queryData.article?.split('; ')[i] || '';
+                                    const city = queryData.city?.split('; ')[i] || '';
+                                    const fullText = `${query} - ${article} (${city})`;
+                                    const truncatedText = windowWidth < 768 ? truncateText(fullText, 29) : fullText; // Обрезаем текст для мобильных устройств
+                                    return <div key={i}>{truncatedText}</div>;
+                                });
+
                                 return (
                                     <Accordion.Item eventKey={index.toString()} key={index}>
                                         <Accordion.Header>
                                             <div className="flex-grow-0">{index + 1})</div>
-                                            <div className="flex-grow-1">{headerTextItems}</div>
-                                            <div className="date-time">Дата: {date}, Время: {time}</div>
-                                            <div
-                                                className="upload-to-google-spreadsheet"
-                                                onClick={(event) => {
-                                                    if (exportingStates[queryData._id]) return; // Блокируем клики, если выгрузка в процессе
-                                                    event.stopPropagation(); // Останавливаем всплытие события
-                                                    handleExportClick(queryData._id, 'Артикул').then(r => r);
-                                                }}
-                                                style={{ cursor: exportingStates[queryData._id] ? 'not-allowed' : 'pointer' }} // Меняем курсор, если выгрузка в процессе
-                                                title={exportingStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Google Таблицу'}
-                                            >
-                                                {exportingStates[queryData._id] ? (
-                                                    <Spinner
-                                                        as="span"
-                                                        animation="border"
-                                                        size="sm"
-                                                        role="status"
-                                                        aria-hidden="true"
-                                                        style={{ width: '1rem', height: '1rem' }} // Фиксируем размер спиннера
-                                                    />
-                                                ) : (
-                                                    <span>Выгрузить</span>
-                                                )}
-                                            </div>
-                                            <div variant="danger" className="delete-button" onClick={(event) => handleDeleteClick(queryData._id, event)}>
-                                                <FaTimes />
-                                            </div>
+                                            {windowWidth < 768 ? ( // Условие для маленьких экранов
+                                                <div className="accordion-header-small">
+                                                    <span variant="danger" className="delete-button delete-button-small" onClick={(event) => handleDeleteClick(queryData._id, event)}>
+                                                        <FaTimes />
+                                                    </span>
+                                                    <div className="flex-grow-1">{headerTextItems}</div>
+                                                    <div className="date-time date-time-small">{time} {date}</div>
+                                                    <div
+                                                        className="upload-to-google-spreadsheet"
+                                                        onClick={(event) => {
+                                                            if (exportingStates[queryData._id]) return;
+                                                            event.stopPropagation();
+                                                            handleExportClick(queryData._id, 'Артикул').then(r => r);
+                                                        }}
+                                                        style={{ cursor: exportingStates[queryData._id] ? 'not-allowed' : 'pointer' }}
+                                                        title={exportingStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Google Таблицу'}
+                                                    >
+                                                        {exportingStates[queryData._id] ? (
+                                                            <Spinner
+                                                                as="span"
+                                                                animation="border"
+                                                                size="sm"
+                                                                role="status"
+                                                                aria-hidden="true"
+                                                                style={{ width: '1rem', height: '1rem' }}
+                                                            />
+                                                        ) : (
+                                                            <span>Выгрузить</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div className="flex-grow-1">{headerTextItems}</div>
+                                                    <div className="date-time">Дата: {date}, Время: {time}</div>
+                                                    <div
+                                                        className="upload-to-google-spreadsheet"
+                                                        onClick={(event) => {
+                                                            if (exportingStates[queryData._id]) return;
+                                                            event.stopPropagation();
+                                                            handleExportClick(queryData._id, 'Артикул').then(r => r);
+                                                        }}
+                                                        style={{ cursor: exportingStates[queryData._id] ? 'not-allowed' : 'pointer' }}
+                                                        title={exportingStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Google Таблицу'}
+                                                    >
+                                                        {exportingStates[queryData._id] ? (
+                                                            <Spinner
+                                                                as="span"
+                                                                animation="border"
+                                                                size="sm"
+                                                                role="status"
+                                                                aria-hidden="true"
+                                                                style={{ width: '1rem', height: '1rem' }}
+                                                            />
+                                                        ) : (
+                                                            <span>Выгрузить</span>
+                                                        )}
+                                                    </div>
+                                                    <div variant="danger" className="delete-button" onClick={(event) => handleDeleteClick(queryData._id, event)}>
+                                                        <FaTimes />
+                                                    </div>
+                                                </>
+                                            )}
                                         </Accordion.Header>
                                         <Accordion.Body>
                                             {hasProducts ? (

@@ -457,7 +457,11 @@ tr:hover {
 /* Адаптивные стили */
 @media (max-width: 768px) {
     .container {
-        padding: 10px;
+        padding: 2px;
+    }
+
+    .rbt-input-main form-control rbt-input {
+        font-size: 14px;
     }
 
     .accordion {
@@ -499,9 +503,31 @@ tr:hover {
         max-height: calc(80vh - 100px);
     }
 
+    .accordion-header-small {
+        width: 100%;
+    }
+
+    .delete-button-small {
+        margin-top: 22px!important;
+        margin-left: 95%;
+        margin-bottom: 0;
+    }
+    .delete-button-small svg {
+        margin-top: 11px;
+    }
+
+    .date-time-small {
+        margin-top: 3px;
+        margin-bottom: 7px;
+    }
+
     .accordion-body {
         padding: 10px;
+        overflow-x: auto; /* Включаем горизонтальный скроллинг */
+        white-space: nowrap; /* Запрещаем перенос текста на новую строку */
+        max-width: 100%; /* Убедитесь, что ширина не превышает родительский контейнер */
     }
+
 
     .accordion-button {
         padding: 10px !important;
@@ -559,7 +585,7 @@ tr:hover {
     }
 
     .th_table, .td_table {
-        font-size: 12px;
+        font-size: 14px;
     }
 
     .tableIndexDescription p {
@@ -594,11 +620,11 @@ tr:hover {
     }
 
     .th_table, .td_table {
-        font-size: 10px;
+        font-size: 14px;
     }
 
     .tableIndexDescription p {
-        font-size: 12px;
+        font-size: 14px;
     }
 
     .modal-content {
