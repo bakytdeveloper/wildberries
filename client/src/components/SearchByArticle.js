@@ -536,7 +536,7 @@ function SearchByArticle() {
                                     const article = queryData.article?.split('; ')[i] || '';
                                     const city = queryData.city?.split('; ')[i] || '';
                                     const fullText = `${query} - ${article} (${city})`;
-                                    const truncatedText = windowWidth < 768 ? truncateText(fullText, 29) : fullText; // Обрезаем текст для мобильных устройств
+                                    const truncatedText = windowWidth < 768 ? truncateText(fullText, 24) : fullText; // Обрезаем текст для мобильных устройств
                                     return <div key={i}>{truncatedText}</div>;
                                 });
 
