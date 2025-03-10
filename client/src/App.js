@@ -49,7 +49,7 @@ function App() {
 
   useEffect(() => {
     document.body.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
+    sessionStorage.setItem('theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {
@@ -203,10 +203,6 @@ function App() {
       fetchSavedQueries();
     }
   };
-
-  // const clearInput = (formId) => {
-  //   setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: '', brand: '', city: 'г.Дмитров' } : f));
-  // };
 
   const handleKeyPress = (e, formId) => {
     if (e.key === 'Enter') {

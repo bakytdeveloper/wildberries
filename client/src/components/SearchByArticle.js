@@ -48,7 +48,7 @@ function SearchByArticle() {
 
     useEffect(() => {
         document.body.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
+        sessionStorage.setItem('theme', theme);
     }, [theme]);
 
     const toggleTheme = () => {
@@ -187,10 +187,6 @@ function SearchByArticle() {
             fetchSavedQueries();
         }
     };
-
-    // const clearInput = (formId) => {
-    //     setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: '', article: '', city: 'г.Дмитров' } : f));
-    // };
 
     // Инициализируем refs для каждого Typeahead
     useEffect(() => {
