@@ -22,6 +22,10 @@
     --accordion-border-color: #dddddd;
     --accordion-hover-background: #d9d7d7;
     --light-text-color: #333333; /* Светлый цвет текста по умолчанию */
+    --link-hover-background: #dcdcfc;
+    --link-background: #eeeefa;
+    --color-theme-background: #eeeefa;
+    --color-theme-hover-background:  #dcdcfc;
 }
 
 [data-theme="dark"] {
@@ -47,6 +51,10 @@
     --accordion-border-color: #444444;
     --accordion-hover-background: #4e4c4c;
     --light-text-color: #cccccc; /* Светло-серый цвет для текста в темной теме */
+    --link-background: #2f2e2e;
+    --link-hover-background: #3c3c3c;
+    --color-theme-background: #292929;
+    --color-theme-hover-background: #3c3c3c;
 }
 
 #root {
@@ -85,12 +93,15 @@ header {
 .color-theme {
     display: inline-flex;
     cursor: pointer;
-    background: none;
+    background-color: var(--color-theme-background);
     padding: 7px 11px;
     border-radius: 50%;
+    box-shadow: #49494a 3px 4px 4px;
+    margin-left: 20px;
 }
 .color-theme:hover {
-    background: #acaaaa;
+    background-color: var(--color-theme-hover-background);
+    box-shadow: #49494a 1px 2px 2px;
 }
 
 .hidden {
@@ -112,7 +123,7 @@ header {
 
 .article-brand-link {
     display: inline-flex;
-    background: #d2d0d0;
+    background-color: var(--link-background);
     font-weight: bold;
     border-radius: 0 0 5px 5px;
 }
@@ -128,13 +139,15 @@ header {
 }
 
 .article-link:hover {
-    background: whitesmoke;
+    background-color: var(--link-hover-background);
     color: black !important;
+    border-radius: 0 0 5px 0;
 }
 
 .brand-link:hover {
-    background: whitesmoke;
+    background-color: var(--link-hover-background);
     color: black;
+    border-radius: 0 0 0 5px;
 }
 
 .container {
@@ -591,6 +604,12 @@ tr:hover {
 @media (max-width: 768px) {
     .container {
         padding: 2px;
+    }
+
+
+    .color-theme {
+        margin-top: 10px;
+        margin-left: 0;
     }
 
     .rbt-input-main form-control rbt-input {
