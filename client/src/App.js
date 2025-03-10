@@ -45,6 +45,16 @@ function App() {
   const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
   const queryTypeaheadRefs = useRef([]);
   const brandTypeaheadRefs = useRef([]);
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+
+  useEffect(() => {
+    document.body.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
+  };
 
   // Инициализируем refs для каждого Typeahead
   useEffect(() => {
@@ -424,7 +434,7 @@ function App() {
   };
 
   return (
-      <div>
+      <div className="app-page">
         <header>
           <h1>Поиск товаров на Wildberries</h1>
         </header>
@@ -437,6 +447,9 @@ function App() {
               <div className="article-link">
                 <Link to="/search-by-article">Поиск по артикулу</Link>
               </div>
+            </div>
+            <div className="color-theme" onClick={toggleTheme}>
+              {theme === 'light' ? '🌒' : '🌕'}
             </div>
           </nav>
         </div>
@@ -544,7 +557,7 @@ function App() {
                         <Accordion.Item eventKey={index.toString()} key={index}>
                           <Accordion.Header>
                             <div className="flex-grow-0">{index + 1})</div>
-                            {windowWidth < 768 ? ( // Условие для маленьких экранов
+                            {windowWidth < 768 ? (
                                 <div className="accordion-header-small">
                                   <span variant="danger" className="delete-button delete-button-small" onClick={(event) => handleDeleteClick(queryData._id, event)}>
                                     <FaTimes />
@@ -669,7 +682,8 @@ function App() {
                                             </tbody>
                                           </table>
                                       ) : (
-                                          <div className="no-products-message" style={{ backgroundColor: '#ffcccb', color: '#000000', padding: '10px', borderRadius: '5px' }}>
+                                          <div className="no-products-message" >
+                                          {/*<div className="no-products-message" style={{ backgroundColor: '#ffcccb', color: '#000000', padding: '10px', borderRadius: '5px' }}>*/}
                                             <strong>По Запросу:</strong> {queryData.query.split('; ')[tableIndex]}
                                             <br />
                                             <strong>Бренд:</strong> {queryData.brand.split('; ')[tableIndex]}

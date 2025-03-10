@@ -1,10 +1,76 @@
 /* Общие стили */
+:root {
+    --background-color: #ffffff;
+    --text-color: #333333;
+    --border-color: #dddddd;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --button-background: #093aee;
+    --button-hover-background: #2451aa;
+    --button-text-color: #ffffff;
+    --table-header-background: #bf70ef;
+    --table-header-text-color: #ffffff;
+    --table-row-even-background: #f5f5f5;
+    --table-row-hover-background: #eeeeee;
+    --modal-background: #ffffff;
+    --modal-text-color: #333333;
+    --input-background: #ffffff;
+    --input-text-color: #333333;
+    --input-border-color: #dddddd;
+    --placeholder-color: #999999;
+    --accordion-background: #ffffff;
+    --accordion-text-color: #333333;
+    --accordion-border-color: #dddddd;
+    --accordion-hover-background: #f5f5f5;
+    --light-text-color: #333333; /* Светлый цвет текста по умолчанию */
+}
+
+[data-theme="dark"] {
+    --background-color: #1e1e1e;
+    --text-color: #cccccc; /* Основной текст светло-серый */
+    --border-color: #444444;
+    --shadow-color: rgba(255, 255, 255, 0.1);
+    --button-background: #1c1c1c;
+    --button-hover-background: #333333;
+    --button-text-color: #ffffff;
+    --table-header-background: #444444;
+    --table-header-text-color: #ffffff;
+    --table-row-even-background: #2d2d2d;
+    --table-row-hover-background: #3d3d3d;
+    --modal-background: #2d2d2d;
+    --modal-text-color: #cccccc; /* Текст модальных окон светло-серый */
+    --input-background: #333333;
+    --input-text-color: #cccccc; /* Текст инпутов светло-серый */
+    --input-border-color: #444444;
+    --placeholder-color: #aaaaaa;
+    --accordion-background: #2d2d2d;
+    --accordion-text-color: #cccccc; /* Текст аккордеона светло-серый */
+    --accordion-border-color: #444444;
+    --accordion-hover-background: #4e4c4c;
+    --light-text-color: #cccccc; /* Светло-серый цвет для текста в темной теме */
+}
+
+#root {
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
 html, body {
     height: 100%;
     margin: 0;
     font-family: 'Roboto', sans-serif;
-    background-color: #f5f5f5;
-    color: #333;
+    background-color: var(--background-color)!important;
+    color: var(--text-color);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.app-page {
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+.article-page {
+    background-color: var(--background-color);
+    color: var(--text-color);
 }
 
 header {
@@ -13,21 +79,32 @@ header {
     background: linear-gradient(to right, #9b08f8, #0bd3e5, #0656f5);
     color: white;
     text-shadow: 2px 2px 4px black, -2px -2px 4px gray;
+    box-shadow: 0 0 19px 0 grey;
+}
+
+.color-theme {
+    display: inline-flex;
+    cursor: pointer;
+    background: none;
+    padding: 7px 11px;
+    border-radius: 50%;
+}
+.color-theme:hover {
+    background: #acaaaa;
 }
 
 .hidden {
-    display: none!important;
+    display: none !important;
 }
 
 .controls_success {
-    background: #69d003!important;
-    border: none!important;
+    background: #69d003 !important;
+    border: none !important;
 }
 
 .controls_success:hover {
     background: #4e9903 !important;
 }
-
 
 .page-link {
     text-align: center;
@@ -37,7 +114,6 @@ header {
     display: inline-flex;
     background: #d2d0d0;
     font-weight: bold;
-    /*padding: 7px 20px 10px;*/
     border-radius: 0 0 5px 5px;
 }
 
@@ -49,26 +125,24 @@ header {
 .brand-link {
     margin-right: 10px;
     padding: 7px 20px 10px;
-
 }
 
 .article-link:hover {
     background: whitesmoke;
-    color: black!important;
+    color: black !important;
 }
 
 .brand-link:hover {
     background: whitesmoke;
     color: black;
-
 }
 
 .container {
     max-width: 90%;
     margin: 22px auto 11px;
     padding: 20px;
-    background-color: white;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: var(--background-color);
+    box-shadow: 0 4px 8px var(--shadow-color);
     border-radius: 8px;
 }
 
@@ -76,9 +150,10 @@ header {
     max-width: 400px;
     margin: auto;
     padding: 20px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-color);
     border-radius: 10px;
-    background-color: #f9f9f9;
+    background-color: var(--background-color);
+    color: var(--text-color);
 }
 
 .query-form {
@@ -88,6 +163,7 @@ header {
 .query-form-title {
     text-align: center;
     margin-bottom: 25px;
+    color: var(--text-color); /* Цвет заголовка формы */
 }
 
 .exit-button {
@@ -99,10 +175,18 @@ header {
 .auth-form h2 {
     text-align: center;
     margin-bottom: 20px;
+    color: var(--text-color); /* Цвет заголовка формы */
 }
 
 .auth-form .form-control {
     margin-bottom: 15px;
+    background-color: var(--input-background);
+    color: var(--input-text-color);
+    border-color: var(--input-border-color);
+}
+
+.auth-form .form-control::placeholder {
+    color: var(--placeholder-color);
 }
 
 .FaEye-button {
@@ -130,6 +214,41 @@ header {
     margin-top: 20px;
     max-height: calc(88vh - 100px);
     overflow-y: auto;
+}
+
+.accordion-item {
+    background-color: var(--accordion-background);
+    border: 1px solid var(--accordion-border-color);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.accordion-button {
+    background-color: var(--accordion-background) !important;
+    color: var(--light-text-color); /* Используем светло-серый цвет для текста */
+    border: none;
+    padding: 15px;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.accordion-button:hover {
+    background-color: var(--accordion-hover-background);
+}
+
+.accordion-button.collapsed {
+    background-color: var(--accordion-background)!important;
+}
+
+
+.accordion-body {
+    padding: 15px;
+    background-color: var(--accordion-background);
+    color: var(--light-text-color); /* Используем светло-серый цвет для текста */
+    border-top: 1px solid var(--accordion-border-color);
 }
 
 .top-section {
@@ -201,8 +320,10 @@ header {
     margin-right: 20px;
     padding: 7px;
     border-radius: 5px;
+    color: var(--light-text-color); /* Используем светло-серый цвет для текста */
 
 }
+
 .delete-button:hover {
     background: #f6f8fa !important;
     color: black;
@@ -212,8 +333,8 @@ button {
     padding: 5px 10px;
     height: 38px;
     border: none;
-    background-color: #093aee;
-    color: white;
+    background-color: var(--button-background);
+    color: var(--button-text-color);
     font-size: 16px;
     border-radius: 4px;
     cursor: pointer;
@@ -225,8 +346,8 @@ button[disabled] {
 }
 
 button:hover:enabled {
-    background-color: #2451aa;
-    color: white;
+    background-color: var(--button-hover-background);
+    color: var(--button-text-color);
 }
 
 table {
@@ -241,7 +362,6 @@ table {
     padding: 4px 7px;
     font-weight: bold;
     margin-right: 10px;
-
 }
 
 .upload-to-google-spreadsheet:hover {
@@ -250,16 +370,15 @@ table {
 }
 
 th, td {
-    border: 1px solid #c3bfbf !important;
+    border: 1px solid var(--border-color) !important;
     padding: 8px;
     text-align: left;
 }
 
 th {
-    background-color: #bf70ef;
+    background-color: var(--table-header-background);
     text-align: center;
-    color: white;
-    border: 1px solid #353434;
+    color: var(--table-header-text-color);
 }
 
 .td_Center {
@@ -267,11 +386,11 @@ th {
 }
 
 tr:nth-child(even) {
-    background-color: #f5f5f5;
+    background-color: var(--table-row-even-background);
 }
 
 tr:hover {
-    background-color: #eee;
+    background-color: var(--table-row-hover-background);
 }
 
 .td_table {
@@ -284,7 +403,7 @@ tr:hover {
 }
 
 .td_table_article:hover {
-    background: white;
+    background: var(--background-color);
 }
 
 .td_table_page {
@@ -292,7 +411,7 @@ tr:hover {
 }
 
 .td_table_page:hover {
-    background: white;
+    background: var(--background-color);
 }
 
 .tableIndexRow {
@@ -314,6 +433,7 @@ tr:hover {
 .tableIndexDescription p {
     margin-left: 10px;
     font-weight: bold;
+    color: var(--light-text-color); /* Используем светло-серый цвет для текста */
 }
 
 .th_table {
@@ -332,31 +452,40 @@ tr:hover {
 }
 
 .td_table_image:hover {
-    background: white;
+    background: var(--background-color);
 }
 
 .flex-grow-0 {
     margin-right: 10px;
     font-weight: bold;
+    color: var(--light-text-color); /* Используем светло-серый цвет для текста */
 }
 
 .flex-grow-1 {
     flex-grow: 1;
+    color: var(--light-text-color); /* Используем светло-серый цвет для текста */
 }
 
 .date-time {
     margin-left: auto;
     margin-right: 20px;
     text-align: right;
+    color: var(--light-text-color); /* Используем светло-серый цвет для текста */
 }
 
 .search input {
     padding: 5px 10px;
     font-size: 14px;
     height: 38px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-color);
     border-radius: 4px;
     flex-grow: 1;
+    background-color: var(--input-background);
+    color: var(--input-text-color);
+}
+
+.search input::placeholder {
+    color: var(--placeholder-color);
 }
 
 .images_table {
@@ -380,18 +509,19 @@ tr:hover {
 
 .modal-content {
     position: relative;
-    background-color: white;
+    background-color: var(--modal-background);
     padding: 20px;
     border-radius: 10px;
+    color: var(--modal-text-color);
 }
 
 .upload-to-google-spreadsheet {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 100px; /* Фиксированная ширина кнопки */
-    height: 30px; /* Фиксированная высота кнопки */
-    padding: 0 10px; /* Отступы внутри кнопки */
+    width: 100px;
+    height: 30px;
+    padding: 0 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
     background-color: #07a6ee;
@@ -458,7 +588,6 @@ tr:hover {
 @media (max-width: 768px) {
     .container {
         padding: 2px;
-
     }
 
     .rbt-input-main form-control rbt-input {
@@ -509,10 +638,11 @@ tr:hover {
     }
 
     .delete-button-small {
-        margin-top: 22px!important;
+        margin-top: 22px !important;
         margin-left: 95%;
         margin-bottom: 0;
     }
+
     .delete-button-small svg {
         margin-top: 11px;
     }
@@ -524,12 +654,11 @@ tr:hover {
 
     .accordion-body {
         padding: 30px 10px;
-        overflow-x: auto; /* Включаем горизонтальный скроллинг */
-        overflow-y: auto; /* Включаем горизонтальный скроллинг */
-        white-space: nowrap; /* Запрещаем перенос текста на новую строку */
-        max-width: 100%; /* Убедитесь, что ширина не превышает родительский контейнер */
+        overflow-x: auto;
+        overflow-y: auto;
+        white-space: nowrap;
+        max-width: 100%;
     }
-
 
     .accordion-button {
         padding: 10px !important;
@@ -634,4 +763,3 @@ tr:hover {
         padding: 5px;
     }
 }
-

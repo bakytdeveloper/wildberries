@@ -44,6 +44,17 @@ function SearchByArticle() {
     const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: true }]);
     const queryTypeaheadRefs = useRef([]);
     const articleTypeaheadRefs = useRef([]);
+    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+
+    useEffect(() => {
+        document.body.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+    }, [theme]);
+
+    const toggleTheme = () => {
+        setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
+    };
+
 
     useEffect(() => {
         const handleResize = () => {
@@ -407,14 +418,14 @@ function SearchByArticle() {
                 gravity: 'top',
                 position: 'right',
                 style: { background: '#ff0000' }
-            }).showToast();
+            }).showToast();  SearchByArticle.js
         } finally {
             setExportingStates((prev) => ({ ...prev, [queryId]: false })); // Сбрасываем состояние после завершения
         }
     };
 
     return (
-        <div>
+        <div  className="article-page">
             <header>
                 <h1>Поиск товаров на Wildberries</h1>
             </header>
@@ -427,6 +438,9 @@ function SearchByArticle() {
                         <div className="article-link">
                             <Link to="/search-by-article">Поиск по артикулу</Link>
                         </div>
+                    </div>
+                    <div className="color-theme" onClick={toggleTheme}>
+                        {theme === 'light' ? '🌒' : '🌕'}
                     </div>
                 </nav>
             </div>
