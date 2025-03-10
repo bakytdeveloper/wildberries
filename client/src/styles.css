@@ -20,7 +20,7 @@
     --accordion-background: #ffffff;
     --accordion-text-color: #333333;
     --accordion-border-color: #dddddd;
-    --accordion-hover-background: #f5f5f5;
+    --accordion-hover-background: #d9d7d7;
     --light-text-color: #333333; /* Светлый цвет текста по умолчанию */
 }
 
@@ -236,11 +236,14 @@ header {
 }
 
 .accordion-button:hover {
-    background-color: var(--accordion-hover-background);
+    background-color: var(--accordion-hover-background) !important;
 }
 
 .accordion-button.collapsed {
     background-color: var(--accordion-background)!important;
+}
+.accordion-button.collapsed:hover {
+    background-color: var(--accordion-hover-background) !important;
 }
 
 
