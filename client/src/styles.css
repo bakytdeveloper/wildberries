@@ -608,6 +608,10 @@ tr:hover {
         padding: 2px;
     }
 
+    #password.form-control {
+        width: 20% !important;
+    }
+
 
     .color-theme {
         margin-top: 10px;
