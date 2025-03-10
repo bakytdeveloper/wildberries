@@ -49,7 +49,7 @@ function App() {
 
   useEffect(() => {
     document.body.setAttribute('data-theme', theme);
-    sessionStorage.setItem('theme', theme);
+    localStorage.setItem('theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {
