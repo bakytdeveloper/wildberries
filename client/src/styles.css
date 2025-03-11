@@ -604,10 +604,13 @@ tr:hover {
 
 /* Адаптивные стили */
 @media (max-width: 768px) {
+    .header-logoWb {
+        width: 120px;
+    }
+
     .container {
         padding: 2px;
     }
-
 
     .article-link {
         margin-left: 12px;
@@ -635,6 +638,17 @@ tr:hover {
 
     .rbt-input-main.form-control.rbt-input {
         font-size: 14px;
+    }
+
+    .dropdown-toggle.btn.btn-primary {
+        border-radius: 4px!important;
+    }
+
+    .btn.btn-primary {
+        border-radius: 4px!important;
+    }
+    .btn.btn-secondary {
+        border-radius: 4px!important;
     }
 
     .accordion {
@@ -764,6 +778,23 @@ tr:hover {
 
     .tableIndexDescription p {
         font-size: 14px;
+    }
+
+    .exit-button.btn.btn-danger {
+        margin-top: 10px;
+        padding: 0 3px;
+        font-size: 12px;
+    }
+
+    .controls_success.btn.btn-primary {
+        font-size: 12px;
+        padding: 0 5px;
+    }
+
+    .controls_primary.btn.btn-primary {
+        margin-left: 15px;
+        font-size: 12px;
+        padding: 0 5px;
     }
 }
 

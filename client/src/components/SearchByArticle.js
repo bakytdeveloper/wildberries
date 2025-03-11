@@ -454,7 +454,7 @@ function SearchByArticle() {
                 ) : showProfile ? (
                     <div className="query-form">
                         <Button variant="danger" className="exit-button" onClick={handleLogout}>Выйти</Button>
-                        <h3 className="query-form-title">Страница поиска по названию и артикулу товара</h3>
+                        <h3 className="query-form-title">Страница поиска по описанию и артикулу товара</h3>
                         <div className="top-section">
                             <div className="left-forms">
                                 {requestForms.map((form, index) => (
