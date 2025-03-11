@@ -130,13 +130,21 @@ header {
     border-radius: 0 0 5px 5px;
 }
 
+.active-link {
+    background-color: var(--shadow-color); /* Цвет фона для активной ссылки */
+}
+
+.brand-link, .article-link {
+    transition: background-color 0.3s, color 0.3s; /* Плавный переход */
+}
+
 .article-link {
-    margin-left: 10px;
+    /*margin-left: 10px;*/
     padding: 7px 20px 10px;
 }
 
 .brand-link {
-    margin-right: 10px;
+    /*margin-right: 10px;*/
     padding: 7px 20px 10px;
 }
 

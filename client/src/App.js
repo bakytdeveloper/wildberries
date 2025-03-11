@@ -13,7 +13,7 @@ import ForgotPasswordForm from './components/Auth/ForgotPasswordForm';
 import ImageModal from './components/ImageModal';
 import { FaTimes } from 'react-icons/fa'; // Импортируем иконку "крестик"
 import { Modal } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 const API_HOST = process.env.REACT_APP_API_HOST;
 
@@ -46,6 +46,7 @@ function App() {
   const queryTypeaheadRefs = useRef([]);
   const brandTypeaheadRefs = useRef([]);
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+  const location = useLocation();
 
   useEffect(() => {
     document.body.setAttribute('data-theme', theme);
@@ -438,10 +439,10 @@ function App() {
         <div className={`page-link ${!isAuthenticated || showRegisterForm || showForgotPasswordForm ? 'hidden' : ''}`}>
           <nav>
             <div className="article-brand-link">
-              <div className="brand-link">
+              <div className={`brand-link ${location.pathname === '/' ? 'active-link' : ''}`}>
                 <Link to="/">Поиск по бренду</Link>
               </div>
-              <div className="article-link">
+              <div className={`article-link ${location.pathname === '/search-by-article' ? 'active-link' : ''}`}>
                 <Link to="/search-by-article">Поиск по артикулу</Link>
               </div>
             </div>
@@ -449,6 +450,7 @@ function App() {
               {theme === 'light' ? '🌒' : '🌕'}
             </div>
           </nav>
+
         </div>
         <div className="container">
           {!isAuthenticated ? (

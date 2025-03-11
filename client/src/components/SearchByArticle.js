@@ -12,7 +12,7 @@ import ForgotPasswordForm from './Auth/ForgotPasswordForm';
 import ImageModal from './ImageModal';
 import { FaTimes } from 'react-icons/fa';
 import { Modal } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import axios from "axios";
 
 const API_HOST = process.env.REACT_APP_API_HOST;
@@ -45,6 +45,7 @@ function SearchByArticle() {
     const queryTypeaheadRefs = useRef([]);
     const articleTypeaheadRefs = useRef([]);
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+    const location = useLocation();
 
     useEffect(() => {
         document.body.setAttribute('data-theme', theme);
@@ -423,15 +424,16 @@ function SearchByArticle() {
     return (
         <div  className="article-page">
             <header>
-                <h1>Поиск товаров на Wildberries</h1>
+                <h1>Поиск товаров на <img className="header-logoWb" src="https://static-basket-01.wbbasket.ru/vol2/site/i/v3/header/logoWb.svg" /></h1>
+                {/*<h1>Поиск товаров на Wildberries</h1>*/}
             </header>
             <div className={`page-link ${!isAuthenticated || showRegisterForm || showForgotPasswordForm ? 'hidden' : ''}`}>
                 <nav>
                     <div className="article-brand-link">
-                        <div className="brand-link">
+                        <div className={`brand-link ${location.pathname === '/' ? 'active-link' : ''}`}>
                             <Link to="/">Поиск по бренду</Link>
                         </div>
-                        <div className="article-link">
+                        <div className={`article-link ${location.pathname === '/search-by-article' ? 'active-link' : ''}`}>
                             <Link to="/search-by-article">Поиск по артикулу</Link>
                         </div>
                     </div>
