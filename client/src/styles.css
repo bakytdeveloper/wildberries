@@ -26,7 +26,8 @@
     --link-background: #eeeefa;
     --color-theme-background: #eeeefa;
     --color-theme-hover-background:  #dcdcfc;
-    --header-box-shadow-background:  0 0 19px 0 #808080;
+    --color-theme-hover-background:  #dcdcfc;
+    --header-background-color: #af4dee, #f886e0;
 }
 
 [data-theme="dark"] {
@@ -57,6 +58,8 @@
     --color-theme-background: #292929;
     --color-theme-hover-background: #3c3c3c;
     --header-box-shadow-background:  0;
+    --header-background-color: #a027ee, #2e0254;
+
 }
 
 #root {
@@ -86,7 +89,7 @@ html, body {
 header {
     text-align: center;
     padding: 2px;
-    background: linear-gradient(to bottom, #af4dee, #f886e0);
+    background: linear-gradient(to bottom, var(--header-background-color));
     color: white;
     /*text-shadow: 2px 2px 6px black, -2px -2px 4px gray;*/
     box-shadow: var(--header-box-shadow-background);
@@ -625,14 +628,14 @@ tr:hover {
     }
 
     .article-link {
-        margin-left: 12px;
-        padding: 7px 10px 10px 12px;
+        /*margin-left: 12px;*/
+        padding: 7px 15px 10px 12px;
         font-size: 15px;
     }
 
     .brand-link {
-        margin-right: 12px;
-        padding: 7px 10px 10px 12px;
+        /*margin-right: 12px;*/
+        padding: 7px 15px 10px 12px;
         font-size: 15px;
     }
 
