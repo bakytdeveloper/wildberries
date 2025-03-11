@@ -629,8 +629,8 @@ function SearchByArticle() {
                                                                     <th className="th_table">Прежняя Позиция</th>
                                                                     <th className="th_table">Бренд</th>
                                                                     <th className="th_table">Наименование</th>
-                                                                    <th className="th_table">Запрос данных</th>
                                                                     <th className="th_table">Время запроса</th>
+                                                                    <th className="th_table">Дата запроса</th>
                                                                 </tr>
                                                                 </thead>
                                                                 <tbody>
@@ -655,8 +655,8 @@ function SearchByArticle() {
                                                                             <td className="td_table">{product.log?.position || (page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position)}</td>
                                                                             <td className="td_table">{product.brand}</td>
                                                                             <td className="td_table">{product.name}</td>
-                                                                            <td className="td_table">{date}</td>
                                                                             <td className="td_table">{time}</td>
+                                                                            <td className="td_table">{date}</td>
                                                                         </tr>
                                                                     );
                                                                 })}

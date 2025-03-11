@@ -608,6 +608,21 @@ tr:hover {
         padding: 2px;
     }
 
+
+    .article-link {
+        margin-left: 12px;
+        padding: 7px 10px 10px 12px;
+        font-size: 15px;
+    }
+
+    .brand-link {
+        margin-right: 12px;
+        padding: 7px 10px 10px 12px;
+        font-size: 15px;
+    }
+
+
+
     #password.form-control {
         width: 20% !important;
     }
@@ -778,8 +793,8 @@ tr:hover {
         height: 25px;
     }
 
-    .th_table, .td_table {
-        font-size: 14px;
+    .th_table {
+        font-size: 12px;
     }
 
     .tableIndexDescription p {

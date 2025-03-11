@@ -32,7 +32,7 @@ const RegisterForm = ({ API_HOST, setIsAuthenticated, setShowProfile, setShowReg
             // Программная перезагрузка страницы через 100 мс
             setTimeout(() => {
                 window.location.reload();
-            }, 100);
+            }, 3000);
         } catch (error) {
             Toastify({
                 text: error.response?.data?.message || 'Ошибка регистрации',
