@@ -624,7 +624,13 @@ tr:hover {
     }
 
     .container {
-        padding: 2px;
+        margin-top: 32px;
+        padding: 5px;
+        box-shadow: 4px 4px 4px 4px var(--shadow-color);
+    }
+
+    .auth-container {
+        margin: 4px 0;
     }
 
     .article-brand-link {
@@ -659,6 +665,7 @@ tr:hover {
     .color-theme {
         margin-top: 10px;
         margin-left: 0;
+        margin-bottom: -10px;
     }
 
     .rbt-input-main.form-control.rbt-input {
