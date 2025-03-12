@@ -58,7 +58,7 @@
     --color-theme-background: #292929;
     --color-theme-hover-background: #3c3c3c;
     --header-box-shadow-background:  0;
-    --header-background-color: #a027ee, #2e0254;
+    --header-background-color: #f684f1, #250143;
 
 }
 
@@ -236,8 +236,11 @@ header {
     text-align: center;
 }
 
-.registration-button {
-    margin-left: 85px !important;
+.forgot-registration-button {
+    display: inline-flex;
+    width: 100%;
+    justify-content: space-between;
+
 }
 
 .accordion {
@@ -785,9 +788,16 @@ tr:hover {
         font-size: 14px;
     }
 
+    .forgot-registration-button {
+        display: inline-flex;
+        width: 100%;
+        justify-content: space-between;
+
+    }
+
     .registration-button {
-        margin-left: 13px !important;
-        margin-top: 10px;
+        /*margin-left: 13px !important;*/
+        /*margin-top: 10px;*/
     }
 
     .exit-button {

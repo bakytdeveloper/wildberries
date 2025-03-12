@@ -72,21 +72,23 @@ const LoginForm = ({ API_HOST, setIsAuthenticated, setShowProfile, setShowForgot
             <Button type="submit" disabled={loading}>
                 {loading ? 'Загрузка...' : 'Войти'}
             </Button>
-            <Button
-                variant="link"
-                onClick={() => setShowForgotPasswordForm(true)}
-                disabled={loading} // Блокируем кнопку
-            >
-                Забыли пароль?
-            </Button>
-            <Button
-                variant="link"
-                className="registration-button"
-                onClick={() => setShowRegisterForm(true)}
-                disabled={loading} // Блокируем кнопку
-            >
-                Регистрация
-            </Button>
+            <div className="forgot-registration-button">
+                <Button
+                    variant="link"
+                    onClick={() => setShowForgotPasswordForm(true)}
+                    disabled={loading} // Блокируем кнопку
+                >
+                    Забыли пароль?
+                </Button>
+                <Button
+                    variant="link"
+                    className="registration-button"
+                    onClick={() => setShowRegisterForm(true)}
+                    disabled={loading} // Блокируем кнопку
+                >
+                    Регистрация
+                </Button>
+            </div>
         </Form>
     );
 };
