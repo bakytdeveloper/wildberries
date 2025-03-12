@@ -627,16 +627,26 @@ tr:hover {
         padding: 2px;
     }
 
+    .article-brand-link {
+        display: inline-flex;
+        background-color: var(--link-background);
+        font-weight: bold;
+        border-radius: 0 0 5px 5px;
+        width: 100%;
+    }
+
     .article-link {
         /*margin-left: 12px;*/
         padding: 7px 15px 10px 12px;
         font-size: 15px;
+        width: 50%;
     }
 
     .brand-link {
         /*margin-right: 12px;*/
         padding: 7px 15px 10px 12px;
         font-size: 15px;
+        width: 50%;
     }
 
 
