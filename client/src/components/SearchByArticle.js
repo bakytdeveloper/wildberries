@@ -139,6 +139,7 @@ function SearchByArticle() {
         }
     };
 
+
     const handleLogout = () => {
         sessionStorage.removeItem('token');
         setIsAuthenticated(false);
@@ -146,33 +147,44 @@ function SearchByArticle() {
     };
 
     const handleQueryChange = (selected, formId) => {
-        let value = '';
-        if (selected.length > 0) {
-            value = selected[0].label; // Используем label из выбранного элемента
-        }
-        console.log('Query selected:', value);
-        setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: value } : f));
+        const value = selected.length > 0 ? selected[0].label : '';
+        setRequestForms(prevForms =>
+            prevForms.map(f =>
+                f.id === formId ? { ...f, query: value } : f
+            )
+        );
     };
 
     const handleArticleChange = (selected, formId) => {
-        let value = '';
-        if (selected.length > 0) {
-            value = selected[0].label; // Используем label из выбранного элемента
-        }
-        console.log('Article selected:', value);
-        setRequestForms(requestForms.map(f => f.id === formId ? { ...f, article: value } : f));
+        const value = selected.length > 0 ? selected[0].label : '';
+        setRequestForms(prevForms =>
+            prevForms.map(f =>
+                f.id === formId ? { ...f, article: value } : f
+            )
+        );
     };
 
     const handleQueryInputChange = (event, formId) => {
         const text = event.target.value;
-        console.log('Query input change:', text);
-        setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: text } : f));
+        console.log('Query input change:', text.target.value);
+        setRequestForms(prevForms => prevForms.map(f =>
+            f.id === formId ? { ...f, query: text.target.value } : f
+        ));
     };
+
+    // const handleArticleInputChange = (text, formId) => {
+    //     setRequestForms(prevForms =>
+    //         prevForms.map(f =>
+    //             f.id === formId ? { ...f, article: text } : f
+    //         )
+    //     );
+    // };
 
     const handleArticleInputChange = (event, formId) => {
         const text = event.target.value;
-        console.log('Article input change:', text);
-        setRequestForms(requestForms.map(f => f.id === formId ? { ...f, article: text } : f));
+        console.log('Brand input change:', text);
+        setRequestForms(prevForms => prevForms.map(f =>
+            f.id === formId ? { ...f, article: text.target.value } : f ));
     };
 
     const handleCityChange = (city, formId) => {
@@ -306,8 +318,8 @@ function SearchByArticle() {
             const newQueries = validForms.map(form => form.query && typeof form.query === 'string' ? form.query.trim() : '');
             const newSuggestions = [...suggestions];
             newQueries.forEach(query => {
-                if (!newSuggestions.includes(query)) {
-                    newSuggestions.push(query);
+                if (!newSuggestions.some(suggestion => suggestion.label === query)) {
+                    newSuggestions.push({ label: query });
                 }
             });
             setSuggestions(newSuggestions);
@@ -315,8 +327,8 @@ function SearchByArticle() {
             const newArticles = validForms.map(form => form.article && typeof form.article === 'string' ? form.article.trim() : '');
             const newArticleSuggestions = [...articleSuggestions];
             newArticles.forEach(article => {
-                if (!newArticleSuggestions.includes(article)) {
-                    newArticleSuggestions.push(article);
+                if (!newArticleSuggestions.some(articleSuggestion => articleSuggestion.label === article)) {
+                    newArticleSuggestions.push({ label: article });
                 }
             });
             setArticleSuggestions(newArticleSuggestions);
@@ -342,6 +354,8 @@ function SearchByArticle() {
             setIsRequesting(false);
         }
     };
+
+
 
     const handleProductClick = (searchQuery, page, position) => {
         const url = `https://www.wildberries.ru/catalog/0/search.aspx?page=${page}&sort=popular&search=${encodeURIComponent(searchQuery)}#position=${position}`;
@@ -468,27 +482,28 @@ function SearchByArticle() {
                                                         id={`query-input-${form.id}`}
                                                         labelKey="label"
                                                         onChange={(selected) => handleQueryChange(selected, form.id)}
-                                                        onInputChange={(text) => handleQueryInputChange(text, form.id)}
+                                                        onInputChange={(text) => handleQueryInputChange({ target: { value: text } }, form.id)}
                                                         options={suggestions}
                                                         placeholder="Введите запрос"
                                                         defaultSelected={form.query ? [{ label: form.query.toString() }] : []}
                                                         allowNew
                                                         newSelectionPrefix="Новый запрос: "
                                                         onKeyDown={(e) => handleKeyPress(e, form.id)}
-                                                        ref={(ref) => (queryTypeaheadRefs.current[index] = ref)} // Сохраняем ref
+                                                        ref={(ref) => (queryTypeaheadRefs.current[index] = ref)}
                                                     />
+
                                                     <Typeahead
                                                         id={`article-input-${form.id}`}
                                                         labelKey="label"
                                                         onChange={(selected) => handleArticleChange(selected, form.id)}
-                                                        onInputChange={(text) => handleArticleInputChange(text, form.id)}
+                                                        onInputChange={(text) => handleArticleInputChange({ target: { value: text } }, form.id)}
                                                         options={articleSuggestions}
                                                         placeholder="Введите артикул"
                                                         defaultSelected={form.article ? [{ label: form.article.toString() }] : []}
                                                         allowNew
                                                         newSelectionPrefix="Новый артикул: "
                                                         onKeyDown={(e) => handleKeyPress(e, form.id)}
-                                                        ref={(ref) => (articleTypeaheadRefs.current[index] = ref)} // Сохраняем ref
+                                                        ref={(ref) => (articleTypeaheadRefs.current[index] = ref)}
                                                     />
                                                     <DropdownButton id="dropdown-basic-button" title={form.city} onSelect={(city) => handleCityChange(city, form.id)}>
                                                         {Object.keys(cityDestinations).map((city) => (
