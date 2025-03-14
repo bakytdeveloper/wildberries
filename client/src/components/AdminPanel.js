@@ -74,35 +74,35 @@ const AdminPanel = ({ API_HOST }) => {
     };
 
     return (
-        <div>
-            <h2>Админ панель</h2>
-            <Table striped bordered hover>
+        <div className="container">
+            <h2 className="query-form-title">Админ панель</h2>
+            <Table striped bordered hover >
                 <thead>
                 <tr>
-                    <th>Имя</th>
-                    <th>Email</th>
-                    <th>Дата регистрации</th>
-                    <th>Статус</th>
-                    <th>Дата блокировки/разблокировки</th>
-                    <th>Разрешение</th>
-                    <th>Удаление</th>
+                    <th className="th_table">Имя</th>
+                    <th className="th_table">Email</th>
+                    <th className="th_table">Дата регистрации</th>
+                    <th className="th_table">Статус</th>
+                    <th className="th_table">Дата блокировки/разблокировки</th>
+                    <th className="th_table">Разрешение</th>
+                    <th className="th_table">Удаление</th>
                 </tr>
                 </thead>
                 <tbody>
                 {users.map(user => (
                     <tr key={user._id}>
-                        <td>{user.username}</td>
-                        <td>{user.email}</td>
-                        <td>{new Date(user.createdAt).toLocaleString()}</td>
-                        <td>{user.isBlocked ? <span style={{color:"red"}}>Заблокирован</span> : <span style={{color:"green", fontWeight:"bold"}}>Активен</span>}</td>
-                        <td>
+                        <td className="td_table">{user.username}</td>
+                        <td className="td_table">{user.email}</td>
+                        <td className="td_table">{new Date(user.createdAt).toLocaleString()}</td>
+                        <td className="td_table">{user.isBlocked ? <span style={{color:"red"}}>Заблокирован</span> : <span style={{color:"green", fontWeight:"bold"}}>Активен</span>}</td>
+                        <td className="td_table">
                             {user.isBlocked
                                 ? new Date(user.blockedAt).toLocaleString()
                                 : user.unblockedAt
                                     ? new Date(user.unblockedAt).toLocaleString()
                                     : 'Нет данных'}
                         </td>
-                        <td>
+                        <td className="td_table">
                             <Button
                                 variant={user.isBlocked ? 'success' : 'primary'}
                                 onClick={() => toggleBlockUser(user._id)}
@@ -110,7 +110,7 @@ const AdminPanel = ({ API_HOST }) => {
                                 {user.isBlocked ? 'Разблокировать' : 'Заблокировать'}
                             </Button>
                         </td>
-                        <td>
+                        <td className="td_table">
                             <Button variant="danger" onClick={() => handleDeleteClick(user._id)}>
                                 Удалить
                             </Button>

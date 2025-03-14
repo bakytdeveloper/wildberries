@@ -622,6 +622,14 @@ tr:hover {
 
 /* Адаптивные стили */
 @media (max-width: 768px) {
+
+    html, body, #root {
+        display: inline-block;
+        width: auto;
+        overflow-x: auto;
+        overflow-y: auto;
+    }
+
     .header-logoWb {
         width: 120px;
     }
@@ -630,6 +638,8 @@ tr:hover {
         margin-top: 32px;
         padding: 5px;
         box-shadow: 4px 4px 4px 4px var(--shadow-color);
+        overflow-x: auto;
+        overflow-y: auto;
     }
 
     .auth-container {
