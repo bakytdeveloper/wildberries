@@ -640,7 +640,6 @@ tr:hover {
 @media (max-width: 768px) {
 
     html, body, #root {
-        display: inline-block;
         width: auto;
         overflow-x: auto;
         overflow-y: auto;

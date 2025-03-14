@@ -2,11 +2,19 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Table, Button, Modal } from 'react-bootstrap';
 import Toastify from 'toastify-js';
+import {useLocation} from "react-router-dom";
 
 const AdminPanel = ({ API_HOST }) => {
     const [users, setUsers] = useState([]);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState(null);
+
+    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+
+    useEffect(() => {
+        document.body.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+    }, [theme]);
 
     useEffect(() => {
         fetchUsers().then(r => r);
