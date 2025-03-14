@@ -9,7 +9,7 @@ const AdminPanel = ({ API_HOST }) => {
     const [selectedUserId, setSelectedUserId] = useState(null);
 
     useEffect(() => {
-        fetchUsers();
+        fetchUsers().then(r => r);
     }, []);
 
     const fetchUsers = async () => {
@@ -35,7 +35,7 @@ const AdminPanel = ({ API_HOST }) => {
             await axios.post(`${API_HOST}/api/admin/users/${userId}/toggle-block`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            fetchUsers();
+            await fetchUsers();
         } catch (error) {
             console.error('Ошибка при блокировке/разблокировке пользователя:', error);
         }
@@ -52,10 +52,10 @@ const AdminPanel = ({ API_HOST }) => {
             await axios.delete(`${API_HOST}/api/admin/users/${selectedUserId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            fetchUsers();
+            await fetchUsers(); // Обновляем список пользователей после удаления
             setShowDeleteModal(false);
             Toastify({
-                text: 'Пользователь успешно удален',
+                text: 'Пользователь и все связанные данные успешно удалены',
                 duration: 3000,
                 gravity: 'top',
                 position: 'right',
@@ -63,6 +63,13 @@ const AdminPanel = ({ API_HOST }) => {
             }).showToast();
         } catch (error) {
             console.error('Ошибка при удалении пользователя:', error);
+            Toastify({
+                text: 'Ошибка при удалении пользователя',
+                duration: 3000,
+                gravity: 'top',
+                position: 'right',
+                style: { background: '#ff0000' }
+            }).showToast();
         }
     };
 
