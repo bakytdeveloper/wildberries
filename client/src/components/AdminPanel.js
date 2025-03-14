@@ -87,7 +87,7 @@ const AdminPanel = ({ API_HOST }) => {
                         <td>{user.username}</td>
                         <td>{user.email}</td>
                         <td>{new Date(user.createdAt).toLocaleString()}</td>
-                        <td>{user.isBlocked ? 'Заблокирован' : 'Активен'}</td>
+                        <td>{user.isBlocked ? <span style={{color:"red"}}>Заблокирован</span> : <span style={{color:"green", fontWeight:"bold"}}>Активен</span>}</td>
                         <td>
                             {user.isBlocked
                                 ? new Date(user.blockedAt).toLocaleString()
@@ -97,7 +97,7 @@ const AdminPanel = ({ API_HOST }) => {
                         </td>
                         <td>
                             <Button
-                                variant={user.isBlocked ? 'success' : 'danger'}
+                                variant={user.isBlocked ? 'success' : 'primary'}
                                 onClick={() => toggleBlockUser(user._id)}
                             >
                                 {user.isBlocked ? 'Разблокировать' : 'Заблокировать'}

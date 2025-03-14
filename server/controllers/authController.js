@@ -55,6 +55,11 @@ const loginUser = async (req, res) => {
             return res.status(400).json({ message: 'Invalid email or password' });
         }
 
+        // Проверяем, заблокирован ли пользователь
+        if (user.isBlocked) {
+            return res.status(403).json({ message: 'User is blocked. Please contact support.' });
+        }
+
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(400).json({ message: 'Invalid email or password' });
@@ -66,6 +71,7 @@ const loginUser = async (req, res) => {
         res.status(500).json({ error: 'Login failed' });
     }
 };
+
 
 
 const forgotPassword = async (req, res) => {

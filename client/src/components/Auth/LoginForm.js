@@ -13,9 +13,11 @@ const LoginForm = ({ API_HOST, setIsAuthenticated, setShowProfile, setShowForgot
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
+
         try {
             const response = await axios.post(`${API_HOST}/api/auth/login`, { email, password });
-            sessionStorage.setItem('token', response.data.token); // Токен сохраняется
+
+            sessionStorage.setItem('token', response.data.token); // Сохраняем токен
             setIsAuthenticated(true);
             setShowProfile(true);
 
@@ -25,11 +27,30 @@ const LoginForm = ({ API_HOST, setIsAuthenticated, setShowProfile, setShowForgot
                 window.location.reload();
             }
         } catch (error) {
-            console.error('Ошибка авторизации:', error);
+            if (error.response && error.response.status === 403) {
+                Toastify({
+                    text: 'Ваш аккаунт заблокирован. Обратитесь в службу поддержки.',
+                    duration: 3000,
+                    close: true,
+                    gravity: 'top',
+                    position: 'right',
+                    backgroundColor: '#FF0000',
+                }).showToast();
+            } else {
+                Toastify({
+                    text: 'Ошибка авторизации. Проверьте свои данные.',
+                    duration: 3000,
+                    close: true,
+                    gravity: 'top',
+                    position: 'right',
+                    backgroundColor: '#FF0000',
+                }).showToast();
+            }
         } finally {
             setLoading(false);
         }
     };
+
 
 
     return (
