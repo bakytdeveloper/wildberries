@@ -620,6 +620,22 @@ tr:hover {
     padding: 7px 15px !important;
 }
 
+.logout-container Button {
+    font-size: 14px;
+    padding: 10px 20px;
+    background-color: #b80601;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 90%;
+}
+
+.logout-container Button:hover {
+    background-color: #c9302c;
+}
+
+
 /* Адаптивные стили */
 @media (max-width: 768px) {
 
@@ -889,3 +905,8 @@ tr:hover {
         padding: 5px;
     }
 }
+
+
+
+
+

@@ -73,10 +73,28 @@ const AdminPanel = ({ API_HOST }) => {
         }
     };
 
+    const handleLogout = () => {
+        sessionStorage.removeItem('token'); // Удаляем токен
+        window.location.href = '/'; // Перенаправляем на страницу входа
+    };
+
     return (
         <div className="container">
-            <h2 className="query-form-title">Админ панель</h2>
-            <Table striped bordered hover >
+            <div className="logout-container" >
+                <Button
+                    className="admin-panel-logout-container"
+                    variant="danger"
+                    onClick={handleLogout} // Добавляем обработчик выхода
+                >
+                    Выход
+                </Button>
+
+            {/*<div className="logout-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>*/}
+                <h2 className="query-form-title">Админ панель</h2>
+
+            </div>
+            <table id="productsTable">
+                {/*<Table striped bordered hover>*/}
                 <thead>
                 <tr>
                     <th className="th_table">Имя</th>
@@ -118,8 +136,8 @@ const AdminPanel = ({ API_HOST }) => {
                     </tr>
                 ))}
                 </tbody>
-            </Table>
-
+            {/*</Table>*/}
+            </table>
             <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
                 <Modal.Header closeButton>
                     <Modal.Title>Подтверждение удаления</Modal.Title>
