@@ -36,7 +36,6 @@ function SearchByArticle() {
     const [showProfile, setShowProfile] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteQueryId, setDeleteQueryId] = useState(null);
-    // const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: true }]);
     const [suggestions, setSuggestions] = useState([]);
     const [articleSuggestions, setArticleSuggestions] = useState([]);
     const [exportingStates, setExportingStates] = useState({}); // Новое состояние для отслеживания выгрузки
@@ -172,13 +171,6 @@ function SearchByArticle() {
         ));
     };
 
-    // const handleArticleInputChange = (text, formId) => {
-    //     setRequestForms(prevForms =>
-    //         prevForms.map(f =>
-    //             f.id === formId ? { ...f, article: text } : f
-    //         )
-    //     );
-    // };
 
     const handleArticleInputChange = (event, formId) => {
         const text = event.target.value;
