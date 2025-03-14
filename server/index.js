@@ -8,6 +8,7 @@ const { protect } = require('./middleware/authMiddleware');
 const otpRoutes = require('./routes/otpRoutes');
 const userRoutes = require('./routes/userRoutes');
 const queryArticleRoutes = require('./routes/queryArticleRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 dotenv.config();
 
@@ -33,6 +34,7 @@ const connectWithRetry = () => {
 };
 
 const startServer = () => {
+    app.use('/api/admin', adminRoutes);
     app.use('/api/auth', authRoutes);
     app.use('/api/otp', otpRoutes);
     app.use('/api/article', protect, queryArticleRoutes);

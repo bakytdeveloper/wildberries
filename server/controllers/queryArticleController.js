@@ -41,6 +41,12 @@ const createArticleQuery = async (req, res) => {
 const getArticleQueries = async (req, res) => {
     try {
         const userId = req.userId;
+
+        // Если userId равен "admin", возвращаем пустой массив или пропускаем запрос
+        if (userId === 'admin') {
+            return res.json([]);
+        }
+
         const queries = await QueryArticleModel.find({ userId }).sort({ createdAt: -1 });
         res.json(queries);
     } catch (error) {

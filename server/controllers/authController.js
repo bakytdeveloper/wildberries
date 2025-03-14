@@ -44,6 +44,12 @@ const loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     try {
+        // Проверка на админа
+        if (email === 'admin@gmail.com' && password === 'admin') {
+            const token = jwt.sign({ userId: 'admin', isAdmin: true }, jwtSecret, { expiresIn: '24h' });
+            return res.json({ token, isAdmin: true });
+        }
+
         const user = await UserModel.findOne({ email });
         if (!user) {
             return res.status(400).json({ message: 'Invalid email or password' });
@@ -54,12 +60,13 @@ const loginUser = async (req, res) => {
             return res.status(400).json({ message: 'Invalid email or password' });
         }
 
-        const token = jwt.sign({ userId: user._id }, jwtSecret, { expiresIn: '24h' });
-        res.json({ token });
+        const token = jwt.sign({ userId: user._id, isAdmin: false }, jwtSecret, { expiresIn: '24h' });
+        res.json({ token, isAdmin: false });
     } catch (error) {
         res.status(500).json({ error: 'Login failed' });
     }
 };
+
 
 const forgotPassword = async (req, res) => {
     const { email } = req.body;

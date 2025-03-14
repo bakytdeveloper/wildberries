@@ -12,27 +12,22 @@ const LoginForm = ({ API_HOST, setIsAuthenticated, setShowProfile, setShowForgot
 
     const handleLogin = async (e) => {
         e.preventDefault();
-        setLoading(true); // Блокируем форму
+        setLoading(true);
         try {
             const response = await axios.post(`${API_HOST}/api/auth/login`, { email, password });
-            sessionStorage.setItem('token', response.data.token);
+            sessionStorage.setItem('token', response.data.token); // Токен сохраняется
             setIsAuthenticated(true);
             setShowProfile(true);
 
-            // Программная перезагрузка страницы через 100 мс
-            setTimeout(() => {
+            if (response.data.isAdmin) {
+                window.location.href = '/admin';
+            } else {
                 window.location.reload();
-            }, 100);
+            }
         } catch (error) {
-            Toastify({
-                text: 'Ошибка авторизации',
-                duration: 3000,
-                gravity: 'top',
-                position: 'right',
-                style: { background: '#ff0000' },
-            }).showToast();
+            console.error('Ошибка авторизации:', error);
         } finally {
-            setLoading(false); // Разблокируем форму
+            setLoading(false);
         }
     };
 
