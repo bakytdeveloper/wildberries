@@ -434,7 +434,6 @@ function SearchByBrand() {
         <div className="app-page">
             <header>
                 <h1>Поиск товаров на <img className="header-logoWb" src="https://static-basket-01.wbbasket.ru/vol2/site/i/v3/header/logoWb.svg" /></h1>
-                {/*<h1>Поиск товаров на Wildberries</h1>*/}
             </header>
             <div className={`page-link ${!isAuthenticated || showRegisterForm || showForgotPasswordForm ? 'hidden' : ''}`}>
                 <nav>
@@ -558,9 +557,9 @@ function SearchByBrand() {
                                             <div className="flex-grow-0">{index + 1})</div>
                                             {windowWidth < 768 ? (
                                                 <div className="accordion-header-small">
-                                  <span variant="danger" className="delete-button delete-button-small" onClick={(event) => handleDeleteClick(queryData._id, event)}>
-                                    <FaTimes />
-                                  </span>
+                                                      <span variant="danger" className="delete-button delete-button-small" onClick={(event) => handleDeleteClick(queryData._id, event)}>
+                                                        <FaTimes />
+                                                      </span>
                                                     <div className="flex-grow-1">{headerTextItems}</div>
                                                     <div className="date-time date-time-small">{time} {date}</div>
                                                     <div
