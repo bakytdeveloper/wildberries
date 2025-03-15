@@ -1,23 +1,23 @@
 import Accordion from 'react-bootstrap/Accordion';
 import "toastify-js/src/toastify.css";
-import '../styles.css';
+import '../../styles.css';
 import React, { useState, useEffect, useRef } from 'react';
-import { Form, Button, InputGroup, DropdownButton, Dropdown, Alert, Spinner } from 'react-bootstrap'; // Добавлен Spinner
+import { Form, Button, InputGroup, DropdownButton, Dropdown, Alert, Spinner } from 'react-bootstrap';
 import Toastify from 'toastify-js';
-import axios from 'axios';
-import { Typeahead } from 'react-bootstrap-typeahead'; // Импортируем Typeahead
-import cityDestinations from '../utils/cityDestinations';
-import RegisterForm from './Auth/RegisterForm';
-import LoginForm from './Auth/LoginForm';
-import ForgotPasswordForm from './Auth/ForgotPasswordForm';
-import ImageModal from './ImageModal';
-import { FaTimes } from 'react-icons/fa'; // Импортируем иконку "крестик"
+import { Typeahead } from 'react-bootstrap-typeahead';
+import cityDestinations from '../../utils/cityDestinations';
+import RegisterForm from '../Auth/RegisterForm';
+import LoginForm from '../Auth/LoginForm';
+import ForgotPasswordForm from '../Auth/ForgotPasswordForm';
+import ImageModal from '../ImageModal';
+import { FaTimes } from 'react-icons/fa';
 import { Modal } from 'react-bootstrap';
 import { Link, useLocation } from 'react-router-dom';
+import axios from "axios";
 
 const API_HOST = process.env.REACT_APP_API_HOST;
 
-function SearchByBrand() {
+function SearchByArticle() {
     const [query, setQuery] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [loadingMessage, setLoadingMessage] = useState('');
@@ -34,17 +34,15 @@ function SearchByBrand() {
     const [showForgotPasswordForm, setShowForgotPasswordForm] = useState(false);
     const accordionRef = useRef(null);
     const [showProfile, setShowProfile] = useState(false);
-    // const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteQueryId, setDeleteQueryId] = useState(null);
     const [suggestions, setSuggestions] = useState([]);
-    const [brandSuggestions, setBrandSuggestions] = useState([]);
-    const [isExporting, setIsExporting] = useState(false); // Новое состояние для отслеживания выгрузки
-    const [exportingStates, setExportingStates] = useState({});
+    const [articleSuggestions, setArticleSuggestions] = useState([]);
+    const [exportingStates, setExportingStates] = useState({}); // Новое состояние для отслеживания выгрузки
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-    const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
+    const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: true }]);
     const queryTypeaheadRefs = useRef([]);
-    const brandTypeaheadRefs = useRef([]);
+    const articleTypeaheadRefs = useRef([]);
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
     const location = useLocation();
 
@@ -56,26 +54,6 @@ function SearchByBrand() {
     const toggleTheme = () => {
         setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
     };
-
-    // Инициализируем refs для каждого Typeahead
-    useEffect(() => {
-        queryTypeaheadRefs.current = queryTypeaheadRefs.current.slice(0, requestForms.length);
-        brandTypeaheadRefs.current = brandTypeaheadRefs.current.slice(0, requestForms.length);
-    }, [requestForms]);
-
-    const clearInput = (formId) => {
-        setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: '', brand: '', city: 'г.Дмитров' } : f));
-
-        // Очищаем Typeahead
-        const formIndex = requestForms.findIndex(f => f.id === formId);
-        if (queryTypeaheadRefs.current[formIndex]) {
-            queryTypeaheadRefs.current[formIndex].clear();
-        }
-        if (brandTypeaheadRefs.current[formIndex]) {
-            brandTypeaheadRefs.current[formIndex].clear();
-        }
-    };
-
 
 
     useEffect(() => {
@@ -93,6 +71,7 @@ function SearchByBrand() {
     const truncateText = (text, maxLength) => {
         return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
     };
+
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -124,7 +103,7 @@ function SearchByBrand() {
         try {
             setLoadingMessage('Загрузка данных...');
             const token = sessionStorage.getItem('token');
-            const response = await fetch(`${API_HOST}/api/queries`, {
+            const response = await fetch(`${API_HOST}/api/article`, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -138,11 +117,11 @@ function SearchByBrand() {
                     setFilteredQueries(savedQueries);
                     setRetryAttempted(false);
 
-                    const uniqueQueries = [...new Set(savedQueries.flatMap(query => query.query.split('; ')))];
+                    const uniqueQueries = [...new Set(savedQueries.flatMap(query => query.query.split('; ').filter(Boolean)))];
                     setSuggestions(uniqueQueries.map(item => ({ label: item.toString() })));
 
-                    const uniqueBrands = [...new Set(savedQueries.flatMap(query => query.brand.split('; ')))];
-                    setBrandSuggestions(uniqueBrands.map(item => ({ label: item.toString() })));
+                    const uniqueArticles = [...new Set(savedQueries.flatMap(query => query.article.split('; ').filter(Boolean)))];
+                    setArticleSuggestions(uniqueArticles.map(item => ({ label: item.toString() })));
                 }
             } catch (jsonError) {
                 console.error('Ошибка парсинга JSON:', jsonError);
@@ -159,6 +138,7 @@ function SearchByBrand() {
         }
     };
 
+
     const handleLogout = () => {
         sessionStorage.removeItem('token');
         setIsAuthenticated(false);
@@ -166,29 +146,37 @@ function SearchByBrand() {
     };
 
     const handleQueryChange = (selected, formId) => {
-        console.log('Query selected:', selected);
         const value = selected.length > 0 ? selected[0].label : '';
-        setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: value } : f));
-
-        // Обновляем список suggestions
-        if (value && !suggestions.some(suggestion => suggestion.label === value)) {
-            setSuggestions(prevSuggestions => [...prevSuggestions, { label: value }]);
-        }
-
-        console.log('Updated form:', requestForms.find(f => f.id === formId));
+        setRequestForms(prevForms =>
+            prevForms.map(f =>
+                f.id === formId ? { ...f, query: value } : f
+            )
+        );
     };
 
-    const handleBrandChange = (selected, formId) => {
-        console.log('Brand selected:', selected);
+    const handleArticleChange = (selected, formId) => {
         const value = selected.length > 0 ? selected[0].label : '';
-        setRequestForms(requestForms.map(f => f.id === formId ? { ...f, brand: value } : f));
+        setRequestForms(prevForms =>
+            prevForms.map(f =>
+                f.id === formId ? { ...f, article: value } : f
+            )
+        );
+    };
 
-        // Обновляем список brandSuggestions
-        if (value && !brandSuggestions.some(brand => brand.label === value)) {
-            setBrandSuggestions(prevBrandSuggestions => [...prevBrandSuggestions, { label: value }]);
-        }
+    const handleQueryInputChange = (event, formId) => {
+        const text = event.target.value;
+        console.log('Query input change:', text.target.value);
+        setRequestForms(prevForms => prevForms.map(f =>
+            f.id === formId ? { ...f, query: text.target.value } : f
+        ));
+    };
 
-        console.log('Updated form:', requestForms.find(f => f.id === formId));
+
+    const handleArticleInputChange = (event, formId) => {
+        const text = event.target.value;
+        console.log('Brand input change:', text);
+        setRequestForms(prevForms => prevForms.map(f =>
+            f.id === formId ? { ...f, article: text.target.value } : f ));
     };
 
     const handleCityChange = (city, formId) => {
@@ -205,15 +193,34 @@ function SearchByBrand() {
         }
     };
 
+    // Инициализируем refs для каждого Typeahead
+    useEffect(() => {
+        queryTypeaheadRefs.current = queryTypeaheadRefs.current.slice(0, requestForms.length);
+        articleTypeaheadRefs.current = articleTypeaheadRefs.current.slice(0, requestForms.length);
+    }, [requestForms]);
+
+    const clearInput = (formId) => {
+        setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: '', article: '', city: 'г.Дмитров' } : f));
+
+        // Очищаем Typeahead
+        const formIndex = requestForms.findIndex(f => f.id === formId);
+        if (queryTypeaheadRefs.current[formIndex]) {
+            queryTypeaheadRefs.current[formIndex].clear();
+        }
+        if (articleTypeaheadRefs.current[formIndex]) {
+            articleTypeaheadRefs.current[formIndex].clear();
+        }
+    };
+
     const handleKeyPress = (e, formId) => {
         if (e.key === 'Enter') {
             e.preventDefault();
-            fetchProducts();
+            fetchProductsByArticle();
         }
     };
 
     const addRequestForm = () => {
-        setRequestForms([...requestForms, { id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: false }]);
+        setRequestForms([...requestForms, { id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: false }]);
     };
 
     const removeRequestForm = (formId) => {
@@ -230,29 +237,16 @@ function SearchByBrand() {
         document.body.style.overflow = 'auto';
     };
 
-    const handleQueryInputChange = (event, formId) => {
-        const text = event.target.value;
-        console.log('Query input change:', text.target.value);
-        setRequestForms(prevForms => prevForms.map(f =>
-            f.id === formId ? { ...f, query: text.target.value } : f
-        ));
-    };
-
-    const handleBrandInputChange = (event, formId) => {
-        const text = event.target.value;
-        console.log('Brand input change:', text);
-        setRequestForms(prevForms => prevForms.map(f =>
-            f.id === formId ? { ...f, brand: text.target.value } : f ));
-    };
-
-    const fetchProducts = async () => {
+    const fetchProductsByArticle = async () => {
         if (isRequesting) return;
         console.log('Request forms before validation:', requestForms);
+
         const validForms = requestForms.filter(form => {
             const query = form.query && typeof form.query === 'string' ? form.query.trim() : '';
-            const brand = form.brand && typeof form.brand === 'string' ? form.brand.trim() : '';
-            return query !== '' && brand !== '';
+            const article = form.article && typeof form.article === 'string' ? form.article.trim() : '';
+            return query !== '' && article !== '';
         });
+
         console.log('Valid forms after validation:', validForms);
         if (validForms.length === 0) {
             Toastify({
@@ -264,22 +258,25 @@ function SearchByBrand() {
             }).showToast();
             return;
         }
+
         setIsRequesting(true);
         setLoadingMessage('Загрузка...');
         setErrorMessage('');
         setSuccessMessage('');
+
         try {
             const token = sessionStorage.getItem('token');
             const trimmedForms = validForms.map(form => ({
                 ...form,
-                query: form.query.trim(),
-                brand: form.brand.trim(),
+                query: form.query && typeof form.query === 'string' ? form.query.trim() : '',
+                article: form.article && typeof form.article === 'string' ? form.article.trim() : '',
                 dest: cityDestinations[form.city],
                 city: form.city,
                 queryTime: new Date().toISOString()
             }));
+
             console.log('Trimmed forms before sending:', trimmedForms);
-            const response = await fetch(`${API_HOST}/api/queries`, {
+            const response = await fetch(`${API_HOST}/api/article`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -287,14 +284,18 @@ function SearchByBrand() {
                 },
                 body: JSON.stringify({ forms: trimmedForms })
             });
+
             if (response.status !== 200) {
                 const result = await response.json();
                 throw new Error(result.error || 'Ошибка выполнения запроса');
             }
+
             const result = await response.json();
             console.log('Response from server:', result);
+
             const totalRequests = validForms.length;
             const successfulRequests = result.productTables.filter(table => table.products.length > 0).length;
+
             if (successfulRequests === totalRequests) {
                 setSuccessMessage('Запрос выполнен успешно!');
             } else if (successfulRequests > 0) {
@@ -302,39 +303,36 @@ function SearchByBrand() {
             } else {
                 setSuccessMessage('По запросу ничего не найдено');
             }
+
             setAllQueries([result, ...allQueries]);
             setFilteredQueries([result, ...allQueries]);
 
-            // Обновляем списки suggestions и brandSuggestions
-            const newQueries = validForms.map(form => form.query.trim());
-            const newBrands = validForms.map(form => form.brand.trim());
-
-            setSuggestions(prevSuggestions => {
-                const updatedSuggestions = [...prevSuggestions];
-                newQueries.forEach(query => {
-                    if (!updatedSuggestions.some(suggestion => suggestion.label === query)) {
-                        updatedSuggestions.push({ label: query });
-                    }
-                });
-                return updatedSuggestions;
+            const newQueries = validForms.map(form => form.query && typeof form.query === 'string' ? form.query.trim() : '');
+            const newSuggestions = [...suggestions];
+            newQueries.forEach(query => {
+                if (!newSuggestions.some(suggestion => suggestion.label === query)) {
+                    newSuggestions.push({ label: query });
+                }
             });
+            setSuggestions(newSuggestions);
 
-            setBrandSuggestions(prevBrandSuggestions => {
-                const updatedBrandSuggestions = [...prevBrandSuggestions];
-                newBrands.forEach(brand => {
-                    if (!updatedBrandSuggestions.some(brandSuggestion => brandSuggestion.label === brand)) {
-                        updatedBrandSuggestions.push({ label: brand });
-                    }
-                });
-                return updatedBrandSuggestions;
+            const newArticles = validForms.map(form => form.article && typeof form.article === 'string' ? form.article.trim() : '');
+            const newArticleSuggestions = [...articleSuggestions];
+            newArticles.forEach(article => {
+                if (!newArticleSuggestions.some(articleSuggestion => articleSuggestion.label === article)) {
+                    newArticleSuggestions.push({ label: article });
+                }
             });
+            setArticleSuggestions(newArticleSuggestions);
 
             setLoadingMessage('');
-            setRequestForms([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
+            setRequestForms([{ id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: true }]);
             setActiveKey('0');
+
             setTimeout(() => {
                 setSuccessMessage('');
             }, 3000);
+
             setTimeout(() => {
                 const newAccordionItem = document.querySelector(`.accordion .accordion-item:first-child`);
                 if (newAccordionItem) {
@@ -349,6 +347,8 @@ function SearchByBrand() {
         }
     };
 
+
+
     const handleProductClick = (searchQuery, page, position) => {
         const url = `https://www.wildberries.ru/catalog/0/search.aspx?page=${page}&sort=popular&search=${encodeURIComponent(searchQuery)}#position=${position}`;
         window.open(url, '_blank');
@@ -356,43 +356,40 @@ function SearchByBrand() {
 
     const handlePageRedirect = (productId) => {
         const url = `https://www.wildberries.ru/catalog/${productId}/detail.aspx`;
-        window.open(url, '_blank'); // Открывает в новой вкладке
+        window.open(url, '_blank');
     };
 
     const handleDeleteClick = (queryId, event) => {
-        event.stopPropagation(); // Останавливаем распространение события
+        event.stopPropagation();
         setDeleteQueryId(queryId);
         setShowDeleteModal(true);
     };
 
     const handleDeleteConfirm = async () => {
-        if (deleteQueryId) {
-            try {
-                const token = sessionStorage.getItem('token');
-                await axios.delete(`${API_HOST}/api/queries/${deleteQueryId}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                setAllQueries(allQueries.filter(query => query._id !== deleteQueryId));
-                setFilteredQueries(filteredQueries.filter(query => query._id !== deleteQueryId));
-                setShowDeleteModal(false);
-                setDeleteQueryId(null);
-                Toastify({
-                    text: "Запрос успешно удален.",
-                    duration: 3000,
-                    gravity: "top",
-                    position: "right",
-                    style: { background: '#00c851' }
-                }).showToast();
-            } catch (error) {
-                console.error('Ошибка удаления запроса:', error);
-                Toastify({
-                    text: "Ошибка удаления запроса.",
-                    duration: 3000,
-                    gravity: "top",
-                    position: "right",
-                    style: { background: '#ff0000' }
-                }).showToast();
+        try {
+            const token = sessionStorage.getItem('token');
+            const response = await fetch(`${API_HOST}/api/article/${deleteQueryId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (response.status !== 200) {
+                throw new Error('Ошибка удаления запроса');
             }
+            setAllQueries(allQueries.filter(query => query._id !== deleteQueryId));
+            setFilteredQueries(filteredQueries.filter(query => query._id !== deleteQueryId));
+            setShowDeleteModal(false);
+            Toastify({
+                text: "Запрос успешно удален.",
+                duration: 3000,
+                gravity: "top",
+                position: "right",
+                style: { background: '#00c851' }
+            }).showToast();
+        } catch (error) {
+            console.error('Error deleting query:', error);
+            setErrorMessage('Ошибка удаления запроса');
         }
     };
 
@@ -402,7 +399,7 @@ function SearchByBrand() {
 
         try {
             const token = sessionStorage.getItem('token');
-            const response = await axios.post(`${API_HOST}/api/queries/export`, { queryId, sheetName }, {
+            const response = await axios.post(`${API_HOST}/api/article/export`, { queryId, sheetName }, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -424,14 +421,14 @@ function SearchByBrand() {
                 gravity: 'top',
                 position: 'right',
                 style: { background: '#ff0000' }
-            }).showToast();
+            }).showToast();  SearchByArticle.js
         } finally {
             setExportingStates((prev) => ({ ...prev, [queryId]: false })); // Сбрасываем состояние после завершения
         }
     };
 
     return (
-        <div className="app-page">
+        <div  className="article-page">
             <header>
                 <h1>Поиск товаров на <img className="header-logoWb" src="https://static-basket-01.wbbasket.ru/vol2/site/i/v3/header/logoWb.svg" /></h1>
                 {/*<h1>Поиск товаров на Wildberries</h1>*/}
@@ -450,7 +447,6 @@ function SearchByBrand() {
                         {theme === 'light' ? '🌒' : '🌕'}
                     </div>
                 </nav>
-
             </div>
             <div className="container">
                 {!isAuthenticated ? (
@@ -466,7 +462,7 @@ function SearchByBrand() {
                 ) : showProfile ? (
                     <div className="query-form">
                         <Button variant="danger" className="exit-button" onClick={handleLogout}>Выйти</Button>
-                        <h3 className="query-form-title">Страница поиска по описанию и бренду товара</h3>
+                        <h3 className="query-form-title">Страница поиска по описанию и артикулу товара</h3>
                         <div className="top-section">
                             <div className="left-forms">
                                 {requestForms.map((form, index) => (
@@ -485,20 +481,21 @@ function SearchByBrand() {
                                                         allowNew
                                                         newSelectionPrefix="Новый запрос: "
                                                         onKeyDown={(e) => handleKeyPress(e, form.id)}
-                                                        ref={(ref) => (queryTypeaheadRefs.current[index] = ref)} // Сохраняем ref
+                                                        ref={(ref) => (queryTypeaheadRefs.current[index] = ref)}
                                                     />
+
                                                     <Typeahead
-                                                        id={`brand-input-${form.id}`}
+                                                        id={`article-input-${form.id}`}
                                                         labelKey="label"
-                                                        onChange={(selected) => handleBrandChange(selected, form.id)}
-                                                        onInputChange={(text) => handleBrandInputChange({ target: { value: text } }, form.id)}
-                                                        options={brandSuggestions}
-                                                        placeholder="Введите бренд"
-                                                        defaultSelected={form.brand ? [{ label: form.brand.toString() }] : []}
+                                                        onChange={(selected) => handleArticleChange(selected, form.id)}
+                                                        onInputChange={(text) => handleArticleInputChange({ target: { value: text } }, form.id)}
+                                                        options={articleSuggestions}
+                                                        placeholder="Введите артикул"
+                                                        defaultSelected={form.article ? [{ label: form.article.toString() }] : []}
                                                         allowNew
-                                                        newSelectionPrefix="Новый бренд: "
+                                                        newSelectionPrefix="Новый артикул: "
                                                         onKeyDown={(e) => handleKeyPress(e, form.id)}
-                                                        ref={(ref) => (brandTypeaheadRefs.current[index] = ref)} // Сохраняем ref
+                                                        ref={(ref) => (articleTypeaheadRefs.current[index] = ref)}
                                                     />
                                                     <DropdownButton id="dropdown-basic-button" title={form.city} onSelect={(city) => handleCityChange(city, form.id)}>
                                                         {Object.keys(cityDestinations).map((city) => (
@@ -506,7 +503,7 @@ function SearchByBrand() {
                                                         ))}
                                                     </DropdownButton>
                                                     {form.isMain ? (
-                                                        <Button variant="primary" onClick={fetchProducts} disabled={isRequesting}>Поиск</Button>
+                                                        <Button variant="primary" onClick={fetchProductsByArticle} disabled={isRequesting}>Поиск</Button>
                                                     ) : (
                                                         <Button variant="danger" onClick={() => removeRequestForm(form.id)}>Удалить</Button>
                                                     )}
@@ -520,7 +517,7 @@ function SearchByBrand() {
                             <div className="right-controls">
                                 <div className="controls">
                                     <Button className="controls_success" onClick={addRequestForm}>Добавить запрос</Button>
-                                    <Button className="controls_primary" onClick={fetchProducts} disabled={isRequesting}>Поиск</Button>
+                                    <Button className="controls_primary" onClick={fetchProductsByArticle} disabled={isRequesting}>Поиск</Button>
                                 </div>
                                 <div className="search-bar">
                                     <Form className="search" onSubmit={(e) => e.preventDefault()}>
@@ -544,10 +541,10 @@ function SearchByBrand() {
                                 const createdAt = new Date(queryData.createdAt);
                                 const date = createdAt.toLocaleDateString();
                                 const time = createdAt.toLocaleTimeString();
-                                const headerTextItems = queryData.query.split('; ').map((query, i) => {
-                                    const brand = queryData.brand.split('; ')[i] || '';
-                                    const city = queryData.city.split('; ')[i] || '';
-                                    const fullText = `${query} - ${brand} (${city})`;
+                                const headerTextItems = queryData.query?.split('; ').map((query, i) => {
+                                    const article = queryData.article?.split('; ')[i] || '';
+                                    const city = queryData.city?.split('; ')[i] || '';
+                                    const fullText = `${query} - ${article} (${city})`;
                                     const truncatedText = windowWidth < 768 ? truncateText(fullText, 24) : fullText; // Обрезаем текст для мобильных устройств
                                     return <div key={i}>{truncatedText}</div>;
                                 });
@@ -556,11 +553,11 @@ function SearchByBrand() {
                                     <Accordion.Item eventKey={index.toString()} key={index}>
                                         <Accordion.Header>
                                             <div className="flex-grow-0">{index + 1})</div>
-                                            {windowWidth < 768 ? (
+                                            {windowWidth < 768 ? ( // Условие для маленьких экранов
                                                 <div className="accordion-header-small">
-                                  <span variant="danger" className="delete-button delete-button-small" onClick={(event) => handleDeleteClick(queryData._id, event)}>
-                                    <FaTimes />
-                                  </span>
+                                                    <span variant="danger" className="delete-button delete-button-small" onClick={(event) => handleDeleteClick(queryData._id, event)}>
+                                                        <FaTimes />
+                                                    </span>
                                                     <div className="flex-grow-1">{headerTextItems}</div>
                                                     <div className="date-time date-time-small">{time} {date}</div>
                                                     <div
@@ -568,7 +565,7 @@ function SearchByBrand() {
                                                         onClick={(event) => {
                                                             if (exportingStates[queryData._id]) return;
                                                             event.stopPropagation();
-                                                            handleExportClick(queryData._id, 'Бренд').then(r => r);
+                                                            handleExportClick(queryData._id, 'Артикул').then(r => r);
                                                         }}
                                                         style={{ cursor: exportingStates[queryData._id] ? 'not-allowed' : 'pointer' }}
                                                         title={exportingStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Google Таблицу'}
@@ -596,7 +593,7 @@ function SearchByBrand() {
                                                         onClick={(event) => {
                                                             if (exportingStates[queryData._id]) return;
                                                             event.stopPropagation();
-                                                            handleExportClick(queryData._id, 'Бренд').then(r => r);
+                                                            handleExportClick(queryData._id, 'Артикул').then(r => r);
                                                         }}
                                                         style={{ cursor: exportingStates[queryData._id] ? 'not-allowed' : 'pointer' }}
                                                         title={exportingStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Google Таблицу'}
@@ -619,7 +616,6 @@ function SearchByBrand() {
                                                     </div>
                                                 </>
                                             )}
-
                                         </Accordion.Header>
                                         <Accordion.Body>
                                             {hasProducts ? (
@@ -627,9 +623,9 @@ function SearchByBrand() {
                                                     <div className="accordion_body_table" key={tableIndex}>
                                                         <div className="tableIndexDescription">
                                                             <p><strong>{tableIndex + 1})</strong></p>
-                                                            <p>По Запросу: <strong>{queryData.query.split('; ')[tableIndex]}</strong></p>
-                                                            <p>Бренд: <strong>{queryData.brand.split('; ')[tableIndex]}</strong></p>
-                                                            <p>Город: <strong>{queryData.city.split('; ')[tableIndex]}</strong></p>
+                                                            <p>По Запросу: <strong>{queryData.query?.split('; ')[tableIndex]}</strong></p>
+                                                            <p>Артикул: <strong>{queryData.article?.split('; ')[tableIndex]}</strong></p>
+                                                            <p>Город: <strong>{queryData.city?.split('; ')[tableIndex]}</strong></p>
                                                         </div>
                                                         {table.products.length > 0 ? (
                                                             <table id="productsTable">
@@ -637,10 +633,10 @@ function SearchByBrand() {
                                                                 <tr>
                                                                     <th className="th_table">№</th>
                                                                     <th className="th_table">Картинка</th>
-                                                                    <th className="th_table">Бренд</th>
                                                                     <th className="th_table">Артикул</th>
                                                                     <th className="th_table">Позиция</th>
                                                                     <th className="th_table">Прежняя Позиция</th>
+                                                                    <th className="th_table">Бренд</th>
                                                                     <th className="th_table">Наименование</th>
                                                                     <th className="th_table">Время запроса</th>
                                                                     <th className="th_table">Дата запроса</th>
@@ -657,14 +653,8 @@ function SearchByBrand() {
                                                                         <tr key={i}>
                                                                             <td className="td_table">{i + 1}</td>
                                                                             <td className="td_table td_table_image">
-                                                                                <img
-                                                                                    className="td_table_img"
-                                                                                    src={product.imageUrl}
-                                                                                    alt={product.name}
-                                                                                    onClick={() => handleImageClick(product.imageUrl)}
-                                                                                />
+                                                                                <img className="td_table_img" src={product.imageUrl} alt={product.name} onClick={() => handleImageClick(product.imageUrl)} />
                                                                             </td>
-                                                                            <td className="td_table">{product.brand}</td>
                                                                             <td className="td_table td_table_article" onClick={() => handlePageRedirect(product.id)}>
                                                                                 {product.id}
                                                                             </td>
@@ -672,6 +662,7 @@ function SearchByBrand() {
                                                                                 {product.log?.promoPosition || (page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position)}
                                                                             </td>
                                                                             <td className="td_table">{product.log?.position || (page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position)}</td>
+                                                                            <td className="td_table">{product.brand}</td>
                                                                             <td className="td_table">{product.name}</td>
                                                                             <td className="td_table">{time}</td>
                                                                             <td className="td_table">{date}</td>
@@ -681,13 +672,12 @@ function SearchByBrand() {
                                                                 </tbody>
                                                             </table>
                                                         ) : (
-                                                            <div className="no-products-message" >
-                                                                {/*<div className="no-products-message" style={{ backgroundColor: '#ffcccb', color: '#000000', padding: '10px', borderRadius: '5px' }}>*/}
-                                                                <strong>По Запросу:</strong> {queryData.query.split('; ')[tableIndex]}
+                                                            <div className="no-products-message" style={{ backgroundColor: '#ffcccb', color: '#000000', padding: '10px', borderRadius: '5px' }}>
+                                                                <strong>По Запросу:</strong> {queryData.query?.split('; ')[tableIndex]}
                                                                 <br />
-                                                                <strong>Бренд:</strong> {queryData.brand.split('; ')[tableIndex]}
+                                                                <strong>Артикул:</strong> {queryData.article?.split('; ')[tableIndex]}
                                                                 <br />
-                                                                <strong>Город:</strong> {queryData.city.split('; ')[tableIndex]}
+                                                                <strong>Город:</strong> {queryData.city?.split('; ')[tableIndex]}
                                                                 <br />
                                                                 <strong>Товары не найдены.</strong>
                                                             </div>
@@ -696,11 +686,11 @@ function SearchByBrand() {
                                                 ))
                                             ) : (
                                                 <div className="no-products-message" style={{ backgroundColor: '#ffcccb', color: '#000000', padding: '10px', borderRadius: '5px' }}>
-                                                    <strong>Запрос:</strong> {queryData.query}
+                                                    <strong>Запрос:</strong> {queryData?.query}
                                                     <br />
-                                                    <strong>Бренд:</strong> {queryData.brand}
+                                                    <strong>Артикул:</strong> {queryData?.article}
                                                     <br />
-                                                    <strong>Город:</strong> {queryData.city}
+                                                    <strong>Город:</strong> {queryData?.city}
                                                     <br />
                                                     <strong>Товары не найдены.</strong>
                                                 </div>
@@ -728,4 +718,4 @@ function SearchByBrand() {
     );
 }
 
-export default SearchByBrand;
+export default SearchByArticle;

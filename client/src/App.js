@@ -1,10 +1,10 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import SearchByArticle from "./components/SearchByArticle";
-import AdminPanel from "./components/AdminPanel";
-import SearchByBrand from "./components/SearchByBrand";
+import SearchByArticle from "./components/Search/SearchByArticle";
+import AdminPanel from "./components/Search/AdminPanel";
+import SearchByBrand from "./components/Search/SearchByBrand";
 
-function AppRouter() {
+function App() {
   return (
       <Router>
         <Routes>
@@ -16,4 +16,4 @@ function AppRouter() {
   );
 }
 
-export default AppRouter;  SearchByArticle.js
+export default App;
