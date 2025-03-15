@@ -43,6 +43,13 @@ const registerUser = async (req, res) => {
 const loginUser = async (req, res) => {
     const { email, password } = req.body;
 
+    console.log('Received login request:', req.body);
+
+    if (!email || !password) {
+        console.log('Email or password missing');
+        return res.status(400).json({ message: 'Email and password are required' });
+    }
+
     try {
         // Проверка на админа
         if (email === 'admin@gmail.com' && password === 'admin') {
@@ -52,6 +59,7 @@ const loginUser = async (req, res) => {
 
         const user = await UserModel.findOne({ email });
         if (!user) {
+            console.log('User not found:', email);
             return res.status(400).json({ message: 'Invalid email or password' });
         }
 
@@ -62,12 +70,14 @@ const loginUser = async (req, res) => {
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
+            console.log('Password mismatch for user:', email);
             return res.status(400).json({ message: 'Invalid email or password' });
         }
 
         const token = jwt.sign({ userId: user._id, isAdmin: false }, jwtSecret, { expiresIn: '24h' });
         res.json({ token, isAdmin: false });
     } catch (error) {
+        console.error('Error during login:', error);
         res.status(500).json({ error: 'Login failed' });
     }
 };
