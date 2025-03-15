@@ -23,7 +23,7 @@ const auth = new google.auth.GoogleAuth({
 const getSheetsInstance = () => google.sheets({ version: 'v4', auth });
 const getDriveInstance = () => google.drive({ version: 'v3', auth });
 
-const TEMPLATE_SPREADSHEET_ID = '1SARDBpZGJnHAIw6al034_ZGsrplWCHCe1MqxaVszwyc';
+const TEMPLATE_SPREADSHEET_ID = process.env.TEMPLATE_SPREADSHEET_ID;
 
 async function createSpreadsheetForUser(email) {
     const drive = getDriveInstance();
@@ -117,6 +117,5 @@ async function addDataToSheet(sheetId, sheetName, data) {
 
 module.exports = {
     createSpreadsheetForUser,
-    getLastRow,
     addDataToSheet
 };

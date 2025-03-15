@@ -8,7 +8,6 @@ router.route('/')
     .get(protect, getQueries)
     .post(protect, createQuery);
 router.delete('/:id', protect, deleteQuery);
-router.route('/export')
-    .post(protect, exportToGoogleSheet); // Новый маршрут для экспорта данных
+router.route('/export').post(protect, exportToGoogleSheet); // экспорт данных в таблицу
 
 module.exports = router;

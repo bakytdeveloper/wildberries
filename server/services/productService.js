@@ -27,7 +27,7 @@ function generateImageUrl(id) {
 async function fetchAndParseProducts(query, dest, selectedBrand, queryTime) {
     try {
         const products = [];
-        const maxConcurrentPages = 18;
+        const maxConcurrentPages = 4;
         let page = 1;
         let hasMoreData = true;
         const baseQuery = selectedBrand === 'S.Point' ? 'Одежда S.Point' : '';
@@ -75,7 +75,7 @@ async function fetchAndParseProducts(query, dest, selectedBrand, queryTime) {
 async function fetchAndParseProductsByArticle(query, dest, article, queryTime) {
     try {
         const products = [];
-        const maxConcurrentPages = 18;
+        const maxConcurrentPages = 4;
         let page = 1;
         let hasMoreData = true;
         const searchQuery = query.toLowerCase();

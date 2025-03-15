@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Table, Button, Modal } from 'react-bootstrap';
 import Toastify from 'toastify-js';
-import {useLocation} from "react-router-dom";
 
 const AdminPanel = ({ API_HOST }) => {
     const [users, setUsers] = useState([]);

@@ -37,6 +37,7 @@
     "@types/node": "^16.18.126",
     "@types/nodemailer": "^6.4.17",
     "fork-ts-checker-webpack-plugin": "^8.0.0",
+    "p-limit": "^4.0.0",
     "typescript": "^5.8.2"
   }
 }
