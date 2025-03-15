@@ -15,7 +15,6 @@ import { FaTimes } from 'react-icons/fa'; // Импортируем иконку
 import { Modal } from 'react-bootstrap';
 import { Link, useLocation } from 'react-router-dom';
 
-const API_HOST = process.env.REACT_APP_API_HOST;
 
 function SearchByBrand() {
     const [query, setQuery] = useState('');
@@ -47,6 +46,7 @@ function SearchByBrand() {
     const brandTypeaheadRefs = useRef([]);
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
     const location = useLocation();
+    const API_HOST = process.env.REACT_APP_API_HOST;
 
     useEffect(() => {
         document.body.setAttribute('data-theme', theme);

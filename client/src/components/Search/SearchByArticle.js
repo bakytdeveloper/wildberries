@@ -15,7 +15,6 @@ import { Modal } from 'react-bootstrap';
 import { Link, useLocation } from 'react-router-dom';
 import axios from "axios";
 
-const API_HOST = process.env.REACT_APP_API_HOST;
 
 function SearchByArticle() {
     const [query, setQuery] = useState('');
@@ -45,6 +44,7 @@ function SearchByArticle() {
     const articleTypeaheadRefs = useRef([]);
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
     const location = useLocation();
+    const API_HOST = process.env.REACT_APP_API_HOST;
 
     useEffect(() => {
         document.body.setAttribute('data-theme', theme);

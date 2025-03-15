@@ -7,6 +7,7 @@ const router = express.Router();
 router.route('/')
     .post(protect, createArticleQuery)
     .get(protect, getArticleQueries);
+
 router.route('/:id').delete(protect, deleteArticleQuery);
 router.route('/export').post(protect, exportToGoogleSheet); // для экспорта данных
 
