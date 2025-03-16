@@ -391,22 +391,22 @@ table {
     border-collapse: collapse;
 }
 
-.upload-to-google-spreadsheet {
-    background: #35cbfa;
-    border: 2px solid #35cbfa;
-    border-radius: 4px;
-    padding: 4px 7px;
-    font-weight: bold;
-    margin-right: 10px;
-}
+/*.upload-to-google-spreadsheet {*/
+/*    background: #35cbfa;*/
+/*    border: 2px solid #35cbfa;*/
+/*    border-radius: 4px;*/
+/*    padding: 4px 7px;*/
+/*    font-weight: bold;*/
+/*    margin-right: 10px;*/
+/*}*/
 
-.upload-to-google-spreadsheet:hover {
-    border: 2px solid bisque;
-    background: #0e9fcb;
-}
+/*.upload-to-google-spreadsheet:hover {*/
+/*    border: 2px solid bisque;*/
+/*    background: #0e9fcb;*/
+/*}*/
 
 .upload-to-excel {
-    margin-left: 10px;
+    /*margin-left: 10px;*/
     background: #0aeee6;
     border: 2px solid #35cbfa;
     border-radius: 4px;
@@ -430,6 +430,34 @@ table {
     background-color: #6c757d;
     cursor: not-allowed;
 }
+
+.upload-to-google-spreadsheet {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /*width: 100px;*/
+    /*width: auto;*/
+    height: 30px;
+    padding: 4px 7px;
+    font-weight: bold;
+
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #07a6ee;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.upload-to-google-spreadsheet:hover {
+    background-color: #e9ecef;
+    color: black;
+}
+
+.upload-to-google-spreadsheet:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 
 th, td {
     border: 1px solid var(--border-color) !important;
@@ -577,29 +605,29 @@ tr:hover {
     color: var(--modal-text-color);
 }
 
-.upload-to-google-spreadsheet {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 100px;
-    height: 30px;
-    padding: 0 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: #07a6ee;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
+/*.upload-to-google-spreadsheet {*/
+/*    display: inline-flex;*/
+/*    align-items: center;*/
+/*    justify-content: center;*/
+/*    width: 100px;*/
+/*    height: 30px;*/
+/*    padding: 0 10px;*/
+/*    border: 1px solid #ccc;*/
+/*    border-radius: 4px;*/
+/*    background-color: #07a6ee;*/
+/*    cursor: pointer;*/
+/*    transition: background-color 0.3s ease;*/
+/*}*/
 
-.upload-to-google-spreadsheet:hover {
-    background-color: #e9ecef;
-    color: black;
-}
+/*.upload-to-google-spreadsheet:hover {*/
+/*    background-color: #e9ecef;*/
+/*    color: black;*/
+/*}*/
 
-.upload-to-google-spreadsheet:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
+/*.upload-to-google-spreadsheet:disabled {*/
+/*    opacity: 0.6;*/
+/*    cursor: not-allowed;*/
+/*}*/
 
 .close {
     position: absolute;
@@ -889,6 +917,11 @@ tr:hover {
         font-size: 12px;
         padding: 0 5px;
     }
+
+    .buttons-sheets {
+        display: inline-flex;
+    }
+
 }
 
 @media (max-width: 480px) {

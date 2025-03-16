@@ -597,53 +597,55 @@ function SearchByBrand() {
                                                     <div className="flex-grow-1">{headerTextItems}</div>
                                                     <div className="date-time date-time-small">{time} {date}</div>
 
-                                                    <div
-                                                        className="upload-to-excel"
-                                                        onClick={(event) => {
-                                                            if (exportingToExcelStates[queryData._id]) return;
-                                                            event.stopPropagation();
-                                                            handleExportToExcelClick(queryData._id, 'Бренд').then(r => r);
-                                                        }}
-                                                        style={{ cursor: exportingToExcelStates[queryData._id] ? 'not-allowed' : 'pointer' }}
-                                                        title={exportingToExcelStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Excel'}
-                                                    >
-                                                        {exportingToExcelStates[queryData._id] ? (
-                                                            <Spinner
-                                                                as="span"
-                                                                animation="border"
-                                                                size="sm"
-                                                                role="status"
-                                                                aria-hidden="true"
-                                                                style={{ width: '1rem', height: '1rem' }}
-                                                            />
-                                                        ) : (
-                                                            <span>Выгрузить в Excel</span>
-                                                        )}
-                                                    </div>
+                                                 <div className="buttons-sheets">
+                                                     <div
+                                                         className="upload-to-excel"
+                                                         onClick={(event) => {
+                                                             if (exportingToExcelStates[queryData._id]) return;
+                                                             event.stopPropagation();
+                                                             handleExportToExcelClick(queryData._id, 'Бренд').then(r => r);
+                                                         }}
+                                                         style={{ cursor: exportingToExcelStates[queryData._id] ? 'not-allowed' : 'pointer' }}
+                                                         title={exportingToExcelStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Excel'}
+                                                     >
+                                                         {exportingToExcelStates[queryData._id] ? (
+                                                             <Spinner
+                                                                 as="span"
+                                                                 animation="border"
+                                                                 size="sm"
+                                                                 role="status"
+                                                                 aria-hidden="true"
+                                                                 style={{ width: '1rem', height: '1rem' }}
+                                                             />
+                                                         ) : (
+                                                             <span>В Excel</span>
+                                                         )}
+                                                     </div>
 
-                                                    <div
-                                                        className="upload-to-google-spreadsheet"
-                                                        onClick={(event) => {
-                                                            if (exportingStates[queryData._id]) return;
-                                                            event.stopPropagation();
-                                                            handleExportClick(queryData._id, 'Бренд').then(r => r);
-                                                        }}
-                                                        style={{ cursor: exportingStates[queryData._id] ? 'not-allowed' : 'pointer' }}
-                                                        title={exportingStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Google Таблицу'}
-                                                    >
-                                                        {exportingStates[queryData._id] ? (
-                                                            <Spinner
-                                                                as="span"
-                                                                animation="border"
-                                                                size="sm"
-                                                                role="status"
-                                                                aria-hidden="true"
-                                                                style={{ width: '1rem', height: '1rem' }}
-                                                            />
-                                                        ) : (
-                                                            <span>Выгрузить</span>
-                                                        )}
-                                                    </div>
+                                                     <div
+                                                         className="upload-to-google-spreadsheet"
+                                                         onClick={(event) => {
+                                                             if (exportingStates[queryData._id]) return;
+                                                             event.stopPropagation();
+                                                             handleExportClick(queryData._id, 'Бренд').then(r => r);
+                                                         }}
+                                                         style={{ cursor: exportingStates[queryData._id] ? 'not-allowed' : 'pointer' }}
+                                                         title={exportingStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Google Таблицу'}
+                                                     >
+                                                         {exportingStates[queryData._id] ? (
+                                                             <Spinner
+                                                                 as="span"
+                                                                 animation="border"
+                                                                 size="sm"
+                                                                 role="status"
+                                                                 aria-hidden="true"
+                                                                 style={{ width: '1rem', height: '1rem' }}
+                                                             />
+                                                         ) : (
+                                                             <span>В Google</span>
+                                                         )}
+                                                     </div>
+                                                 </div>
                                                 </div>
                                             ) : (
                                                 <>
@@ -694,7 +696,7 @@ function SearchByBrand() {
                                                                 style={{ width: '1rem', height: '1rem' }}
                                                             />
                                                         ) : (
-                                                            <span>Выгрузить</span>
+                                                            <span>Выгрузить в Google</span>
                                                         )}
                                                     </div>
                                                     <div variant="danger" className="delete-button" onClick={(event) => handleDeleteClick(queryData._id, event)}>

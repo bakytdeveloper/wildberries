@@ -11,6 +11,13 @@ const downloadImage = async (url) => {
 };
 
 const createExcelFileForUser = async (userId) => {
+    const excelFilesDir = path.join(__dirname, '../excelFiles');
+
+    // Проверяем, существует ли папка excelFiles
+    if (!fs.existsSync(excelFilesDir)) {
+        fs.mkdirSync(excelFilesDir, { recursive: true }); // Создаем папку, если её нет
+    }
+
     const workbook = new ExcelJS.Workbook();
     const sheetBrand = workbook.addWorksheet('Бренд');
     const sheetArticle = workbook.addWorksheet('Артикул');

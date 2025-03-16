@@ -596,7 +596,7 @@ function SearchByArticle() {
                                                     </span>
                                                     <div className="flex-grow-1">{headerTextItems}</div>
                                                     <div className="date-time date-time-small">{time} {date}</div>
-
+                                                    <div className="buttons-sheets">
                                                     <div
                                                         className="upload-to-excel"
                                                         onClick={(event) => {
@@ -617,7 +617,7 @@ function SearchByArticle() {
                                                                 style={{ width: '1rem', height: '1rem' }}
                                                             />
                                                         ) : (
-                                                            <span>Выгрузить в Excel</span>
+                                                            <span>В Excel</span>
                                                         )}
                                                     </div>
 
@@ -641,9 +641,10 @@ function SearchByArticle() {
                                                                 style={{ width: '1rem', height: '1rem' }}
                                                             />
                                                         ) : (
-                                                            <span>Выгрузить</span>
+                                                            <span>В Google</span>
                                                         )}
                                                     </div>
+                                                </div>
                                                 </div>
                                             ) : (
                                                 <>
@@ -694,7 +695,7 @@ function SearchByArticle() {
                                                                 style={{ width: '1rem', height: '1rem' }}
                                                             />
                                                         ) : (
-                                                            <span>Выгрузить</span>
+                                                            <span>Выгрузить в Google</span>
                                                         )}
                                                     </div>
                                                     <div variant="danger" className="delete-button" onClick={(event) => handleDeleteClick(queryData._id, event)}>
