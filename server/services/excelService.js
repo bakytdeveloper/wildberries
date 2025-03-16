@@ -3,6 +3,9 @@ const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
 const {sendExcelLink} = require("../smtp/otpService");
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 // Функция для загрузки изображения по URL
 const downloadImage = async (url) => {
