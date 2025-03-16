@@ -45,6 +45,8 @@ function SearchByArticle() {
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
     const location = useLocation();
     const API_HOST = process.env.REACT_APP_API_HOST;
+    const [exportingToExcelStates, setExportingToExcelStates] = useState({});
+
 
     useEffect(() => {
         document.body.setAttribute('data-theme', theme);
@@ -427,6 +429,41 @@ function SearchByArticle() {
         }
     };
 
+    const handleExportToExcelClick = async (queryId, sheetName) => {
+        if (exportingToExcelStates[queryId]) return; // Блокируем повторные клики
+        setExportingToExcelStates((prev) => ({ ...prev, [queryId]: true })); // Устанавливаем состояние выгрузки
+
+        try {
+            const token = sessionStorage.getItem('token');
+            const response = await axios.post(`${API_HOST}/api/article/export-excel`, { queryId, sheetName }, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            Toastify({
+                text: 'Данные успешно выгружены в Excel.',
+                duration: 3000,
+                gravity: 'top',
+                position: 'right',
+                style: { background: '#00cc00' }
+            }).showToast();
+        } catch (error) {
+            console.error('Ошибка выгрузки данных:', error);
+            Toastify({
+                text: 'Ошибка выгрузки данных.',
+                duration: 3000,
+                gravity: 'top',
+                position: 'right',
+                style: { background: '#ff0000' }
+            }).showToast();
+        } finally {
+            setExportingToExcelStates((prev) => ({ ...prev, [queryId]: false })); // Сбрасываем состояние выгрузки
+        }
+    };
+
+
+
     return (
         <div  className="article-page">
             <header>
@@ -559,6 +596,31 @@ function SearchByArticle() {
                                                     </span>
                                                     <div className="flex-grow-1">{headerTextItems}</div>
                                                     <div className="date-time date-time-small">{time} {date}</div>
+
+                                                    <div
+                                                        className="upload-to-excel"
+                                                        onClick={(event) => {
+                                                            if (exportingToExcelStates[queryData._id]) return;
+                                                            event.stopPropagation();
+                                                            handleExportToExcelClick(queryData._id, 'Артикул').then(r => r);
+                                                        }}
+                                                        style={{ cursor: exportingToExcelStates[queryData._id] ? 'not-allowed' : 'pointer' }}
+                                                        title={exportingToExcelStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Excel'}
+                                                    >
+                                                        {exportingToExcelStates[queryData._id] ? (
+                                                            <Spinner
+                                                                as="span"
+                                                                animation="border"
+                                                                size="sm"
+                                                                role="status"
+                                                                aria-hidden="true"
+                                                                style={{ width: '1rem', height: '1rem' }}
+                                                            />
+                                                        ) : (
+                                                            <span>Выгрузить в Excel</span>
+                                                        )}
+                                                    </div>
+
                                                     <div
                                                         className="upload-to-google-spreadsheet"
                                                         onClick={(event) => {
@@ -587,6 +649,31 @@ function SearchByArticle() {
                                                 <>
                                                     <div className="flex-grow-1">{headerTextItems}</div>
                                                     <div className="date-time">Дата: {date}, Время: {time}</div>
+
+                                                    <div
+                                                        className="upload-to-excel"
+                                                        onClick={(event) => {
+                                                            if (exportingToExcelStates[queryData._id]) return;
+                                                            event.stopPropagation();
+                                                            handleExportToExcelClick(queryData._id, 'Артикул').then(r => r);
+                                                        }}
+                                                        style={{ cursor: exportingToExcelStates[queryData._id] ? 'not-allowed' : 'pointer' }}
+                                                        title={exportingToExcelStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Excel'}
+                                                    >
+                                                        {exportingToExcelStates[queryData._id] ? (
+                                                            <Spinner
+                                                                as="span"
+                                                                animation="border"
+                                                                size="sm"
+                                                                role="status"
+                                                                aria-hidden="true"
+                                                                style={{ width: '1rem', height: '1rem' }}
+                                                            />
+                                                        ) : (
+                                                            <span>Выгрузить в Excel</span>
+                                                        )}
+                                                    </div>
+
                                                     <div
                                                         className="upload-to-google-spreadsheet"
                                                         onClick={(event) => {

@@ -2,6 +2,7 @@ const { QueryModel } = require('../models/queryModel');
 const { fetchAndParseProducts } = require('../services/productService');
 const { UserModel } = require('../models/userModel');
 const { addDataToSheet } = require('../services/googleSheetService');
+const { addDataToExcel, cleanOldData } = require('../services/excelService');
 
 // Получение всех запросов
 const getQueries = async (req, res) => {
@@ -127,9 +128,54 @@ const exportToGoogleSheet = async (req, res) => {
     }
 };
 
+
+
+const exportToExcel = async (req, res) => {
+    const { queryId, sheetName } = req.body;
+    const userId = req.userId;
+
+    try {
+        const query = await QueryModel.findOne({ _id: queryId, userId }).populate('productTables.products');
+        if (!query) {
+            return res.status(404).json({ error: 'Запрос не найден' });
+        }
+
+        const data = query.productTables.flatMap((table) =>
+            table.products.map((product) => {
+                const promoPosition = product?.log?.promoPosition ?? (product?.page && product.page > 1 ? `${product.page}${product.position < 10 ? '0' + product.position : product.position}` : String(product?.position));
+                const position = product?.log?.position ?? (product?.page && product.page > 1 ? `${product.page}${product.position < 10 ? '0' + product.position : product.position}` : String(product?.position));
+
+                return [
+                    String(product?.query || query.query),
+                    String(product?.brand || query.brand),
+                    String(product?.city || query.city),
+                    String(product?.imageUrl),
+                    String(product?.id),
+                    String(product?.name),
+                    promoPosition,
+                    position,
+                    new Date(product?.queryTime || query.createdAt).toLocaleTimeString(),
+                    new Date(product?.queryTime || query.createdAt).toLocaleDateString(),
+                ];
+            })
+        );
+
+        // Очищаем старые данные
+        await cleanOldData(userId);
+
+        // Добавляем новые данные
+        await addDataToExcel(userId, sheetName, data);
+        res.json({ message: 'Данные успешно выгружены в Excel' });
+    } catch (error) {
+        console.error('Ошибка выгрузки данных:', error);
+        res.status(500).json({ error: 'Ошибка выгрузки данных' });
+    }
+};
+
 module.exports = {
     getQueries,
     createQuery,
     deleteQuery,
-    exportToGoogleSheet
+    exportToGoogleSheet,
+    exportToExcel // Добавьте новый метод
 };

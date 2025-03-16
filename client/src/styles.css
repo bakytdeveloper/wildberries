@@ -405,6 +405,32 @@ table {
     background: #0e9fcb;
 }
 
+.upload-to-excel {
+    margin-left: 10px;
+    background: #0aeee6;
+    border: 2px solid #35cbfa;
+    border-radius: 4px;
+    padding: 4px 7px;
+    font-weight: bold;
+    margin-right: 10px;
+    gap: 5px;
+}
+
+.upload-to-excel:hover {
+    border: 2px solid bisque;
+    background: #b9cbcb;
+    color: black;
+}
+
+.upload-to-excel span {
+    font-size: 14px;
+}
+
+.upload-to-excel:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
 th, td {
     border: 1px solid var(--border-color) !important;
     padding: 8px;

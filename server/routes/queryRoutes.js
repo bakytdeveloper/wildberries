@@ -1,5 +1,5 @@
 const express = require('express');
-const { getQueries, createQuery, deleteQuery, exportToGoogleSheet } = require('../controllers/queryController');
+const { getQueries, createQuery, deleteQuery, exportToGoogleSheet, exportToExcel } = require('../controllers/queryController');
 const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -10,5 +10,6 @@ router.route('/')
 
 router.delete('/:id', protect, deleteQuery);
 router.route('/export').post(protect, exportToGoogleSheet); // экспорт данных в таблицу
+router.route('/export-excel').post(protect, exportToExcel);
 
 module.exports = router;
