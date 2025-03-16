@@ -1,6 +1,8 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
+const {sendExcelFileToUser} = require("../services/excelService");
+const {createExcelFileForUser} = require("../services/excelService");
 const { UserModel } = require('../models/userModel');
 const { sendOTP } = require('../smtp/otpService');
 const { createSpreadsheetForUser } = require('../services/googleSheetService');
@@ -30,7 +32,16 @@ const registerUser = async (req, res) => {
         console.log('Spreadsheet ID:', spreadsheetId); // Логирование Spreadsheet ID
         newUser.spreadsheetId = spreadsheetId;
 
+        // Создание Excel-файла для пользователя
+        const excelFilePath = await createExcelFileForUser(newUser._id.toString());
+        console.log('Excel File Path:', excelFilePath); // Логирование пути к Excel-файлу
+        newUser.excelFileId = excelFilePath;
+
         await newUser.save();
+
+
+        // Отправка ссылки на Excel-файл пользователю
+        await sendExcelFileToUser(email, newUser._id.toString());
 
         const token = jwt.sign({ userId: newUser._id }, jwtSecret, { expiresIn: '24h' });
         res.status(201).json({ token });
@@ -39,6 +50,7 @@ const registerUser = async (req, res) => {
         res.status(500).json({ error: 'Registration failed' });
     }
 };
+
 
 const loginUser = async (req, res) => {
     const { email, password } = req.body;

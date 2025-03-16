@@ -2,7 +2,7 @@ const ExcelJS = require('exceljs');
 const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
-const { v4: uuidv4 } = require('uuid'); // Для генерации уникальных имен файлов
+const {sendExcelLink} = require("../smtp/otpService");
 
 // Функция для загрузки изображения по URL
 const downloadImage = async (url) => {
@@ -115,8 +115,37 @@ const cleanOldData = async (userId) => {
     await workbook.xlsx.writeFile(filePath);
 };
 
+// Функция для удаления Excel-файла пользователя
+const deleteExcelFile = async (userId) => {
+    const filePath = path.join(__dirname, `../excelFiles/${userId}.xlsx`);
+
+    if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        console.log(`Excel-файл пользователя ${userId} удален.`);
+    }
+};
+
+
+
+// Функция для создания публичной ссылки на Excel-файл
+const getExcelFileLink = (userId) => {
+    // Пример: файл доступен по URL сервера
+    const serverUrl = process.env.SERVER_URL || 'http://localhost:5505'; // Укажите URL вашего сервера
+    return `${serverUrl}/excelFiles/${userId}.xlsx`;
+};
+
+// Функция для отправки ссылки на Excel-файл пользователю
+const sendExcelFileToUser = async (email, userId) => {
+    const fileLink = getExcelFileLink(userId);
+    await sendExcelLink(email, fileLink);
+};
+
+
 module.exports = {
     createExcelFileForUser,
     addDataToExcel,
     cleanOldData,
+    deleteExcelFile, // Экспортируем новую функцию
+    getExcelFileLink,
+    sendExcelFileToUser,
 };

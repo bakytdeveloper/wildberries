@@ -1,3 +1,4 @@
+const {deleteExcelFile} = require("../services/excelService");
 const { QueryArticleModel } = require("../models/queryArticleModel");
 const { QueryModel } = require("../models/queryModel");
 const { UserModel } = require('../models/userModel');
@@ -53,6 +54,9 @@ const deleteUser = async (req, res) => {
 
         // Удаляем все статьи пользователя
         await QueryArticleModel.deleteMany({ userId });
+
+        // Удаляем Excel-файл пользователя
+        await deleteExcelFile(userId);
 
         res.json({ message: 'Пользователь и все связанные данные успешно удалены' });
     } catch (error) {

@@ -9,6 +9,7 @@ const otpRoutes = require('./routes/otpRoutes');
 const userRoutes = require('./routes/userRoutes');
 const queryArticleRoutes = require('./routes/queryArticleRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const path = require('path'); // Добавляем модуль path для работы с путями
 
 dotenv.config();
 
@@ -18,6 +19,9 @@ const port = process.env.PORT || 5505;
 
 app.use(cors());
 app.use(express.json());
+
+// Добавляем middleware для обслуживания статических файлов из папки excelFiles
+app.use('/excelFiles', express.static(path.join(__dirname, 'excelFiles')));
 
 console.log('MONGODB_URI:', urlMongo); // Логирование строки подключения
 
