@@ -440,8 +440,8 @@ table {
     height: 30px;
     padding: 4px 7px;
     font-weight: bold;
-
-    border: 1px solid #ccc;
+    font-size: 14px;
+    border: 2px solid #ccc;
     border-radius: 4px;
     background-color: #07a6ee;
     cursor: pointer;

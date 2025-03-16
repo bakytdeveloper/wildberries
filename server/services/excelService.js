@@ -93,8 +93,8 @@ const addDataToExcel = async (userId, sheetName, data) => {
                 });
 
                 // Вставляем изображение в ячейку с сохранением пропорций
-                const imageWidth = 30; // Ширина изображения в пикселях
-                const imageHeight = 30; // Высота изображения в пикселях
+                const imageWidth = 40; // Ширина изображения в пикселях
+                const imageHeight = 40; // Высота изображения в пикселях
 
                 sheet.addImage(imageId, {
                     tl: { col: 3, row: newRow.number - 1, offset: 5, height: imageHeight }, // Позиция изображения (колонка 4, строка текущей записи)
@@ -102,7 +102,9 @@ const addDataToExcel = async (userId, sheetName, data) => {
                 });
 
                 // Устанавливаем высоту строки для изображения
-                sheet.getRow(newRow.number).height = imageHeight / 1.5; // Подгоняем высоту строки под изображение
+                // Устанавливаем высоту строки для изображения
+                sheet.getRow(newRow.number).height = 40; // Подгоняем высоту строки под изображение
+                // sheet.getRow(newRow.number).height = imageHeight / 1.5; // Подгоняем высоту строки под изображение
             } catch (error) {
                 console.error('Ошибка загрузки изображения:', error);
             }
