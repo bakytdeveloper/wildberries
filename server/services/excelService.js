@@ -31,9 +31,11 @@ const createExcelFileForUser = async (userId) => {
     return filePath;
 };
 
+// Добавление данных в Excel-файл пользователя
 const addDataToExcel = async (userId, sheetName, data) => {
     const filePath = path.join(__dirname, `../excelFiles/${userId}.xlsx`);
 
+    // Если файл не существует, создаем его
     if (!fs.existsSync(filePath)) {
         await createExcelFileForUser(userId);
     }
@@ -46,9 +48,27 @@ const addDataToExcel = async (userId, sheetName, data) => {
         throw new Error(`Страница "${sheetName}" не найдена.`);
     }
 
+    // Удаляем старые записи (старше 7 дней)
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.setDate(now.getDate() - 7));
+
+    const rowsToDelete = [];
+    sheet.eachRow((row, rowNumber) => {
+        const dateCell = row.getCell(10); // Дата находится в 10-й колонке
+        if (dateCell.value && dateCell.value instanceof Date && dateCell.value < sevenDaysAgo) {
+            rowsToDelete.push(rowNumber);
+        }
+    });
+
+    // Удаляем строки в обратном порядке, чтобы не нарушить нумерацию
+    rowsToDelete.reverse().forEach((rowNumber) => {
+        sheet.spliceRows(rowNumber, 1);
+    });
+
     // Добавляем пустую строку перед новой выгрузкой (только один раз)
     sheet.addRow([]);
 
+    // Добавляем новые данные
     for (const row of data) {
         const newRow = sheet.addRow(row);
 
@@ -79,8 +99,10 @@ const addDataToExcel = async (userId, sheetName, data) => {
         }
     }
 
+    // Сохраняем обновленный файл
     await workbook.xlsx.writeFile(filePath);
 };
+
 
 // Функция для удаления старых записей
 const cleanOldData = async (userId) => {

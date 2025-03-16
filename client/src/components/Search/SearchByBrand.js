@@ -443,7 +443,7 @@ function SearchByBrand() {
                 }
             });
             Toastify({
-                text: 'Данные успешно выгружены в Excel.',
+                text: 'Данные успешно выгружены в Excel таблицу.',
                 duration: 3000,
                 gravity: 'top',
                 position: 'right',
