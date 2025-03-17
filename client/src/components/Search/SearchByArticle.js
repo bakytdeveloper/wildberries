@@ -15,7 +15,6 @@ import { Modal } from 'react-bootstrap';
 import { Link, useLocation } from 'react-router-dom';
 import axios from "axios";
 
-
 function SearchByArticle() {
     const [query, setQuery] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
@@ -37,7 +36,7 @@ function SearchByArticle() {
     const [deleteQueryId, setDeleteQueryId] = useState(null);
     const [suggestions, setSuggestions] = useState([]);
     const [articleSuggestions, setArticleSuggestions] = useState([]);
-    const [exportingStates, setExportingStates] = useState({}); // Новое состояние для отслеживания выгрузки
+    const [exportingStates, setExportingStates] = useState({});
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: true }]);
     const queryTypeaheadRefs = useRef([]);
@@ -46,7 +45,7 @@ function SearchByArticle() {
     const location = useLocation();
     const API_HOST = process.env.REACT_APP_API_HOST;
     const [exportingToExcelStates, setExportingToExcelStates] = useState({});
-
+    const [showInitialForm, setShowInitialForm] = useState(true); // Состояние для управления видимостью начальной формы
 
     useEffect(() => {
         document.body.setAttribute('data-theme', theme);
@@ -56,7 +55,6 @@ function SearchByArticle() {
     const toggleTheme = () => {
         setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
     };
-
 
     useEffect(() => {
         const handleResize = () => {
@@ -73,7 +71,6 @@ function SearchByArticle() {
     const truncateText = (text, maxLength) => {
         return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
     };
-
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -140,7 +137,6 @@ function SearchByArticle() {
         }
     };
 
-
     const handleLogout = () => {
         sessionStorage.removeItem('token');
         setIsAuthenticated(false);
@@ -173,7 +169,6 @@ function SearchByArticle() {
         ));
     };
 
-
     const handleArticleInputChange = (event, formId) => {
         const text = event.target.value;
         console.log('Brand input change:', text);
@@ -195,7 +190,6 @@ function SearchByArticle() {
         }
     };
 
-    // Инициализируем refs для каждого Typeahead
     useEffect(() => {
         queryTypeaheadRefs.current = queryTypeaheadRefs.current.slice(0, requestForms.length);
         articleTypeaheadRefs.current = articleTypeaheadRefs.current.slice(0, requestForms.length);
@@ -204,7 +198,6 @@ function SearchByArticle() {
     const clearInput = (formId) => {
         setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: '', article: '', city: 'г.Дмитров' } : f));
 
-        // Очищаем Typeahead
         const formIndex = requestForms.findIndex(f => f.id === formId);
         if (queryTypeaheadRefs.current[formIndex]) {
             queryTypeaheadRefs.current[formIndex].clear();
@@ -226,7 +219,16 @@ function SearchByArticle() {
     };
 
     const removeRequestForm = (formId) => {
-        setRequestForms(requestForms.filter(f => f.id !== formId));
+        setRequestForms((prevForms) => {
+            const updatedForms = prevForms.filter((f) => f.id !== formId);
+
+            if (updatedForms.length === 1) {
+                setShowInitialForm(true); // Показываем начальную форму
+                return [{ id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: true }];
+            }
+
+            return updatedForms;
+        });
     };
 
     const handleImageClick = (imageUrl) => {
@@ -329,6 +331,7 @@ function SearchByArticle() {
 
             setLoadingMessage('');
             setRequestForms([{ id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: true }]);
+            setShowInitialForm(true); // Показываем начальную форму после выполнения поиска
             setActiveKey('0');
 
             setTimeout(() => {
@@ -348,8 +351,6 @@ function SearchByArticle() {
             setIsRequesting(false);
         }
     };
-
-
 
     const handleProductClick = (searchQuery, page, position) => {
         const url = `https://www.wildberries.ru/catalog/0/search.aspx?page=${page}&sort=popular&search=${encodeURIComponent(searchQuery)}#position=${position}`;
@@ -396,8 +397,8 @@ function SearchByArticle() {
     };
 
     const handleExportClick = async (queryId, sheetName) => {
-        if (exportingStates[queryId]) return; // Блокируем повторные клики
-        setExportingStates((prev) => ({ ...prev, [queryId]: true })); // Устанавливаем состояние "выгрузка в процессе" для конкретной кнопки
+        if (exportingStates[queryId]) return;
+        setExportingStates((prev) => ({ ...prev, [queryId]: true }));
 
         try {
             const token = sessionStorage.getItem('token');
@@ -423,15 +424,15 @@ function SearchByArticle() {
                 gravity: 'top',
                 position: 'right',
                 style: { background: '#ff0000' }
-            }).showToast();  SearchByArticle.js
+            }).showToast();
         } finally {
-            setExportingStates((prev) => ({ ...prev, [queryId]: false })); // Сбрасываем состояние после завершения
+            setExportingStates((prev) => ({ ...prev, [queryId]: false }));
         }
     };
 
     const handleExportToExcelClick = async (queryId, sheetName) => {
-        if (exportingToExcelStates[queryId]) return; // Блокируем повторные клики
-        setExportingToExcelStates((prev) => ({ ...prev, [queryId]: true })); // Устанавливаем состояние выгрузки
+        if (exportingToExcelStates[queryId]) return;
+        setExportingToExcelStates((prev) => ({ ...prev, [queryId]: true }));
 
         try {
             const token = sessionStorage.getItem('token');
@@ -458,14 +459,92 @@ function SearchByArticle() {
                 style: { background: '#ff0000' }
             }).showToast();
         } finally {
-            setExportingToExcelStates((prev) => ({ ...prev, [queryId]: false })); // Сбрасываем состояние выгрузки
+            setExportingToExcelStates((prev) => ({ ...prev, [queryId]: false }));
         }
     };
 
+    const handleFillForm = (queryData) => {
+        const queries = queryData.query.split('; ');
+        const articles = queryData.article.split('; ');
+        const cities = queryData.city.split('; ');
 
+        const newForms = queries.map((query, index) => ({
+            id: Date.now() + index,
+            query: query,
+            article: articles[index] || '',
+            city: cities[index] || 'г.Дмитров',
+            isMain: false
+        }));
+
+        setRequestForms((prevForms) => {
+            const mainForm = prevForms.find((form) => form.isMain);
+            const otherForms = prevForms.filter((form) => !form.isMain);
+
+            const uniqueNewForms = newForms.filter((newForm) => {
+                return !prevForms.some(
+                    (existingForm) =>
+                        existingForm.query === newForm.query &&
+                        existingForm.article === newForm.article &&
+                        existingForm.city === newForm.city
+                );
+            });
+
+            if (uniqueNewForms.length > 0) {
+                setShowInitialForm(false); // Скрываем начальную форму
+                return [mainForm, ...otherForms, ...uniqueNewForms];
+            }
+
+            return prevForms;
+        });
+    };
+
+    const handleSearchAllQueries = () => {
+        const allQueriesData = filteredQueries.flatMap(queryData => {
+            const queries = queryData.query.split('; ');
+            const articles = queryData.article.split('; ');
+            const cities = queryData.city.split('; ');
+
+            return queries.map((query, index) => ({
+                query: query.trim(),
+                article: articles[index]?.trim() || '',
+                city: cities[index]?.trim() || 'г.Дмитров'
+            }));
+        });
+
+        const uniqueQueriesData = Array.from(new Set(allQueriesData.map(JSON.stringify))).map(JSON.parse);
+
+        const newForms = uniqueQueriesData.map((data, index) => ({
+            id: Date.now() + index,
+            query: data.query,
+            article: data.article,
+            city: data.city,
+            isMain: false
+        }));
+
+        setRequestForms((prevForms) => {
+            const mainForm = prevForms.find((form) => form.isMain);
+            const otherForms = prevForms.filter((form) => !form.isMain);
+
+            const uniqueNewForms = newForms.filter((newForm) => {
+                return !prevForms.some(
+                    (existingForm) =>
+                        existingForm.query === newForm.query &&
+                        existingForm.article === newForm.article &&
+                        existingForm.city === newForm.city
+                );
+            });
+
+            if (uniqueNewForms.length > 0) {
+                setShowInitialForm(false); // Скрываем начальную форму
+                return [mainForm, ...otherForms, ...uniqueNewForms];
+            }
+
+            return prevForms;
+        });
+    };
 
     return (
-        <div  className="article-page">
+        <div className="article-page">
             <header>
                 <h1>Поиск товаров на <img className="header-logoWb" src="https://static-basket-01.wbbasket.ru/vol2/site/i/v3/header/logoWb.svg" /></h1>
             </header>
@@ -501,59 +580,101 @@ function SearchByArticle() {
                         <h3 className="query-form-title">Страница поиска по описанию и артикулу товара</h3>
                         <div className="top-section">
                             <div className="left-forms">
-                                {requestForms.map((form, index) => (
-                                    <Form key={form.id} className="search" onSubmit={(e) => e.preventDefault()}>
+                                {showInitialForm && (
+                                    <Form key="initial-form" className="search" onSubmit={(e) => e.preventDefault()}>
                                         <div className="search-container">
                                             <div className="search-left">
                                                 <InputGroup className="InputGroupForm">
                                                     <Typeahead
-                                                        id={`query-input-${form.id}`}
+                                                        id="query-input-initial"
                                                         labelKey="label"
-                                                        onChange={(selected) => handleQueryChange(selected, form.id)}
-                                                        onInputChange={(text) => handleQueryInputChange({ target: { value: text } }, form.id)}
+                                                        onChange={(selected) => handleQueryChange(selected, requestForms[0].id)}
+                                                        onInputChange={(text) => handleQueryInputChange({ target: { value: text } }, requestForms[0].id)}
                                                         options={suggestions}
                                                         placeholder="Введите запрос"
-                                                        defaultSelected={form.query ? [{ label: form.query.toString() }] : []}
+                                                        defaultSelected={requestForms[0].query ? [{ label: requestForms[0].query.toString() }] : []}
                                                         allowNew
                                                         newSelectionPrefix="Новый запрос: "
-                                                        onKeyDown={(e) => handleKeyPress(e, form.id)}
-                                                        ref={(ref) => (queryTypeaheadRefs.current[index] = ref)}
+                                                        onKeyDown={(e) => handleKeyPress(e, requestForms[0].id)}
+                                                        ref={(ref) => (queryTypeaheadRefs.current[0] = ref)}
                                                     />
-
                                                     <Typeahead
-                                                        id={`article-input-${form.id}`}
+                                                        id="article-input-initial"
                                                         labelKey="label"
-                                                        onChange={(selected) => handleArticleChange(selected, form.id)}
-                                                        onInputChange={(text) => handleArticleInputChange({ target: { value: text } }, form.id)}
+                                                        onChange={(selected) => handleArticleChange(selected, requestForms[0].id)}
+                                                        onInputChange={(text) => handleArticleInputChange({ target: { value: text } }, requestForms[0].id)}
                                                         options={articleSuggestions}
                                                         placeholder="Введите артикул"
-                                                        defaultSelected={form.article ? [{ label: form.article.toString() }] : []}
+                                                        defaultSelected={requestForms[0].article ? [{ label: requestForms[0].article.toString() }] : []}
                                                         allowNew
                                                         newSelectionPrefix="Новый артикул: "
-                                                        onKeyDown={(e) => handleKeyPress(e, form.id)}
-                                                        ref={(ref) => (articleTypeaheadRefs.current[index] = ref)}
+                                                        onKeyDown={(e) => handleKeyPress(e, requestForms[0].id)}
+                                                        ref={(ref) => (articleTypeaheadRefs.current[0] = ref)}
                                                     />
-                                                    <DropdownButton id="dropdown-basic-button" title={form.city} onSelect={(city) => handleCityChange(city, form.id)}>
+                                                    <DropdownButton id="dropdown-basic-button" title={requestForms[0].city} onSelect={(city) => handleCityChange(city, requestForms[0].id)}>
                                                         {Object.keys(cityDestinations).map((city) => (
                                                             <Dropdown.Item key={city} eventKey={city}>{city}</Dropdown.Item>
                                                         ))}
                                                     </DropdownButton>
-                                                    {form.isMain ? (
-                                                        <Button variant="primary" onClick={fetchProductsByArticle} disabled={isRequesting}>Поиск</Button>
-                                                    ) : (
-                                                        <Button variant="danger" onClick={() => removeRequestForm(form.id)}>Удалить</Button>
-                                                    )}
-                                                    <Button variant="secondary" onClick={() => clearInput(form.id)} id="clearButton" disabled={isRequesting}>X</Button>
+                                                    <Button variant="primary" onClick={fetchProductsByArticle} disabled={isRequesting}>Поиск</Button>
+                                                    <Button variant="secondary" onClick={() => clearInput(requestForms[0].id)} id="clearButton" disabled={isRequesting}>X</Button>
                                                 </InputGroup>
                                             </div>
                                         </div>
                                     </Form>
-                                ))}
+                                )}
+
+                                {requestForms
+                                    .filter((form) => !form.isMain)
+                                    .map((form, index) => (
+                                        <Form key={form.id} className="search" onSubmit={(e) => e.preventDefault()}>
+                                            <div className="search-container">
+                                                <div className="search-left">
+                                                    <InputGroup className="InputGroupForm">
+                                                        <Typeahead
+                                                            id={`query-input-${form.id}`}
+                                                            labelKey="label"
+                                                            onChange={(selected) => handleQueryChange(selected, form.id)}
+                                                            onInputChange={(text) => handleQueryInputChange({ target: { value: text } }, form.id)}
+                                                            options={suggestions}
+                                                            placeholder="Введите запрос"
+                                                            defaultSelected={form.query ? [{ label: form.query.toString() }] : []}
+                                                            allowNew
+                                                            newSelectionPrefix="Новый запрос: "
+                                                            onKeyDown={(e) => handleKeyPress(e, form.id)}
+                                                            ref={(ref) => (queryTypeaheadRefs.current[index + 1] = ref)}
+                                                        />
+                                                        <Typeahead
+                                                            id={`article-input-${form.id}`}
+                                                            labelKey="label"
+                                                            onChange={(selected) => handleArticleChange(selected, form.id)}
+                                                            onInputChange={(text) => handleArticleInputChange({ target: { value: text } }, form.id)}
+                                                            options={articleSuggestions}
+                                                            placeholder="Введите артикул"
+                                                            defaultSelected={form.article ? [{ label: form.article.toString() }] : []}
+                                                            allowNew
+                                                            newSelectionPrefix="Новый артикул: "
+                                                            onKeyDown={(e) => handleKeyPress(e, form.id)}
+                                                            ref={(ref) => (articleTypeaheadRefs.current[index + 1] = ref)}
+                                                        />
+                                                        <DropdownButton id="dropdown-basic-button" title={form.city} onSelect={(city) => handleCityChange(city, form.id)}>
+                                                            {Object.keys(cityDestinations).map((city) => (
+                                                                <Dropdown.Item key={city} eventKey={city}>{city}</Dropdown.Item>
+                                                            ))}
+                                                        </DropdownButton>
+                                                        <Button variant="danger" onClick={() => removeRequestForm(form.id)}>Удалить</Button>
+                                                        <Button variant="secondary" onClick={() => clearInput(form.id)} id="clearButton" disabled={isRequesting}>X</Button>
+                                                    </InputGroup>
+                                                </div>
+                                            </div>
+                                        </Form>
+                                    ))}
                             </div>
                             <div className="right-controls">
                                 <div className="controls">
                                     <Button className="controls_success" onClick={addRequestForm}>Добавить запрос</Button>
                                     <Button className="controls_primary" onClick={fetchProductsByArticle} disabled={isRequesting}>Поиск</Button>
+                                    <Button className="controls_primary" onClick={handleSearchAllQueries}>Поиск по всем запросам</Button>
                                 </div>
                                 <div className="search-bar">
                                     <Form className="search" onSubmit={(e) => e.preventDefault()}>
@@ -581,7 +702,7 @@ function SearchByArticle() {
                                     const article = queryData.article?.split('; ')[i] || '';
                                     const city = queryData.city?.split('; ')[i] || '';
                                     const fullText = `${query} - ${article} (${city})`;
-                                    const truncatedText = windowWidth < 768 ? truncateText(fullText, 24) : fullText; // Обрезаем текст для мобильных устройств
+                                    const truncatedText = windowWidth < 768 ? truncateText(fullText, 24) : fullText;
                                     return <div key={i}>{truncatedText}</div>;
                                 });
 
@@ -589,7 +710,7 @@ function SearchByArticle() {
                                     <Accordion.Item eventKey={index.toString()} key={index}>
                                         <Accordion.Header>
                                             <div className="flex-grow-0">{index + 1})</div>
-                                            {windowWidth < 768 ? ( // Условие для маленьких экранов
+                                            {windowWidth < 768 ? (
                                                 <div className="accordion-header-small">
                                                     <span variant="danger" className="delete-button delete-button-small" onClick={(event) => handleDeleteClick(queryData._id, event)}>
                                                         <FaTimes />
@@ -597,60 +718,77 @@ function SearchByArticle() {
                                                     <div className="flex-grow-1">{headerTextItems}</div>
                                                     <div className="date-time date-time-small">{time} {date}</div>
                                                     <div className="buttons-sheets">
-                                                    <div
-                                                        className="upload-to-excel"
-                                                        onClick={(event) => {
-                                                            if (exportingToExcelStates[queryData._id]) return;
-                                                            event.stopPropagation();
-                                                            handleExportToExcelClick(queryData._id, 'Артикул').then(r => r);
-                                                        }}
-                                                        style={{ cursor: exportingToExcelStates[queryData._id] ? 'not-allowed' : 'pointer' }}
-                                                        title={exportingToExcelStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Excel'}
-                                                    >
-                                                        {exportingToExcelStates[queryData._id] ? (
-                                                            <Spinner
-                                                                as="span"
-                                                                animation="border"
-                                                                size="sm"
-                                                                role="status"
-                                                                aria-hidden="true"
-                                                                style={{ width: '1rem', height: '1rem' }}
-                                                            />
-                                                        ) : (
-                                                            <span>В Excel</span>
-                                                        )}
-                                                    </div>
+                                                        <Button
+                                                            variant="primary"
+                                                            onClick={(event) => {
+                                                                event.stopPropagation();
+                                                                handleFillForm(queryData);
+                                                            }}
+                                                        >
+                                                            Заполнить формы
+                                                        </Button>
+                                                        <div
+                                                            className="upload-to-excel"
+                                                            onClick={(event) => {
+                                                                if (exportingToExcelStates[queryData._id]) return;
+                                                                event.stopPropagation();
+                                                                handleExportToExcelClick(queryData._id, 'Артикул').then(r => r);
+                                                            }}
+                                                            style={{ cursor: exportingToExcelStates[queryData._id] ? 'not-allowed' : 'pointer' }}
+                                                            title={exportingToExcelStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Excel'}
+                                                        >
+                                                            {exportingToExcelStates[queryData._id] ? (
+                                                                <Spinner
+                                                                    as="span"
+                                                                    animation="border"
+                                                                    size="sm"
+                                                                    role="status"
+                                                                    aria-hidden="true"
+                                                                    style={{ width: '1rem', height: '1rem' }}
+                                                                />
+                                                            ) : (
+                                                                <span>В Excel</span>
+                                                            )}
+                                                        </div>
 
-                                                    <div
-                                                        className="upload-to-google-spreadsheet"
-                                                        onClick={(event) => {
-                                                            if (exportingStates[queryData._id]) return;
-                                                            event.stopPropagation();
-                                                            handleExportClick(queryData._id, 'Артикул').then(r => r);
-                                                        }}
-                                                        style={{ cursor: exportingStates[queryData._id] ? 'not-allowed' : 'pointer' }}
-                                                        title={exportingStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Google Таблицу'}
-                                                    >
-                                                        {exportingStates[queryData._id] ? (
-                                                            <Spinner
-                                                                as="span"
-                                                                animation="border"
-                                                                size="sm"
-                                                                role="status"
-                                                                aria-hidden="true"
-                                                                style={{ width: '1rem', height: '1rem' }}
-                                                            />
-                                                        ) : (
-                                                            <span>В Google</span>
-                                                        )}
+                                                        <div
+                                                            className="upload-to-google-spreadsheet"
+                                                            onClick={(event) => {
+                                                                if (exportingStates[queryData._id]) return;
+                                                                event.stopPropagation();
+                                                                handleExportClick(queryData._id, 'Артикул').then(r => r);
+                                                            }}
+                                                            style={{ cursor: exportingStates[queryData._id] ? 'not-allowed' : 'pointer' }}
+                                                            title={exportingStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Google Таблицу'}
+                                                        >
+                                                            {exportingStates[queryData._id] ? (
+                                                                <Spinner
+                                                                    as="span"
+                                                                    animation="border"
+                                                                    size="sm"
+                                                                    role="status"
+                                                                    aria-hidden="true"
+                                                                    style={{ width: '1rem', height: '1rem' }}
+                                                                />
+                                                            ) : (
+                                                                <span>В Google</span>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
                                                 </div>
                                             ) : (
                                                 <>
                                                     <div className="flex-grow-1">{headerTextItems}</div>
                                                     <div className="date-time">Дата: {date}, Время: {time}</div>
-
+                                                    <Button
+                                                        variant="primary"
+                                                        onClick={(event) => {
+                                                            event.stopPropagation();
+                                                            handleFillForm(queryData);
+                                                        }}
+                                                    >
+                                                        Заполнить формы
+                                                    </Button>
                                                     <div
                                                         className="upload-to-excel"
                                                         onClick={(event) => {
