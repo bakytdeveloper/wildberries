@@ -240,110 +240,6 @@ function SearchByBrand() {
             f.id === formId ? { ...f, brand: text.target.value } : f ));
     };
 
-    // const fetchProducts = async () => {
-    //     if (isRequesting) return;
-    //     console.log('Request forms before validation:', requestForms);
-    //     const validForms = requestForms.filter(form => {
-    //         const query = form.query && typeof form.query === 'string' ? form.query.trim() : '';
-    //         const brand = form.brand && typeof form.brand === 'string' ? form.brand.trim() : '';
-    //         return query !== '' && brand !== '';
-    //     });
-    //     console.log('Valid forms after validation:', validForms);
-    //     if (validForms.length === 0) {
-    //         Toastify({
-    //             text: "Все формы должны быть заполнены.",
-    //             duration: 3000,
-    //             gravity: "top",
-    //             position: "right",
-    //             style: { background: '#ff0000' }
-    //         }).showToast();
-    //         return;
-    //     }
-    //     setIsRequesting(true);
-    //     setLoadingMessage('Загрузка...');
-    //     setErrorMessage('');
-    //     setSuccessMessage('');
-    //     try {
-    //         const token = sessionStorage.getItem('token');
-    //         const trimmedForms = validForms.map(form => ({
-    //             ...form,
-    //             query: form.query.trim(),
-    //             brand: form.brand.trim(),
-    //             dest: cityDestinations[form.city],
-    //             city: form.city,
-    //             queryTime: new Date().toISOString()
-    //         }));
-    //         console.log('Trimmed forms before sending:', trimmedForms);
-    //         const response = await fetch(`${API_HOST}/api/queries`, {
-    //             method: 'POST',
-    //             headers: {
-    //                 'Content-Type': 'application/json',
-    //                 'Authorization': `Bearer ${token}`
-    //             },
-    //             body: JSON.stringify({ forms: trimmedForms })
-    //         });
-    //         if (response.status !== 200) {
-    //             const result = await response.json();
-    //             throw new Error(result.error || 'Ошибка выполнения запроса');
-    //         }
-    //         const result = await response.json();
-    //         console.log('Response from server:', result);
-    //         const totalRequests = validForms.length;
-    //         const successfulRequests = result.productTables.filter(table => table.products.length > 0).length;
-    //         if (successfulRequests === totalRequests) {
-    //             setSuccessMessage('Запрос выполнен успешно!');
-    //         } else if (successfulRequests > 0) {
-    //             setSuccessMessage('Запрос выполнен, но не все ответы получены');
-    //         } else {
-    //             setSuccessMessage('По запросу ничего не найдено');
-    //         }
-    //         setAllQueries([result, ...allQueries]);
-    //         setFilteredQueries([result, ...allQueries]);
-    //
-    //         // Обновляем списки suggestions и brandSuggestions
-    //         const newQueries = validForms.map(form => form.query.trim());
-    //         const newBrands = validForms.map(form => form.brand.trim());
-    //
-    //         setSuggestions(prevSuggestions => {
-    //             const updatedSuggestions = [...prevSuggestions];
-    //             newQueries.forEach(query => {
-    //                 if (!updatedSuggestions.some(suggestion => suggestion.label === query)) {
-    //                     updatedSuggestions.push({ label: query });
-    //                 }
-    //             });
-    //             return updatedSuggestions;
-    //         });
-    //
-    //         setBrandSuggestions(prevBrandSuggestions => {
-    //             const updatedBrandSuggestions = [...prevBrandSuggestions];
-    //             newBrands.forEach(brand => {
-    //                 if (!updatedBrandSuggestions.some(brandSuggestion => brandSuggestion.label === brand)) {
-    //                     updatedBrandSuggestions.push({ label: brand });
-    //                 }
-    //             });
-    //             return updatedBrandSuggestions;
-    //         });
-    //
-    //         setLoadingMessage('');
-    //         setRequestForms([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
-    //         setActiveKey('0');
-    //         setTimeout(() => {
-    //             setSuccessMessage('');
-    //         }, 3000);
-    //         setTimeout(() => {
-    //             const newAccordionItem = document.querySelector(`.accordion .accordion-item:first-child`);
-    //             if (newAccordionItem) {
-    //                 newAccordionItem.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    //             }
-    //         }, 100);
-    //     } catch (error) {
-    //         console.error('Error fetching products:', error);
-    //         setErrorMessage('Ошибка выполнения запроса');
-    //     } finally {
-    //         setIsRequesting(false);
-    //     }
-    // };
-
     const removeRequestForm = (formId) => {
         setRequestForms((prevForms) => {
             const updatedForms = prevForms.filter((f) => f.id !== formId);
@@ -624,7 +520,59 @@ function SearchByBrand() {
         });
     };
 
+    const handleSearchAllQueries = () => {
+        // Собираем все уникальные запросы, бренды и города из всех заголовков
+        const allQueriesData = filteredQueries.flatMap(queryData => {
+            const queries = queryData.query.split('; ');
+            const brands = queryData.brand.split('; ');
+            const cities = queryData.city.split('; ');
 
+            return queries.map((query, index) => ({
+                query: query.trim(),
+                brand: brands[index]?.trim() || '',
+                city: cities[index]?.trim() || 'г.Дмитров'
+            }));
+        });
+
+        // Убираем дубликаты
+        const uniqueQueriesData = Array.from(new Set(allQueriesData.map(JSON.stringify))).map(JSON.parse);
+
+        // Создаем массив новых форм на основе уникальных данных
+        const newForms = uniqueQueriesData.map((data, index) => ({
+            id: Date.now() + index, // Уникальный ID для каждой формы
+            query: data.query,
+            brand: data.brand,
+            city: data.city,
+            isMain: false // Новые формы не будут основными
+        }));
+
+        // Обновляем состояние форм
+        setRequestForms((prevForms) => {
+            // Основная форма всегда остается первой
+            const mainForm = prevForms.find((form) => form.isMain);
+            const otherForms = prevForms.filter((form) => !form.isMain);
+
+            // Фильтруем новые формы, исключая дубликаты
+            const uniqueNewForms = newForms.filter((newForm) => {
+                // Проверяем, есть ли уже форма с такими же значениями
+                return !prevForms.some(
+                    (existingForm) =>
+                        existingForm.query === newForm.query &&
+                        existingForm.brand === newForm.brand &&
+                        existingForm.city === newForm.city
+                );
+            });
+
+            // Если есть уникальные формы, добавляем их после основной формы
+            if (uniqueNewForms.length > 0) {
+                setShowInitialForm(false); // Скрываем начальную форму
+                return [mainForm, ...otherForms, ...uniqueNewForms];
+            }
+
+            // Если все формы дублируются, возвращаем предыдущее состояние
+            return prevForms;
+        });
+    };
 
     return (
         <div className="app-page">
@@ -758,6 +706,7 @@ function SearchByBrand() {
                                 <div className="controls">
                                     <Button className="controls_success" onClick={addRequestForm}>Добавить запрос</Button>
                                     <Button className="controls_primary" onClick={fetchProducts} disabled={isRequesting}>Поиск</Button>
+                                    <Button className="controls_primary" onClick={handleSearchAllQueries}>Поиск по всем запросам</Button>
                                 </div>
                                 <div className="search-bar">
                                     <Form className="search" onSubmit={(e) => e.preventDefault()}>
