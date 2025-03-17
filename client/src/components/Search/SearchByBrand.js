@@ -32,7 +32,6 @@ function SearchByBrand() {
     const [showForgotPasswordForm, setShowForgotPasswordForm] = useState(false);
     const accordionRef = useRef(null);
     const [showProfile, setShowProfile] = useState(false);
-    // const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteQueryId, setDeleteQueryId] = useState(null);
     const [suggestions, setSuggestions] = useState([]);
@@ -47,6 +46,7 @@ function SearchByBrand() {
     const location = useLocation();
     const API_HOST = process.env.REACT_APP_API_HOST;
     const [exportingToExcelStates, setExportingToExcelStates] = useState({});
+    const [showInitialForm, setShowInitialForm] = useState(true); // Состояние для управления видимостью начальной формы
 
     useEffect(() => {
         document.body.setAttribute('data-theme', theme);
@@ -75,8 +75,6 @@ function SearchByBrand() {
             brandTypeaheadRefs.current[formIndex].clear();
         }
     };
-
-
 
     useEffect(() => {
         const handleResize = () => {
@@ -216,9 +214,6 @@ function SearchByBrand() {
         setRequestForms([...requestForms, { id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: false }]);
     };
 
-    const removeRequestForm = (formId) => {
-        setRequestForms(requestForms.filter(f => f.id !== formId));
-    };
 
     const handleImageClick = (imageUrl) => {
         setModalImage(imageUrl);
@@ -243,6 +238,124 @@ function SearchByBrand() {
         console.log('Brand input change:', text);
         setRequestForms(prevForms => prevForms.map(f =>
             f.id === formId ? { ...f, brand: text.target.value } : f ));
+    };
+
+    // const fetchProducts = async () => {
+    //     if (isRequesting) return;
+    //     console.log('Request forms before validation:', requestForms);
+    //     const validForms = requestForms.filter(form => {
+    //         const query = form.query && typeof form.query === 'string' ? form.query.trim() : '';
+    //         const brand = form.brand && typeof form.brand === 'string' ? form.brand.trim() : '';
+    //         return query !== '' && brand !== '';
+    //     });
+    //     console.log('Valid forms after validation:', validForms);
+    //     if (validForms.length === 0) {
+    //         Toastify({
+    //             text: "Все формы должны быть заполнены.",
+    //             duration: 3000,
+    //             gravity: "top",
+    //             position: "right",
+    //             style: { background: '#ff0000' }
+    //         }).showToast();
+    //         return;
+    //     }
+    //     setIsRequesting(true);
+    //     setLoadingMessage('Загрузка...');
+    //     setErrorMessage('');
+    //     setSuccessMessage('');
+    //     try {
+    //         const token = sessionStorage.getItem('token');
+    //         const trimmedForms = validForms.map(form => ({
+    //             ...form,
+    //             query: form.query.trim(),
+    //             brand: form.brand.trim(),
+    //             dest: cityDestinations[form.city],
+    //             city: form.city,
+    //             queryTime: new Date().toISOString()
+    //         }));
+    //         console.log('Trimmed forms before sending:', trimmedForms);
+    //         const response = await fetch(`${API_HOST}/api/queries`, {
+    //             method: 'POST',
+    //             headers: {
+    //                 'Content-Type': 'application/json',
+    //                 'Authorization': `Bearer ${token}`
+    //             },
+    //             body: JSON.stringify({ forms: trimmedForms })
+    //         });
+    //         if (response.status !== 200) {
+    //             const result = await response.json();
+    //             throw new Error(result.error || 'Ошибка выполнения запроса');
+    //         }
+    //         const result = await response.json();
+    //         console.log('Response from server:', result);
+    //         const totalRequests = validForms.length;
+    //         const successfulRequests = result.productTables.filter(table => table.products.length > 0).length;
+    //         if (successfulRequests === totalRequests) {
+    //             setSuccessMessage('Запрос выполнен успешно!');
+    //         } else if (successfulRequests > 0) {
+    //             setSuccessMessage('Запрос выполнен, но не все ответы получены');
+    //         } else {
+    //             setSuccessMessage('По запросу ничего не найдено');
+    //         }
+    //         setAllQueries([result, ...allQueries]);
+    //         setFilteredQueries([result, ...allQueries]);
+    //
+    //         // Обновляем списки suggestions и brandSuggestions
+    //         const newQueries = validForms.map(form => form.query.trim());
+    //         const newBrands = validForms.map(form => form.brand.trim());
+    //
+    //         setSuggestions(prevSuggestions => {
+    //             const updatedSuggestions = [...prevSuggestions];
+    //             newQueries.forEach(query => {
+    //                 if (!updatedSuggestions.some(suggestion => suggestion.label === query)) {
+    //                     updatedSuggestions.push({ label: query });
+    //                 }
+    //             });
+    //             return updatedSuggestions;
+    //         });
+    //
+    //         setBrandSuggestions(prevBrandSuggestions => {
+    //             const updatedBrandSuggestions = [...prevBrandSuggestions];
+    //             newBrands.forEach(brand => {
+    //                 if (!updatedBrandSuggestions.some(brandSuggestion => brandSuggestion.label === brand)) {
+    //                     updatedBrandSuggestions.push({ label: brand });
+    //                 }
+    //             });
+    //             return updatedBrandSuggestions;
+    //         });
+    //
+    //         setLoadingMessage('');
+    //         setRequestForms([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
+    //         setActiveKey('0');
+    //         setTimeout(() => {
+    //             setSuccessMessage('');
+    //         }, 3000);
+    //         setTimeout(() => {
+    //             const newAccordionItem = document.querySelector(`.accordion .accordion-item:first-child`);
+    //             if (newAccordionItem) {
+    //                 newAccordionItem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    //             }
+    //         }, 100);
+    //     } catch (error) {
+    //         console.error('Error fetching products:', error);
+    //         setErrorMessage('Ошибка выполнения запроса');
+    //     } finally {
+    //         setIsRequesting(false);
+    //     }
+    // };
+
+    const removeRequestForm = (formId) => {
+        setRequestForms((prevForms) => {
+            const updatedForms = prevForms.filter((f) => f.id !== formId);
+
+            // Если все формы удалены, восстанавливаем начальную форму
+            if (updatedForms.length === 1) {
+                setShowInitialForm(true); // Показываем начальную форму
+                return [{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }];
+            }
+
+            return updatedForms;
+        });
     };
 
     const fetchProducts = async () => {
@@ -330,7 +443,10 @@ function SearchByBrand() {
             });
 
             setLoadingMessage('');
+            // Очищаем начальную форму
+            clearInput(requestForms[0].id);
             setRequestForms([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
+            setShowInitialForm(true); // Убедимся, что начальная форма отображается
             setActiveKey('0');
             setTimeout(() => {
                 setSuccessMessage('');
@@ -348,6 +464,7 @@ function SearchByBrand() {
             setIsRequesting(false);
         }
     };
+
 
     const handleProductClick = (searchQuery, page, position) => {
         const url = `https://www.wildberries.ru/catalog/0/search.aspx?page=${page}&sort=popular&search=${encodeURIComponent(searchQuery)}#position=${position}`;
@@ -464,6 +581,51 @@ function SearchByBrand() {
     };
 
 
+
+    const handleFillForm = (queryData) => {
+        const queries = queryData.query.split('; ');
+        const brands = queryData.brand.split('; ');
+        const cities = queryData.city.split('; ');
+
+        // Создаем массив новых форм на основе данных из заголовка
+        const newForms = queries.map((query, index) => ({
+            id: Date.now() + index, // Уникальный ID для каждой формы
+            query: query,
+            brand: brands[index] || '',
+            city: cities[index] || 'г.Дмитров',
+            isMain: false // Новые формы не будут основными
+        }));
+
+        // Обновляем состояние форм
+        setRequestForms((prevForms) => {
+            // Основная форма всегда остается первой
+            const mainForm = prevForms.find((form) => form.isMain);
+            const otherForms = prevForms.filter((form) => !form.isMain);
+
+            // Фильтруем новые формы, исключая дубликаты
+            const uniqueNewForms = newForms.filter((newForm) => {
+                // Проверяем, есть ли уже форма с такими же значениями
+                return !prevForms.some(
+                    (existingForm) =>
+                        existingForm.query === newForm.query &&
+                        existingForm.brand === newForm.brand &&
+                        existingForm.city === newForm.city
+                );
+            });
+
+            // Если есть уникальные формы, добавляем их после основной формы
+            if (uniqueNewForms.length > 0) {
+                setShowInitialForm(false); // Скрываем начальную форму
+                return [mainForm, ...otherForms, ...uniqueNewForms];
+            }
+
+            // Если все формы дублируются, возвращаем предыдущее состояние
+            return prevForms;
+        });
+    };
+
+
+
     return (
         <div className="app-page">
             <header>
@@ -502,53 +664,95 @@ function SearchByBrand() {
                         <h3 className="query-form-title">Страница поиска по описанию и бренду товара</h3>
                         <div className="top-section">
                             <div className="left-forms">
-                                {requestForms.map((form, index) => (
-                                    <Form key={form.id} className="search" onSubmit={(e) => e.preventDefault()}>
+                                {showInitialForm && (
+                                    <Form key="initial-form" className="search" onSubmit={(e) => e.preventDefault()}>
                                         <div className="search-container">
                                             <div className="search-left">
                                                 <InputGroup className="InputGroupForm">
                                                     <Typeahead
-                                                        id={`query-input-${form.id}`}
+                                                        id="query-input-initial"
                                                         labelKey="label"
-                                                        onChange={(selected) => handleQueryChange(selected, form.id)}
-                                                        onInputChange={(text) => handleQueryInputChange({ target: { value: text } }, form.id)}
+                                                        onChange={(selected) => handleQueryChange(selected, requestForms[0].id)}
+                                                        onInputChange={(text) => handleQueryInputChange({ target: { value: text } }, requestForms[0].id)}
                                                         options={suggestions}
                                                         placeholder="Введите запрос"
-                                                        defaultSelected={form.query ? [{ label: form.query.toString() }] : []}
+                                                        defaultSelected={requestForms[0].query ? [{ label: requestForms[0].query.toString() }] : []}
                                                         allowNew
                                                         newSelectionPrefix="Новый запрос: "
-                                                        onKeyDown={(e) => handleKeyPress(e, form.id)}
-                                                        ref={(ref) => (queryTypeaheadRefs.current[index] = ref)} // Сохраняем ref
+                                                        onKeyDown={(e) => handleKeyPress(e, requestForms[0].id)}
+                                                        ref={(ref) => (queryTypeaheadRefs.current[0] = ref)} // Сохраняем ref
                                                     />
                                                     <Typeahead
-                                                        id={`brand-input-${form.id}`}
+                                                        id="brand-input-initial"
                                                         labelKey="label"
-                                                        onChange={(selected) => handleBrandChange(selected, form.id)}
-                                                        onInputChange={(text) => handleBrandInputChange({ target: { value: text } }, form.id)}
+                                                        onChange={(selected) => handleBrandChange(selected, requestForms[0].id)}
+                                                        onInputChange={(text) => handleBrandInputChange({ target: { value: text } }, requestForms[0].id)}
                                                         options={brandSuggestions}
                                                         placeholder="Введите бренд"
-                                                        defaultSelected={form.brand ? [{ label: form.brand.toString() }] : []}
+                                                        defaultSelected={requestForms[0].brand ? [{ label: requestForms[0].brand.toString() }] : []}
                                                         allowNew
                                                         newSelectionPrefix="Новый бренд: "
-                                                        onKeyDown={(e) => handleKeyPress(e, form.id)}
-                                                        ref={(ref) => (brandTypeaheadRefs.current[index] = ref)} // Сохраняем ref
+                                                        onKeyDown={(e) => handleKeyPress(e, requestForms[0].id)}
+                                                        ref={(ref) => (brandTypeaheadRefs.current[0] = ref)} // Сохраняем ref
                                                     />
-                                                    <DropdownButton id="dropdown-basic-button" title={form.city} onSelect={(city) => handleCityChange(city, form.id)}>
+                                                    <DropdownButton id="dropdown-basic-button" title={requestForms[0].city} onSelect={(city) => handleCityChange(city, requestForms[0].id)}>
                                                         {Object.keys(cityDestinations).map((city) => (
                                                             <Dropdown.Item key={city} eventKey={city}>{city}</Dropdown.Item>
                                                         ))}
                                                     </DropdownButton>
-                                                    {form.isMain ? (
-                                                        <Button variant="primary" onClick={fetchProducts} disabled={isRequesting}>Поиск</Button>
-                                                    ) : (
-                                                        <Button variant="danger" onClick={() => removeRequestForm(form.id)}>Удалить</Button>
-                                                    )}
-                                                    <Button variant="secondary" onClick={() => clearInput(form.id)} id="clearButton" disabled={isRequesting}>X</Button>
+                                                    <Button variant="primary" onClick={fetchProducts} disabled={isRequesting}>Поиск</Button>
+                                                    <Button variant="secondary" onClick={() => clearInput(requestForms[0].id)} id="clearButton" disabled={isRequesting}>X</Button>
                                                 </InputGroup>
                                             </div>
                                         </div>
                                     </Form>
-                                ))}
+                                )}
+
+                                {requestForms
+                                    .filter((form) => !form.isMain) // Исключаем начальную форму из отображения
+                                    .map((form, index) => (
+                                        <Form key={form.id} className="search" onSubmit={(e) => e.preventDefault()}>
+                                            <div className="search-container">
+                                                <div className="search-left">
+                                                    <InputGroup className="InputGroupForm">
+                                                        <Typeahead
+                                                            id={`query-input-${form.id}`}
+                                                            labelKey="label"
+                                                            onChange={(selected) => handleQueryChange(selected, form.id)}
+                                                            onInputChange={(text) => handleQueryInputChange({ target: { value: text } }, form.id)}
+                                                            options={suggestions}
+                                                            placeholder="Введите запрос"
+                                                            defaultSelected={form.query ? [{ label: form.query.toString() }] : []}
+                                                            allowNew
+                                                            newSelectionPrefix="Новый запрос: "
+                                                            onKeyDown={(e) => handleKeyPress(e, form.id)}
+                                                            ref={(ref) => (queryTypeaheadRefs.current[index + 1] = ref)} // Сохраняем ref
+                                                        />
+                                                        <Typeahead
+                                                            id={`brand-input-${form.id}`}
+                                                            labelKey="label"
+                                                            onChange={(selected) => handleBrandChange(selected, form.id)}
+                                                            onInputChange={(text) => handleBrandInputChange({ target: { value: text } }, form.id)}
+                                                            options={brandSuggestions}
+                                                            placeholder="Введите бренд"
+                                                            defaultSelected={form.brand ? [{ label: form.brand.toString() }] : []}
+                                                            allowNew
+                                                            newSelectionPrefix="Новый бренд: "
+                                                            onKeyDown={(e) => handleKeyPress(e, form.id)}
+                                                            ref={(ref) => (brandTypeaheadRefs.current[index + 1] = ref)} // Сохраняем ref
+                                                        />
+                                                        <DropdownButton id="dropdown-basic-button" title={form.city} onSelect={(city) => handleCityChange(city, form.id)}>
+                                                            {Object.keys(cityDestinations).map((city) => (
+                                                                <Dropdown.Item key={city} eventKey={city}>{city}</Dropdown.Item>
+                                                            ))}
+                                                        </DropdownButton>
+                                                        <Button variant="danger" onClick={() => removeRequestForm(form.id)}>Удалить</Button>
+                                                        <Button variant="secondary" onClick={() => clearInput(form.id)} id="clearButton" disabled={isRequesting}>X</Button>
+                                                    </InputGroup>
+                                                </div>
+                                            </div>
+                                        </Form>
+                                    ))}
                             </div>
                             <div className="right-controls">
                                 <div className="controls">
@@ -597,60 +801,83 @@ function SearchByBrand() {
                                                     <div className="flex-grow-1">{headerTextItems}</div>
                                                     <div className="date-time date-time-small">{time} {date}</div>
 
-                                                 <div className="buttons-sheets">
-                                                     <div
-                                                         className="upload-to-excel"
-                                                         onClick={(event) => {
-                                                             if (exportingToExcelStates[queryData._id]) return;
-                                                             event.stopPropagation();
-                                                             handleExportToExcelClick(queryData._id, 'Бренд').then(r => r);
-                                                         }}
-                                                         style={{ cursor: exportingToExcelStates[queryData._id] ? 'not-allowed' : 'pointer' }}
-                                                         title={exportingToExcelStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Excel'}
-                                                     >
-                                                         {exportingToExcelStates[queryData._id] ? (
-                                                             <Spinner
-                                                                 as="span"
-                                                                 animation="border"
-                                                                 size="sm"
-                                                                 role="status"
-                                                                 aria-hidden="true"
-                                                                 style={{ width: '1rem', height: '1rem' }}
-                                                             />
-                                                         ) : (
-                                                             <span>В Excel</span>
-                                                         )}
-                                                     </div>
+                                                    <div className="buttons-sheets">
 
-                                                     <div
-                                                         className="upload-to-google-spreadsheet"
-                                                         onClick={(event) => {
-                                                             if (exportingStates[queryData._id]) return;
-                                                             event.stopPropagation();
-                                                             handleExportClick(queryData._id, 'Бренд').then(r => r);
-                                                         }}
-                                                         style={{ cursor: exportingStates[queryData._id] ? 'not-allowed' : 'pointer' }}
-                                                         title={exportingStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Google Таблицу'}
-                                                     >
-                                                         {exportingStates[queryData._id] ? (
-                                                             <Spinner
-                                                                 as="span"
-                                                                 animation="border"
-                                                                 size="sm"
-                                                                 role="status"
-                                                                 aria-hidden="true"
-                                                                 style={{ width: '1rem', height: '1rem' }}
-                                                             />
-                                                         ) : (
-                                                             <span>В Google</span>
-                                                         )}
-                                                     </div>
-                                                 </div>
+                                                        <Button
+                                                            variant="primary"
+                                                            onClick={(event) => {
+                                                                event.stopPropagation();
+                                                                handleFillForm(queryData);
+                                                            }}
+                                                        >
+                                                            Заполнить формы
+                                                        </Button>
+
+
+                                                        <div
+                                                            className="upload-to-excel"
+                                                            onClick={(event) => {
+                                                                if (exportingToExcelStates[queryData._id]) return;
+                                                                event.stopPropagation();
+                                                                handleExportToExcelClick(queryData._id, 'Бренд').then(r => r);
+                                                            }}
+                                                            style={{ cursor: exportingToExcelStates[queryData._id] ? 'not-allowed' : 'pointer' }}
+                                                            title={exportingToExcelStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Excel'}
+                                                        >
+                                                            {exportingToExcelStates[queryData._id] ? (
+                                                                <Spinner
+                                                                    as="span"
+                                                                    animation="border"
+                                                                    size="sm"
+                                                                    role="status"
+                                                                    aria-hidden="true"
+                                                                    style={{ width: '1rem', height: '1rem' }}
+                                                                />
+                                                            ) : (
+                                                                <span>В Excel</span>
+                                                            )}
+                                                        </div>
+
+                                                        <div
+                                                            className="upload-to-google-spreadsheet"
+                                                            onClick={(event) => {
+                                                                if (exportingStates[queryData._id]) return;
+                                                                event.stopPropagation();
+                                                                handleExportClick(queryData._id, 'Бренд').then(r => r);
+                                                            }}
+                                                            style={{ cursor: exportingStates[queryData._id] ? 'not-allowed' : 'pointer' }}
+                                                            title={exportingStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Google Таблицу'}
+                                                        >
+                                                            {exportingStates[queryData._id] ? (
+                                                                <Spinner
+                                                                    as="span"
+                                                                    animation="border"
+                                                                    size="sm"
+                                                                    role="status"
+                                                                    aria-hidden="true"
+                                                                    style={{ width: '1rem', height: '1rem' }}
+                                                                />
+                                                            ) : (
+                                                                <span>В Google</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             ) : (
                                                 <>
                                                     <div className="flex-grow-1">{headerTextItems}</div>
                                                     <div className="date-time">Дата: {date}, Время: {time}</div>
+
+                                                    <Button
+                                                        variant="primary"
+                                                        onClick={(event) => {
+                                                            event.stopPropagation();
+                                                            handleFillForm(queryData);
+                                                        }}
+                                                    >
+                                                        Заполнить формы
+                                                    </Button>
+
 
                                                     <div
                                                         className="upload-to-excel"
