@@ -202,6 +202,12 @@ header {
     right: 10px;
 }
 
+.controls_primary_danger {
+    position: absolute;
+    top: 15px;
+    left: 81%;
+}
+
 .auth-form h2 {
     text-align: center;
     margin-bottom: 20px;
@@ -875,6 +881,12 @@ tr:hover {
     .exit-button {
         position: static;
         margin-bottom: 10px;
+    }
+
+    .controls_primary_danger {
+        position: static;
+        /*margin-bottom: 10px;*/
+        margin-right: 10px;
     }
 
     .query-form-title {

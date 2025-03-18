@@ -47,6 +47,7 @@ function SearchByBrand() {
     const API_HOST = process.env.REACT_APP_API_HOST;
     const [exportingToExcelStates, setExportingToExcelStates] = useState({});
     const [showInitialForm, setShowInitialForm] = useState(true); // Состояние для управления видимостью начальной формы
+    const [showResetButton, setShowResetButton] = useState(false);
 
     useEffect(() => {
         document.body.setAttribute('data-theme', theme);
@@ -569,29 +570,32 @@ function SearchByBrand() {
 
 
 
+    const handleResetForms = () => {
+        setRequestForms([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
+        setShowInitialForm(true);
+        setShowResetButton(false);
+    };
+
+
+
     const handleFillForm = (queryData) => {
         const queries = queryData.query.split('; ');
         const brands = queryData.brand.split('; ');
         const cities = queryData.city.split('; ');
 
-        // Создаем массив новых форм на основе данных из заголовка
         const newForms = queries.map((query, index) => ({
-            id: Date.now() + index, // Уникальный ID для каждой формы
+            id: Date.now() + index,
             query: query,
             brand: brands[index] || '',
             city: cities[index] || 'г.Дмитров',
-            isMain: false // Новые формы не будут основными
+            isMain: false
         }));
 
-        // Обновляем состояние форм
         setRequestForms((prevForms) => {
-            // Основная форма всегда остается первой
             const mainForm = prevForms.find((form) => form.isMain);
             const otherForms = prevForms.filter((form) => !form.isMain);
 
-            // Фильтруем новые формы, исключая дубликаты
             const uniqueNewForms = newForms.filter((newForm) => {
-                // Проверяем, есть ли уже форма с такими же значениями
                 return !prevForms.some(
                     (existingForm) =>
                         existingForm.query === newForm.query &&
@@ -600,19 +604,17 @@ function SearchByBrand() {
                 );
             });
 
-            // Если есть уникальные формы, добавляем их после основной формы
             if (uniqueNewForms.length > 0) {
-                setShowInitialForm(false); // Скрываем начальную форму
+                setShowInitialForm(false);
+                setShowResetButton(true); // Показываем кнопку сброса
                 return [mainForm, ...otherForms, ...uniqueNewForms];
             }
 
-            // Если все формы дублируются, возвращаем предыдущее состояние
             return prevForms;
         });
     };
 
     const handleSearchAllQueries = () => {
-        // Собираем все уникальные запросы, бренды и города из всех заголовков
         const allQueriesData = filteredQueries.flatMap(queryData => {
             const queries = queryData.query.split('; ');
             const brands = queryData.brand.split('; ');
@@ -625,27 +627,21 @@ function SearchByBrand() {
             }));
         });
 
-        // Убираем дубликаты
         const uniqueQueriesData = Array.from(new Set(allQueriesData.map(JSON.stringify))).map(JSON.parse);
 
-        // Создаем массив новых форм на основе уникальных данных
         const newForms = uniqueQueriesData.map((data, index) => ({
-            id: Date.now() + index, // Уникальный ID для каждой формы
+            id: Date.now() + index,
             query: data.query,
             brand: data.brand,
             city: data.city,
-            isMain: false // Новые формы не будут основными
+            isMain: false
         }));
 
-        // Обновляем состояние форм
         setRequestForms((prevForms) => {
-            // Основная форма всегда остается первой
             const mainForm = prevForms.find((form) => form.isMain);
             const otherForms = prevForms.filter((form) => !form.isMain);
 
-            // Фильтруем новые формы, исключая дубликаты
             const uniqueNewForms = newForms.filter((newForm) => {
-                // Проверяем, есть ли уже форма с такими же значениями
                 return !prevForms.some(
                     (existingForm) =>
                         existingForm.query === newForm.query &&
@@ -654,13 +650,12 @@ function SearchByBrand() {
                 );
             });
 
-            // Если есть уникальные формы, добавляем их после основной формы
             if (uniqueNewForms.length > 0) {
-                setShowInitialForm(false); // Скрываем начальную форму
+                setShowInitialForm(false);
+                setShowResetButton(true); // Показываем кнопку сброса
                 return [mainForm, ...otherForms, ...uniqueNewForms];
             }
 
-            // Если все формы дублируются, возвращаем предыдущее состояние
             return prevForms;
         });
     };
@@ -699,6 +694,9 @@ function SearchByBrand() {
                     </div>
                 ) : showProfile ? (
                     <div className="query-form">
+                        {showResetButton && (
+                            <Button className="controls_primary controls_primary_danger" variant="danger" onClick={handleResetForms}>Сбросить</Button>
+                        )}
                         <Button variant="danger" className="exit-button" onClick={handleLogout}>Выйти</Button>
                         <h3 className="query-form-title">Страница поиска по описанию и бренду товара</h3>
                         <div className="top-section">
@@ -874,7 +872,7 @@ function SearchByBrand() {
                                                                     style={{ width: '1rem', height: '1rem' }}
                                                                 />
                                                             ) : (
-                                                                <span>В Excel</span>
+                                                                <span>Excel</span>
                                                             )}
                                                         </div>
 
@@ -898,7 +896,7 @@ function SearchByBrand() {
                                                                     style={{ width: '1rem', height: '1rem' }}
                                                                 />
                                                             ) : (
-                                                                <span>В Google</span>
+                                                                <span>Google</span>
                                                             )}
                                                         </div>
                                                     </div>

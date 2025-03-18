@@ -46,6 +46,7 @@ function SearchByArticle() {
     const API_HOST = process.env.REACT_APP_API_HOST;
     const [exportingToExcelStates, setExportingToExcelStates] = useState({});
     const [showInitialForm, setShowInitialForm] = useState(true); // Состояние для управления видимостью начальной формы
+    const [showResetButton, setShowResetButton] = useState(false);
 
     useEffect(() => {
         document.body.setAttribute('data-theme', theme);
@@ -464,6 +465,12 @@ function SearchByArticle() {
         }
     };
 
+    const handleResetForms = () => {
+        setRequestForms([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
+        setShowInitialForm(true);
+        setShowResetButton(false);
+    };
+
     const handleFillForm = (queryData) => {
         const queries = queryData.query.split('; ');
         const articles = queryData.article.split('; ');
@@ -492,6 +499,7 @@ function SearchByArticle() {
 
             if (uniqueNewForms.length > 0) {
                 setShowInitialForm(false); // Скрываем начальную форму
+                setShowResetButton(true); // Показываем кнопку сброса
                 return [mainForm, ...otherForms, ...uniqueNewForms];
             }
 
@@ -537,6 +545,7 @@ function SearchByArticle() {
 
             if (uniqueNewForms.length > 0) {
                 setShowInitialForm(false); // Скрываем начальную форму
+                setShowResetButton(true); // Показываем кнопку сброса
                 return [mainForm, ...otherForms, ...uniqueNewForms];
             }
 
@@ -577,6 +586,9 @@ function SearchByArticle() {
                     </div>
                 ) : showProfile ? (
                     <div className="query-form">
+                        {showResetButton && (
+                            <Button className="controls_primary controls_primary_danger" variant="danger" onClick={handleResetForms}>Сбросить</Button>
+                        )}
                         <Button variant="danger" className="exit-button" onClick={handleLogout}>Выйти</Button>
                         <h3 className="query-form-title">Страница поиска по описанию и артикулу товара</h3>
                         <div className="top-section">
@@ -748,7 +760,7 @@ function SearchByArticle() {
                                                                     style={{ width: '1rem', height: '1rem' }}
                                                                 />
                                                             ) : (
-                                                                <span>В Excel</span>
+                                                                <span>Excel</span>
                                                             )}
                                                         </div>
 
@@ -772,7 +784,7 @@ function SearchByArticle() {
                                                                     style={{ width: '1rem', height: '1rem' }}
                                                                 />
                                                             ) : (
-                                                                <span>В Google</span>
+                                                                <span>Google</span>
                                                             )}
                                                         </div>
                                                     </div>
