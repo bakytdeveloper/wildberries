@@ -241,6 +241,7 @@ function SearchByArticle() {
         document.body.style.overflow = 'auto';
     };
 
+
     const fetchProductsByArticle = async () => {
         if (isRequesting) return;
         console.log('Request forms before validation:', requestForms);
@@ -674,7 +675,7 @@ function SearchByArticle() {
                                 <div className="controls">
                                     <Button className="controls_success" onClick={addRequestForm}>Добавить запрос</Button>
                                     <Button className="controls_primary" onClick={fetchProductsByArticle} disabled={isRequesting}>Поиск</Button>
-                                    <Button className="controls_primary" onClick={handleSearchAllQueries}>Поиск по всем запросам</Button>
+                                    <Button className="controls_primary controls_primary_warning"  variant="warning" onClick={handleSearchAllQueries}>Все запросы</Button>
                                 </div>
                                 <div className="search-bar">
                                     <Form className="search" onSubmit={(e) => e.preventDefault()}>
@@ -718,15 +719,15 @@ function SearchByArticle() {
                                                     <div className="flex-grow-1">{headerTextItems}</div>
                                                     <div className="date-time date-time-small">{time} {date}</div>
                                                     <div className="buttons-sheets">
-                                                        <Button
-                                                            variant="primary"
+                                                        <div
+                                                            className="upload-requests"
                                                             onClick={(event) => {
                                                                 event.stopPropagation();
                                                                 handleFillForm(queryData);
                                                             }}
                                                         >
-                                                            Заполнить формы
-                                                        </Button>
+                                                            <span>Запросы</span>
+                                                        </div>
                                                         <div
                                                             className="upload-to-excel"
                                                             onClick={(event) => {
@@ -780,15 +781,15 @@ function SearchByArticle() {
                                                 <>
                                                     <div className="flex-grow-1">{headerTextItems}</div>
                                                     <div className="date-time">Дата: {date}, Время: {time}</div>
-                                                    <Button
-                                                        variant="primary"
+                                                    <div
+                                                        className="upload-requests"
                                                         onClick={(event) => {
                                                             event.stopPropagation();
                                                             handleFillForm(queryData);
                                                         }}
                                                     >
-                                                        Заполнить формы
-                                                    </Button>
+                                                        <span>Запросы</span>
+                                                    </div>
                                                     <div
                                                         className="upload-to-excel"
                                                         onClick={(event) => {
