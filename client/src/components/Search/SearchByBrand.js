@@ -255,114 +255,6 @@ function SearchByBrand() {
         });
     };
 
-    // const fetchProducts = async () => {
-    //     if (isRequesting) return;
-    //     console.log('Request forms before validation:', requestForms);
-    //     const validForms = requestForms.filter(form => {
-    //         const query = form.query && typeof form.query === 'string' ? form.query.trim() : '';
-    //         const brand = form.brand && typeof form.brand === 'string' ? form.brand.trim() : '';
-    //         return query !== '' && brand !== '';
-    //     });
-    //     console.log('Valid forms after validation:', validForms);
-    //     if (validForms.length === 0) {
-    //         Toastify({
-    //             text: "Все формы должны быть заполнены.",
-    //             duration: 3000,
-    //             gravity: "top",
-    //             position: "right",
-    //             style: { background: '#ff0000' }
-    //         }).showToast();
-    //         return;
-    //     }
-    //     setIsRequesting(true);
-    //     setLoadingMessage('Загрузка...');
-    //     setErrorMessage('');
-    //     setSuccessMessage('');
-    //     try {
-    //         const token = sessionStorage.getItem('token');
-    //         const trimmedForms = validForms.map(form => ({
-    //             ...form,
-    //             query: form.query.trim(),
-    //             brand: form.brand.trim(),
-    //             dest: cityDestinations[form.city],
-    //             city: form.city,
-    //             queryTime: new Date().toISOString()
-    //         }));
-    //         console.log('Trimmed forms before sending:', trimmedForms);
-    //         const response = await fetch(`${API_HOST}/api/queries`, {
-    //             method: 'POST',
-    //             headers: {
-    //                 'Content-Type': 'application/json',
-    //                 'Authorization': `Bearer ${token}`
-    //             },
-    //             body: JSON.stringify({ forms: trimmedForms })
-    //         });
-    //         if (response.status !== 200) {
-    //             const result = await response.json();
-    //             throw new Error(result.error || 'Ошибка выполнения запроса');
-    //         }
-    //         const result = await response.json();
-    //         console.log('Response from server:', result);
-    //         const totalRequests = validForms.length;
-    //         const successfulRequests = result.productTables.filter(table => table.products.length > 0).length;
-    //         if (successfulRequests === totalRequests) {
-    //             setSuccessMessage('Запрос выполнен успешно!');
-    //         } else if (successfulRequests > 0) {
-    //             setSuccessMessage('Запрос выполнен, но не все ответы получены');
-    //         } else {
-    //             setSuccessMessage('По запросу ничего не найдено');
-    //         }
-    //         setAllQueries([result, ...allQueries]);
-    //         setFilteredQueries([result, ...allQueries]);
-    //
-    //         // Обновляем списки suggestions и brandSuggestions
-    //         const newQueries = validForms.map(form => form.query.trim());
-    //         const newBrands = validForms.map(form => form.brand.trim());
-    //
-    //         setSuggestions(prevSuggestions => {
-    //             const updatedSuggestions = [...prevSuggestions];
-    //             newQueries.forEach(query => {
-    //                 if (!updatedSuggestions.some(suggestion => suggestion.label === query)) {
-    //                     updatedSuggestions.push({ label: query });
-    //                 }
-    //             });
-    //             return updatedSuggestions;
-    //         });
-    //
-    //         setBrandSuggestions(prevBrandSuggestions => {
-    //             const updatedBrandSuggestions = [...prevBrandSuggestions];
-    //             newBrands.forEach(brand => {
-    //                 if (!updatedBrandSuggestions.some(brandSuggestion => brandSuggestion.label === brand)) {
-    //                     updatedBrandSuggestions.push({ label: brand });
-    //                 }
-    //             });
-    //             return updatedBrandSuggestions;
-    //         });
-    //
-    //         setLoadingMessage('');
-    //         // Очищаем начальную форму
-    //         clearInput(requestForms[0].id);
-    //         setRequestForms([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
-    //         setShowInitialForm(true); // Убедимся, что начальная форма отображается
-    //         setActiveKey('0');
-    //         setTimeout(() => {
-    //             setSuccessMessage('');
-    //         }, 3000);
-    //         setTimeout(() => {
-    //             const newAccordionItem = document.querySelector(`.accordion .accordion-item:first-child`);
-    //             if (newAccordionItem) {
-    //                 newAccordionItem.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    //             }
-    //         }, 100);
-    //     } catch (error) {
-    //         console.error('Error fetching products:', error);
-    //         setErrorMessage('Ошибка выполнения запроса');
-    //     } finally {
-    //         setIsRequesting(false);
-    //     }
-    // };
-
-
     const fetchProducts = async () => {
         if (isRequesting) return;
         const validForms = requestForms.filter(form => {
@@ -449,9 +341,6 @@ function SearchByBrand() {
             setIsRequesting(false);
         }
     };
-
-
-
 
 
     const handleProductClick = (searchQuery, page, position) => {
