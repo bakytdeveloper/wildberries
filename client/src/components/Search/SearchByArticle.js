@@ -334,6 +334,7 @@ function SearchByArticle() {
             setLoadingMessage('');
             setRequestForms([{ id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: true }]);
             setShowInitialForm(true); // Показываем начальную форму после выполнения поиска
+            setShowResetButton(false); // Скрываем кнопку "Сбросить"
             setActiveKey('0');
 
             setTimeout(() => {

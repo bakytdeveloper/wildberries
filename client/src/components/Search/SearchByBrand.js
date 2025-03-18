@@ -324,6 +324,7 @@ function SearchByBrand() {
             clearInput(requestForms[0].id);
             setRequestForms([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
             setShowInitialForm(true);
+            setShowResetButton(false); // Скрываем кнопку "Сбросить"
             setActiveKey('0');
             setTimeout(() => {
                 setSuccessMessage('');

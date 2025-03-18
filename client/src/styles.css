@@ -5,7 +5,7 @@
     --border-color: #dddddd;
     --shadow-color: rgba(0, 0, 0, 0.1);
     --button-background: #093aee;
-    --button-hover-background: #2451aa;
+    --button-hover-background: #3575f6;
     --button-text-color: #ffffff;
     --table-header-background: #bf70ef;
     --table-header-text-color: #ffffff;
@@ -399,13 +399,18 @@ table {
 
 .upload-to-excel {
     /*margin-left: 10px;*/
-    background: #3e72ef;
+    background: #08d4cd;
     border: 2px solid #06b9f1;
     border-radius: 4px;
     padding: 4px 7px;
     font-weight: bold;
     margin-right: 10px;
+    align-items: center;
+    justify-content: center;
     gap: 5px;
+    min-width: 170px; /* Фиксированная минимальная ширина */
+    /*max-width: 200px; !* Фиксированная максимальная ширина *!*/
+    text-align: center;
 }
 
 .upload-to-excel:hover {
@@ -457,6 +462,8 @@ table {
     /*width: 100px;*/
     /*width: auto;*/
     /*height: 30px;*/
+    min-width: 170px; /* Фиксированная минимальная ширина */
+    /*max-width: 200px; !* Фиксированная максимальная ширина *!*/
     padding: 4px 7px;
     font-weight: bold;
     font-size: 14px;
@@ -476,6 +483,7 @@ table {
     opacity: 0.6;
     cursor: not-allowed;
 }
+
 
 
 th, td {
@@ -925,6 +933,14 @@ tr:hover {
 
     .buttons-sheets {
         display: inline-flex;
+    }
+
+    .upload-to-google-spreadsheet {
+        min-width: 90px;
+    }
+
+    .upload-to-excel {
+        min-width: 90px;
     }
 
 }
