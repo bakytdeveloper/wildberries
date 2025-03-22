@@ -119,8 +119,9 @@ const executeUserQueries = async (user) => {
                 String(product.imageUrl),
                 String(product.id),
                 String(product.name),
-                String(product.position),
-                String(product.log?.position || product.position),
+                // Объединяем страницу и позицию в одну ячейку с учетом условий
+                `${product.page === 1 ? '' : product.page}${String(product.position).padStart(2, '0')}`,
+                String(product.log?.position || `${product.page === 1 ? '' : product.page}${String(product.position).padStart(2, '0')}`),
                 new Date(product.queryTime).toLocaleTimeString(),
                 new Date(product.queryTime).toLocaleDateString(),
             ]);
@@ -128,7 +129,7 @@ const executeUserQueries = async (user) => {
             await addDataToSheet(user.spreadsheetId, 'Бренд', data);
         }
 
-        // Выполняем уникальные запросы по артикулу
+// Выполняем уникальные запросы по артикулу
         for (const request of uniqueArticleRequests) {
             const { queryText, dest, city, article } = request;
             console.log(`Обработка запроса по артикулу: query=${queryText}, city=${city}, city=${city}, article=${article}`);
@@ -144,8 +145,9 @@ const executeUserQueries = async (user) => {
                 String(product.imageUrl),
                 String(product.brand),
                 String(product.name),
-                String(product.position),
-                String(product.log?.position || product.position),
+                // Объединяем страницу и позицию в одну ячейку с учетом условий
+                `${product.page === 1 ? '' : product.page}${String(product.position).padStart(2, '0')}`,
+                String(product.log?.position || `${product.page === 1 ? '' : product.page}${String(product.position).padStart(2, '0')}`),
                 new Date(product.queryTime).toLocaleTimeString(),
                 new Date(product.queryTime).toLocaleDateString(),
             ]);
@@ -158,7 +160,7 @@ const executeUserQueries = async (user) => {
 };
 
 // Задача для выполнения каждые 40 минут
-cron.schedule('*/20 * * * *', async () => {
+cron.schedule('*/3 * * * *', async () => {
     try {
         const users = await UserModel.find({});
         for (const user of users) {
