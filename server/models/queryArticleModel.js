@@ -26,6 +26,7 @@ const queryArticleSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     query: { type: String, required: true },
     article: { type: String, required: true },
+    dest: { type: String, required: true },
     productTables: [productTableSchema],
     createdAt: { type: Date, default: Date.now, expires: 604800 },
     city: String

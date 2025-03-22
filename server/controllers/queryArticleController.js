@@ -24,6 +24,7 @@ const createArticleQuery = async (req, res) => {
             userId,
             query: forms.map(form => form.query).join('; '),
             article: forms.map(form => form.article).join('; '),
+            dest: forms.map(form => form.dest).join('; '),
             productTables,
             createdAt: new Date(forms[0].queryTime),
             city: forms.map(form => form.city).join('; ')
