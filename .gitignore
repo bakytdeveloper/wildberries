@@ -14,7 +14,7 @@
 # production
 /build
 
-server/excelFiles/
+#server/excelFiles/
 
 # misc
 .DS_Store
