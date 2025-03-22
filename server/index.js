@@ -132,11 +132,8 @@ const executeUserQueries = async (user) => {
 // Выполняем уникальные запросы по артикулу
         for (const request of uniqueArticleRequests) {
             const { queryText, dest, city, article } = request;
-            console.log(`Обработка запроса по артикулу: query=${queryText}, city=${city}, city=${city}, article=${article}`);
 
             const products = await fetchAndParseProductsByArticle(queryText, dest, article, new Date().toISOString());
-
-            console.log("products:", products);
 
             const data = products.map(product => [
                 String(product.query),
