@@ -10,13 +10,14 @@ const userRoutes = require('./routes/userRoutes');
 const queryArticleRoutes = require('./routes/queryArticleRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const path = require('path');
+const cron = require("node-cron");
 const {addDataToSheet} = require("./services/googleSheetService");
 const {QueryModel} = require("./models/queryModel");
 const {QueryArticleModel} = require("./models/queryArticleModel");
 const {fetchAndParseProducts} = require("./services/productService");
 const {fetchAndParseProductsByArticle} = require("./services/productService");
 const {UserModel} = require("./models/userModel"); // Добавляем модуль path для работы с путями
-const cron = require('node-cron');
+// const cron = require('node-cron');
 
 dotenv.config();
 
