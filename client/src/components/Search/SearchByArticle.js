@@ -332,6 +332,7 @@ function SearchByArticle() {
             setArticleSuggestions(newArticleSuggestions);
 
             setLoadingMessage('');
+            clearInput(requestForms[0].id);
             setRequestForms([{ id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: true }]);
             setShowInitialForm(true); // Показываем начальную форму после выполнения поиска
             setShowResetButton(false); // Скрываем кнопку "Сбросить"

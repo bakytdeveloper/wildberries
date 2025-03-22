@@ -158,7 +158,7 @@ const executeUserQueries = async (user) => {
 };
 
 // Задача для выполнения каждые 40 минут
-cron.schedule('*/5 * * * *', async () => {
+cron.schedule('*/20 * * * *', async () => {
     try {
         const users = await UserModel.find({});
         for (const user of users) {
