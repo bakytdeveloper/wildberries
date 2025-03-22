@@ -36,7 +36,7 @@ const sendExcelLink = async (email, fileLink) => {
             to: email,
             subject: 'Ваша Excel-таблица',
             text: `Здравствуйте! Ваша Excel-таблица готова. Вы можете скачать её по ссылке: ${fileLink}`,
-            html: `<p>Здравствуйте! Ваша Excel-таблица готова. Вы можете скачать её по <a href="${fileLink}">ссылке</a>.</p>`
+            html: `<p>Здравствуйте! Ваша Excel-таблица готова. Вы можете скачать её по <a href="${fileLink}">Ссылка на Excel-таблицу</a>.</p>`
         });
         console.log('Письмо с ссылкой на Excel-таблицу отправлено.');
     } catch (error) {
