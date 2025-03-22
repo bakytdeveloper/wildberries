@@ -102,7 +102,6 @@ const addDataToExcel = async (userId, sheetName, data) => {
                 });
 
                 // Устанавливаем высоту строки для изображения
-                // Устанавливаем высоту строки для изображения
                 sheet.getRow(newRow.number).height = 40; // Подгоняем высоту строки под изображение
                 // sheet.getRow(newRow.number).height = imageHeight / 1.5; // Подгоняем высоту строки под изображение
             } catch (error) {
