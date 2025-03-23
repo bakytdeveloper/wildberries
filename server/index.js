@@ -17,7 +17,6 @@ const {QueryArticleModel} = require("./models/queryArticleModel");
 const {fetchAndParseProducts} = require("./services/productService");
 const {fetchAndParseProductsByArticle} = require("./services/productService");
 const {UserModel} = require("./models/userModel"); // Добавляем модуль path для работы с путями
-// const cron = require('node-cron');
 
 dotenv.config();
 
