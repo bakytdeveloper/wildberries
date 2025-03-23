@@ -171,6 +171,11 @@ cron.schedule('0 */6 * * *', async () => {
 
 
 const startServer = () => {
+
+    app.get('/api', (req, res) => {
+        res.send('API is working');
+    });
+
     app.use('/api/admin', adminRoutes);
     app.use('/api/auth', authRoutes);
     app.use('/api/otp', otpRoutes);
