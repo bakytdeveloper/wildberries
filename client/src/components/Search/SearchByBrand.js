@@ -165,7 +165,6 @@ function SearchByBrand() {
     };
 
     const handleQueryChange = (selected, formId) => {
-        console.log('Query selected:', selected);
         const value = selected.length > 0 ? selected[0].label : '';
         setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: value } : f));
 
@@ -174,11 +173,11 @@ function SearchByBrand() {
             setSuggestions(prevSuggestions => [...prevSuggestions, { label: value }]);
         }
 
-        console.log('Updated form:', requestForms.find(f => f.id === formId));
+        // console.log('Updated form:', requestForms.find(f => f.id === formId));
     };
 
     const handleBrandChange = (selected, formId) => {
-        console.log('Brand selected:', selected);
+        // console.log('Brand selected:', selected);
         const value = selected.length > 0 ? selected[0].label : '';
         setRequestForms(requestForms.map(f => f.id === formId ? { ...f, brand: value } : f));
 
@@ -187,7 +186,7 @@ function SearchByBrand() {
             setBrandSuggestions(prevBrandSuggestions => [...prevBrandSuggestions, { label: value }]);
         }
 
-        console.log('Updated form:', requestForms.find(f => f.id === formId));
+        // console.log('Updated form:', requestForms.find(f => f.id === formId));
     };
 
     const handleCityChange = (city, formId) => {
@@ -228,7 +227,7 @@ function SearchByBrand() {
 
     const handleQueryInputChange = (event, formId) => {
         const text = event.target.value;
-        console.log('Query input change:', text.target.value);
+        // console.log('Query input change:', text.target.value);
         setRequestForms(prevForms => prevForms.map(f =>
             f.id === formId ? { ...f, query: text.target.value } : f
         ));
@@ -236,7 +235,7 @@ function SearchByBrand() {
 
     const handleBrandInputChange = (event, formId) => {
         const text = event.target.value;
-        console.log('Brand input change:', text);
+        // console.log('Brand input change:', text);
         setRequestForms(prevForms => prevForms.map(f =>
             f.id === formId ? { ...f, brand: text.target.value } : f ));
     };
@@ -305,7 +304,7 @@ function SearchByBrand() {
             }
 
             const result = await response.json();
-            console.log('Response from server:', result);
+            // console.log('Response from server:', result);
             const totalRequests = validForms.length;
             const successfulRequests = result.productTables.filter(table => table.products.length > 0).length;
 

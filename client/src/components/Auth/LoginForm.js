@@ -14,8 +14,8 @@ const LoginForm = ({ API_HOST, setIsAuthenticated, setShowProfile, setShowForgot
         e.preventDefault();
         setLoading(true);
 
-        console.log('Sending request to:', `${API_HOST}/api/auth/login`);
-        console.log('Request data:', { email, password });
+        // console.log('Sending request to:', `${API_HOST}/api/auth/login`);
+        // console.log('Request data:', { email, password });
 
         try {
             const response = await axios.post(`${API_HOST}/api/auth/login`, { email, password });

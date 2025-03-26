@@ -151,6 +151,11 @@ function SearchByArticle() {
                 f.id === formId ? { ...f, query: value } : f
             )
         );
+        // Обновляем список suggestions
+        if (value && !suggestions.some(suggestion => suggestion.label === value)) {
+            setSuggestions(prevSuggestions => [...prevSuggestions, { label: value }]);
+        }
+
     };
 
     const handleArticleChange = (selected, formId) => {
@@ -160,11 +165,18 @@ function SearchByArticle() {
                 f.id === formId ? { ...f, article: value } : f
             )
         );
+
+        // Обновляем список brandSuggestions
+        if (value && !articleSuggestions.some(brand => brand.label === value)) {
+            setArticleSuggestions(prevArticleSuggestions => [...prevArticleSuggestions, { label: value }]);
+        }
+
+
     };
 
     const handleQueryInputChange = (event, formId) => {
         const text = event.target.value;
-        console.log('Query input change:', text.target.value);
+        // console.log('Query input change:', text.target.value);
         setRequestForms(prevForms => prevForms.map(f =>
             f.id === formId ? { ...f, query: text.target.value } : f
         ));
@@ -172,7 +184,7 @@ function SearchByArticle() {
 
     const handleArticleInputChange = (event, formId) => {
         const text = event.target.value;
-        console.log('Brand input change:', text);
+        // console.log('Brand input change:', text);
         setRequestForms(prevForms => prevForms.map(f =>
             f.id === formId ? { ...f, article: text.target.value } : f ));
     };
@@ -245,7 +257,7 @@ function SearchByArticle() {
 
     const fetchProductsByArticle = async () => {
         if (isRequesting) return;
-        console.log('Request forms before validation:', requestForms);
+        // console.log('Request forms before validation:', requestForms);
 
         const validForms = requestForms.filter(form => {
             const query = form.query && typeof form.query === 'string' ? form.query.trim() : '';
@@ -253,7 +265,7 @@ function SearchByArticle() {
             return query !== '' && article !== '';
         });
 
-        console.log('Valid forms after validation:', validForms);
+        // console.log('Valid forms after validation:', validForms);
         if (validForms.length === 0) {
             Toastify({
                 text: "Все формы должны быть заполнены.",
@@ -281,7 +293,7 @@ function SearchByArticle() {
                 queryTime: new Date().toISOString()
             }));
 
-            console.log('Trimmed forms before sending:', trimmedForms);
+            // console.log('Trimmed forms before sending:', trimmedForms);
             const response = await fetch(`${API_HOST}/api/article`, {
                 method: 'POST',
                 headers: {
@@ -297,7 +309,7 @@ function SearchByArticle() {
             }
 
             const result = await response.json();
-            console.log('Response from server:', result);
+            // console.log('Response from server:', result);
 
             const totalRequests = validForms.length;
             const successfulRequests = result.productTables.filter(table => table.products.length > 0).length;

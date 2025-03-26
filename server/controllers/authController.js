@@ -11,7 +11,7 @@ dotenv.config();
 const jwtSecret = process.env.JWT_SECRET || 'yourSecretKey';
 
 const registerUser = async (req, res) => {
-    console.log('Received request body:', req.body); // Логирование запроса
+    // console.log('Received request body:', req.body); // Логирование запроса
     const { username, password, email } = req.body;
 
     try {
@@ -29,12 +29,12 @@ const registerUser = async (req, res) => {
 
         // Создание Google Таблицы для пользователя
         const spreadsheetId = await createSpreadsheetForUser(email);
-        console.log('Spreadsheet ID:', spreadsheetId); // Логирование Spreadsheet ID
+        // console.log('Spreadsheet ID:', spreadsheetId); // Логирование Spreadsheet ID
         newUser.spreadsheetId = spreadsheetId;
 
         // Создание Excel-файла для пользователя
         const excelFilePath = await createExcelFileForUser(newUser._id.toString());
-        console.log('Excel File Path:', excelFilePath); // Логирование пути к Excel-файлу
+        // console.log('Excel File Path:', excelFilePath); // Логирование пути к Excel-файлу
         newUser.excelFileId = excelFilePath;
 
         await newUser.save();
@@ -55,10 +55,10 @@ const registerUser = async (req, res) => {
 const loginUser = async (req, res) => {
     const { email, password } = req.body;
 
-    console.log('Received login request:', req.body);
+    // console.log('Received login request:', req.body);
 
     if (!email || !password) {
-        console.log('Email or password missing');
+        // console.log('Email or password missing');
         return res.status(400).json({ message: 'Требуется адрес электронной почты и пароль.' });
     }
 
@@ -71,7 +71,7 @@ const loginUser = async (req, res) => {
 
         const user = await UserModel.findOne({ email });
         if (!user) {
-            console.log('User not found:', email);
+            // console.log('User not found:', email);
             return res.status(400).json({ message: 'Неверный адрес электронной почты или пароль' });
         }
 
@@ -82,7 +82,7 @@ const loginUser = async (req, res) => {
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            console.log('Password mismatch for user:', email);
+            // console.log('Password mismatch for user:', email);
             return res.status(400).json({ message: 'Неверный адрес электронной почты или пароль' });
         }
 
