@@ -75,21 +75,21 @@ async function getLastRow(sheetId, sheetName) {
 
 async function addDataToSheet(sheetId, sheetName, data) {
     const sheets = getSheetsInstance();
-    console.log("DATA:", data);
+    console.log("ДАННЫЕ:", data);
     try {
         const lastRow = await getLastRow(sheetId, sheetName);
 
-        if (lastRow > 1) {
-            await sheets.spreadsheets.values.append({
-                spreadsheetId: sheetId,
-                range: `${sheetName}!A${lastRow}:J${lastRow}`,
-                valueInputOption: 'USER_ENTERED',
-                requestBody: {
-                    values: [Array(10).fill('')],
-                },
-            });
-        }
+        // Всегда вставляем пустую строку ПЕРЕД новыми данными
+        await sheets.spreadsheets.values.append({
+            spreadsheetId: sheetId,
+            range: `${sheetName}!A${lastRow + 1}:J${lastRow + 1}`,
+            valueInputOption: 'USER_ENTERED',
+            requestBody: {
+                values: [Array(10).fill('')], // Пустая строка
+            },
+        });
 
+        // Форматируем данные перед вставкой
         const formattedData = data.map((row) => {
             const imageUrl = row[3];
             if (imageUrl) {
@@ -98,22 +98,24 @@ async function addDataToSheet(sheetId, sheetName, data) {
             return row;
         });
 
+        // Добавляем данные после пустой строки
         const response = await sheets.spreadsheets.values.append({
             spreadsheetId: sheetId,
-            range: `${sheetName}!A${lastRow + 1}:J${lastRow + formattedData.length}`,
+            range: `${sheetName}!A${lastRow + 2}:J${lastRow + 1 + formattedData.length}`,
             valueInputOption: 'USER_ENTERED',
             requestBody: {
                 values: formattedData,
             },
         });
 
-        console.log('Add data response:', JSON.stringify(response.data, null, 2));
+        console.log('Добавить данные response:', JSON.stringify(response.data, null, 2));
         return response.data;
     } catch (error) {
-        console.error('Error adding data to sheet:', error);
+        console.error('Ошибка добавления данных в лист:', error);
         throw error;
     }
 }
+
 
 module.exports = {
     createSpreadsheetForUser,
