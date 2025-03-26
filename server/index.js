@@ -39,9 +39,9 @@ const connectWithRetry = () => {
         });
 };
 
-// Задача для выполнения каждые 6 часов
+// Задача для выполнения каждые 4 часов
 // cron.schedule('*/10 * * * *', async () => {
-cron.schedule('0 */6 * * *', async () => {
+cron.schedule('0 */4 * * *', async () => {
     try {
         const users = await UserModel.find({});
         for (const user of users) {
@@ -53,11 +53,6 @@ cron.schedule('0 */6 * * *', async () => {
 });
 
 const startServer = () => {
-
-    app.get('/api', (req, res) => {
-        res.send('API is working');
-    });
-
     app.use('/api/admin', adminRoutes);
     app.use('/api/auth', authRoutes);
     app.use('/api/otp', otpRoutes);
