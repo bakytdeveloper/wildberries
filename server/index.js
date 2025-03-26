@@ -34,7 +34,7 @@ const connectWithRetry = () => {
             startServer();
         })
         .catch((error) => {
-            console.error('Error connecting to MongoDB:', error.message);
+            console.error('Ошибка подключения к MongoDB:', error.message);
             setTimeout(connectWithRetry, 5000);
         });
 };
@@ -60,7 +60,7 @@ const startServer = () => {
     app.use('/api/queries', protect, queryRoutes);
     app.use('/api/user', protect, userRoutes); // Добавляем маршрут для профиля пользователя
     app.listen(port, () => {
-        console.log(`Server running at http://localhost:${port}`);
+        console.log(`Сервер работает на http://localhost:${port}`);
     });
 };
 

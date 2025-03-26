@@ -34,9 +34,9 @@ const sendExcelLink = async (email, fileLink) => {
         await transporter.sendMail({
             from: 'bakytdeveloper@gmail.com',
             to: email,
-            subject: 'Ваша Excel-таблица',
+            subject: 'Ваша Excel-таблица готова',
             text: `Здравствуйте! Ваша Excel-таблица готова. Вы можете скачать её по ссылке: ${fileLink}`,
-            html: `<p>Здравствуйте! Ваша Excel-таблица готова. Вы можете скачать её по <a href="${fileLink}">Ссылка на Excel-таблицу</a>.</p>`
+            html: `<p>Здравствуйте! Ваша Excel-таблица готова. Вы можете по ей, это <a href="${fileLink}">Ваша Excel-таблица</a>.</p>`
         });
         console.log('Письмо с ссылкой на Excel-таблицу отправлено.');
     } catch (error) {

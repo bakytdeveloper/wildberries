@@ -18,7 +18,7 @@ const getQueries = async (req, res) => {
         res.json(queries); // Отправляем JSON ответ
     } catch (error) {
         console.error('Error fetching queries:', error);
-        res.status(500).json({ error: 'Failed to fetch queries' });
+        res.status(500).json({ error: 'Не удалось получить запросы' });
     }
 };
 
@@ -28,7 +28,7 @@ const createQuery = async (req, res) => {
     const userId = req.userId; // Получаем идентификатор пользователя из запроса
 
     if (!forms || !Array.isArray(forms) || forms.length === 0) {
-        res.status(400).json({ error: 'Invalid request format' });
+        res.status(400).json({ error: 'Неверный формат запроса' });
         return;
     }
 
@@ -54,7 +54,7 @@ const createQuery = async (req, res) => {
         res.json(newQuery);
     } catch (error) {
         console.error('Error saving queries:', error);
-        res.status(500).json({ error: 'Failed to save queries' });
+        res.status(500).json({ error: 'Не удалось сохранить запросы' });
     }
 };
 

@@ -16,12 +16,12 @@ const registerUser = async (req, res) => {
 
     try {
         if (!username || !email || !password) {
-            return res.status(400).json({ message: 'All fields are required' });
+            return res.status(400).json({ message: 'Все поля обязательны для заполнения' });
         }
 
         const existingUser = await UserModel.findOne({ email });
         if (existingUser) {
-            return res.status(400).json({ message: 'User already exists' });
+            return res.status(400).json({ message: 'Пользователь уже существует' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -47,7 +47,7 @@ const registerUser = async (req, res) => {
         res.status(201).json({ token });
     } catch (error) {
         console.error('Error during registration:', error);
-        res.status(500).json({ error: 'Registration failed' });
+        res.status(500).json({ error: 'Регистрация не удалась' });
     }
 };
 
@@ -59,7 +59,7 @@ const loginUser = async (req, res) => {
 
     if (!email || !password) {
         console.log('Email or password missing');
-        return res.status(400).json({ message: 'Email and password are required' });
+        return res.status(400).json({ message: 'Требуется адрес электронной почты и пароль.' });
     }
 
     try {
@@ -72,25 +72,25 @@ const loginUser = async (req, res) => {
         const user = await UserModel.findOne({ email });
         if (!user) {
             console.log('User not found:', email);
-            return res.status(400).json({ message: 'Invalid email or password' });
+            return res.status(400).json({ message: 'Неверный адрес электронной почты или пароль' });
         }
 
         // Проверяем, заблокирован ли пользователь
         if (user.isBlocked) {
-            return res.status(403).json({ message: 'User is blocked. Please contact support.' });
+            return res.status(403).json({ message: 'Пользователь заблокирован. Обратитесь в службу поддержки.' });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             console.log('Password mismatch for user:', email);
-            return res.status(400).json({ message: 'Invalid email or password' });
+            return res.status(400).json({ message: 'Неверный адрес электронной почты или пароль' });
         }
 
         const token = jwt.sign({ userId: user._id, isAdmin: false }, jwtSecret, { expiresIn: '24h' });
         res.json({ token, isAdmin: false });
     } catch (error) {
         console.error('Error during login:', error);
-        res.status(500).json({ error: 'Login failed' });
+        res.status(500).json({ error: 'Ошибка входа' });
     }
 };
 

@@ -38,7 +38,7 @@ function SearchByArticle() {
     const [articleSuggestions, setArticleSuggestions] = useState([]);
     const [exportingStates, setExportingStates] = useState({});
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-    const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: true }]);
+    const [requestForms, setRequestForms] = useState([{ id: Date.now(), query: '', article: '', city: 'г.Москва', isMain: true }]);
     const queryTypeaheadRefs = useRef([]);
     const articleTypeaheadRefs = useRef([]);
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
@@ -197,7 +197,7 @@ function SearchByArticle() {
     }, [requestForms]);
 
     const clearInput = (formId) => {
-        setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: '', article: '', city: 'г.Дмитров' } : f));
+        setRequestForms(requestForms.map(f => f.id === formId ? { ...f, query: '', article: '', city: 'г.Москва' } : f));
 
         const formIndex = requestForms.findIndex(f => f.id === formId);
         if (queryTypeaheadRefs.current[formIndex]) {
@@ -216,7 +216,7 @@ function SearchByArticle() {
     };
 
     const addRequestForm = () => {
-        setRequestForms([...requestForms, { id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: false }]);
+        setRequestForms([...requestForms, { id: Date.now(), query: '', article: '', city: 'г.Москва', isMain: false }]);
     };
 
     const removeRequestForm = (formId) => {
@@ -225,7 +225,7 @@ function SearchByArticle() {
 
             if (updatedForms.length === 1) {
                 setShowInitialForm(true); // Показываем начальную форму
-                return [{ id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: true }];
+                return [{ id: Date.now(), query: '', article: '', city: 'г.Москва', isMain: true }];
             }
 
             return updatedForms;
@@ -333,7 +333,7 @@ function SearchByArticle() {
 
             setLoadingMessage('');
             clearInput(requestForms[0].id);
-            setRequestForms([{ id: Date.now(), query: '', article: '', city: 'г.Дмитров', isMain: true }]);
+            setRequestForms([{ id: Date.now(), query: '', article: '', city: 'г.Москва', isMain: true }]);
             setShowInitialForm(true); // Показываем начальную форму после выполнения поиска
             setShowResetButton(false); // Скрываем кнопку "Сбросить"
             setActiveKey('0');
@@ -468,7 +468,7 @@ function SearchByArticle() {
     };
 
     const handleResetForms = () => {
-        setRequestForms([{ id: Date.now(), query: '', brand: '', city: 'г.Дмитров', isMain: true }]);
+        setRequestForms([{ id: Date.now(), query: '', brand: '', city: 'г.Москва', isMain: true }]);
         setShowInitialForm(true);
         setShowResetButton(false);
     };
@@ -482,7 +482,7 @@ function SearchByArticle() {
             id: Date.now() + index,
             query: query,
             article: articles[index] || '',
-            city: cities[index] || 'г.Дмитров',
+            city: cities[index] || 'г.Москва',
             isMain: false
         }));
 
@@ -518,7 +518,7 @@ function SearchByArticle() {
             return queries.map((query, index) => ({
                 query: query.trim(),
                 article: articles[index]?.trim() || '',
-                city: cities[index]?.trim() || 'г.Дмитров'
+                city: cities[index]?.trim() || 'г.Москва'
             }));
         });
 
