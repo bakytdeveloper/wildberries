@@ -437,7 +437,8 @@ function SearchByBrand() {
                 }
             });
             Toastify({
-                text: 'Данные успешно выгружены в Excel таблицу.',
+                text: 'Данные успешно выгружены в Excel таблицу. ' +
+                       'Таблица находится на вашей на Эл.Почте',
                 duration: 3000,
                 gravity: 'top',
                 position: 'right',

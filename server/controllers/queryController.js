@@ -1,3 +1,4 @@
+const {createExcelFileOnDemand} = require("../services/excelService");
 const { QueryModel } = require('../models/queryModel');
 const { fetchAndParseProducts } = require('../services/productService');
 const { UserModel } = require('../models/userModel');
@@ -135,6 +136,18 @@ const exportToExcel = async (req, res) => {
     const userId = req.userId;
 
     try {
+
+        // Получаем пользователя
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'Пользователь не найден' });
+        }
+
+        // Если у пользователя еще нет Excel файла, создаем его
+        if (!user.excelFileId) {
+            await createExcelFileOnDemand(userId, user.email);
+        }
+
         const query = await QueryModel.findOne({ _id: queryId, userId }).populate('productTables.products');
         if (!query) {
             return res.status(404).json({ error: 'Запрос не найден' });

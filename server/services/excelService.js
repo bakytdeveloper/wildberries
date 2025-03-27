@@ -4,6 +4,7 @@ const fs = require('fs');
 const axios = require('axios');
 const {sendExcelLink} = require("../smtp/otpService");
 const dotenv = require('dotenv');
+const {UserModel} = require("../models/userModel");
 
 dotenv.config();
 
@@ -158,7 +159,23 @@ const deleteExcelFile = async (userId) => {
     }
 };
 
+const createExcelFileOnDemand = async (userId, email) => {
+    try {
+        // Создаем файл
+        const excelFilePath = await createExcelFileForUser(userId);
 
+        // Обновляем пользователя в базе
+        await UserModel.findByIdAndUpdate(userId, { excelFileId: excelFilePath });
+
+        // Отправляем файл пользователю
+        await sendExcelFileToUser(email, userId);
+
+        return excelFilePath;
+    } catch (error) {
+        console.error('Error creating Excel file on demand:', error);
+        throw error;
+    }
+};
 
 // Функция для создания публичной ссылки на Excel-файл
 const getExcelFileLink = (userId) => {
@@ -176,6 +193,7 @@ const sendExcelFileToUser = async (email, userId) => {
 
 module.exports = {
     createExcelFileForUser,
+    createExcelFileOnDemand,
     addDataToExcel,
     cleanOldData,
     deleteExcelFile, // Экспортируем новую функцию
