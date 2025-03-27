@@ -456,11 +456,7 @@ table {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    /*width: 100px;*/
-    /*width: auto;*/
-    /*height: 30px;*/
     min-width: 170px; /* Фиксированная минимальная ширина */
-    /*max-width: 200px; !* Фиксированная максимальная ширина *!*/
     padding: 4px 7px;
     font-weight: bold;
     font-size: 14px;
@@ -737,8 +733,6 @@ tr:hover {
         width: 50%;
     }
 
-
-
     #password.form-control {
         width: 20% !important;
     }
@@ -803,6 +797,7 @@ tr:hover {
 
     .controls_primary_warning {
         margin-left: 10px;
+        font-size: 13px!important;
     }
 
     .accordion {
@@ -934,11 +929,16 @@ tr:hover {
     }
 
     .upload-to-google-spreadsheet {
-        min-width: 90px;
+        min-width: 60px;
+        font-size: 13px;
+        padding: 4px 5px;
+
     }
 
     .upload-to-excel {
-        min-width: 90px;
+        min-width: 55px;
+        font-size: 13px;
+        padding: 4px 5px;
     }
 
 }
