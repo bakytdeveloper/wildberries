@@ -42,79 +42,150 @@ const createExcelFileForUser = async (userId) => {
     return filePath;
 };
 
-// Добавление данных в Excel-файл пользователя
-const addDataToExcel = async (userId, sheetName, data) => {
-    const filePath = path.join(__dirname, `../excelFiles/${userId}.xlsx`);
+// // Добавление данных в Excel-файл пользователя
+// const addDataToExcel = async (userId, sheetName, data) => {
+//     const filePath = path.join(__dirname, `../excelFiles/${userId}.xlsx`);
+//
+//     // Если файл не существует, создаем его
+//     if (!fs.existsSync(filePath)) {
+//         await createExcelFileForUser(userId);
+//     }
+//
+//     const workbook = new ExcelJS.Workbook();
+//     await workbook.xlsx.readFile(filePath);
+//
+//     const sheet = workbook.getWorksheet(sheetName);
+//     if (!sheet) {
+//         throw new Error(`Страница "${sheetName}" не найдена.`);
+//     }
+//
+//     // Удаляем старые записи (старше 7 дней)
+//     const now = new Date();
+//     const sevenDaysAgo = new Date(now.setDate(now.getDate() - 7));
+//
+//     const rowsToDelete = [];
+//     sheet.eachRow((row, rowNumber) => {
+//         const dateCell = row.getCell(9); // Дата находится в 9-й колонке
+//         if (dateCell.value && dateCell.value instanceof Date && dateCell.value < sevenDaysAgo) {
+//             rowsToDelete.push(rowNumber);
+//         }
+//     });
+//
+//     // Удаляем строки в обратном порядке, чтобы не нарушить нумерацию
+//     rowsToDelete.reverse().forEach((rowNumber) => {
+//         sheet.spliceRows(rowNumber, 1);
+//     });
+//
+//     // Добавляем пустую строку перед новой выгрузкой (только один раз)
+//     sheet.addRow([]);
+//
+//     // Добавляем новые данные
+//     for (const row of data) {
+//         const newRow = sheet.addRow(row);
+//
+//         // Вставляем изображение вместо URL
+//         const imageUrl = row[3]; // URL картинки находится в 4-й колонке
+//         if (imageUrl && typeof imageUrl === 'string' && imageUrl.startsWith('http')) {
+//             try {
+//                 const imageBuffer = await downloadImage(imageUrl);
+//                 const imageId = workbook.addImage({
+//                     buffer: imageBuffer,
+//                     extension: 'jpeg', // или 'png', в зависимости от формата
+//                 });
+//
+//                 // Вставляем изображение в ячейку с сохранением пропорций
+//                 const imageWidth = 30; // Ширина изображения в пикселях
+//                 const imageHeight = 30; // Высота изображения в пикселях
+//
+//                 sheet.addImage(imageId, {
+//                     tl: { col: 3, row: newRow.number - 1, offset: 5, height: imageHeight }, // Позиция изображения (колонка 4, строка текущей записи)
+//                     ext: { width: imageWidth, height: imageHeight }, // Размер изображения
+//                 });
+//
+//                 // Устанавливаем высоту строки для изображения
+//                 // sheet.getRow(newRow.number).height = 40; // Подгоняем высоту строки под изображение
+//                 sheet.getRow(newRow.number).height = imageHeight / 1.5; // Подгоняем высоту строки под изображение
+//             } catch (error) {
+//                 console.error('Ошибка загрузки изображения:', error);
+//             }
+//         }
+//     }
+//
+//     // Сохраняем обновленный файл
+//     await workbook.xlsx.writeFile(filePath);
+// };
 
-    // Если файл не существует, создаем его
+const addDataToExcel = async (userId, sheetName, data, hasStar = false) => {
+    const filePath = path.join(__dirname, `../excelFiles/${userId}.xlsx`);
     if (!fs.existsSync(filePath)) {
         await createExcelFileForUser(userId);
     }
-
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile(filePath);
-
     const sheet = workbook.getWorksheet(sheetName);
     if (!sheet) {
         throw new Error(`Страница "${sheetName}" не найдена.`);
     }
 
-    // Удаляем старые записи (старше 7 дней)
+    // Удаляем старые записи
     const now = new Date();
     const sevenDaysAgo = new Date(now.setDate(now.getDate() - 7));
-
     const rowsToDelete = [];
     sheet.eachRow((row, rowNumber) => {
-        const dateCell = row.getCell(9); // Дата находится в 9-й колонке
+        const dateCell = row.getCell(9);
         if (dateCell.value && dateCell.value instanceof Date && dateCell.value < sevenDaysAgo) {
             rowsToDelete.push(rowNumber);
         }
     });
-
-    // Удаляем строки в обратном порядке, чтобы не нарушить нумерацию
     rowsToDelete.reverse().forEach((rowNumber) => {
         sheet.spliceRows(rowNumber, 1);
     });
 
-    // Добавляем пустую строку перед новой выгрузкой (только один раз)
     sheet.addRow([]);
 
-    // Добавляем новые данные
     for (const row of data) {
         const newRow = sheet.addRow(row);
 
-        // Вставляем изображение вместо URL
-        const imageUrl = row[3]; // URL картинки находится в 4-й колонке
+        // Форматирование позиции со звёздочкой
+        if (hasStar && row[6] && row[6].includes('*')) {
+            const positionCell = newRow.getCell(7); // Позиция в 7-й колонке
+            positionCell.font = {
+                ...positionCell.font,
+                bold: true,
+                color: { argb: 'FFFF0000' } // Красный цвет только для звёздочки
+            };
+
+            // Разделяем число и звёздочку для частичного форматирования
+            const value = row[6];
+            const numValue = value.replace('*', '');
+            positionCell.value = { richText: [
+                    { text: numValue },
+                    { text: '*', font: { bold: true, color: { argb: 'FFD15E00' } } }
+                ]};
+        }
+
+        const imageUrl = row[3];
         if (imageUrl && typeof imageUrl === 'string' && imageUrl.startsWith('http')) {
             try {
                 const imageBuffer = await downloadImage(imageUrl);
                 const imageId = workbook.addImage({
                     buffer: imageBuffer,
-                    extension: 'jpeg', // или 'png', в зависимости от формата
+                    extension: 'jpeg',
                 });
-
-                // Вставляем изображение в ячейку с сохранением пропорций
-                const imageWidth = 30; // Ширина изображения в пикселях
-                const imageHeight = 30; // Высота изображения в пикселях
-
+                const imageWidth = 30;
+                const imageHeight = 30;
                 sheet.addImage(imageId, {
-                    tl: { col: 3, row: newRow.number - 1, offset: 5, height: imageHeight }, // Позиция изображения (колонка 4, строка текущей записи)
-                    ext: { width: imageWidth, height: imageHeight }, // Размер изображения
+                    tl: { col: 3, row: newRow.number - 1, offset: 5, height: imageHeight },
+                    ext: { width: imageWidth, height: imageHeight },
                 });
-
-                // Устанавливаем высоту строки для изображения
-                // sheet.getRow(newRow.number).height = 40; // Подгоняем высоту строки под изображение
-                sheet.getRow(newRow.number).height = imageHeight / 1.5; // Подгоняем высоту строки под изображение
+                sheet.getRow(newRow.number).height = imageHeight / 1.5;
             } catch (error) {
                 console.error('Ошибка загрузки изображения:', error);
             }
         }
     }
-
-    // Сохраняем обновленный файл
     await workbook.xlsx.writeFile(filePath);
 };
-
 
 // Функция для удаления старых записей
 const cleanOldData = async (userId) => {

@@ -359,6 +359,7 @@ header {
 .delete-button {
     margin-right: 20px;
     padding: 7px;
+    margin-left: 5px;
     border-radius: 5px;
     color: var(--light-text-color); /* Используем светло-серый цвет для текста */
 

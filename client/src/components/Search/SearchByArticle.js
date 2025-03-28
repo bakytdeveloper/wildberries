@@ -647,6 +647,7 @@ function SearchByArticle() {
                                                     <Button variant="secondary" onClick={() => clearInput(requestForms[0].id)} id="clearButton" disabled={isRequesting}>X</Button>
                                                 </InputGroup>
                                             </div>
+
                                         </div>
                                     </Form>
                                 )}

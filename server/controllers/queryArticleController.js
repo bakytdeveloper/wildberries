@@ -77,31 +77,131 @@ const deleteArticleQuery = async (req, res) => {
     }
 };
 
+// // Экспорт в Google Таблицы
+// const exportToGoogleSheet = async (req, res) => {
+//     const { queryId, sheetName } = req.body;
+//     const userId = req.userId;
+//
+//     try {
+//         const query = await QueryArticleModel.findOne({ _id: queryId, userId }).populate('productTables.products');
+//         if (!query) {
+//             return res.status(404).json({ error: 'Запрос не найден' });
+//         }
+//
+//         const user = await UserModel.findById(userId);
+//         if (!user || !user.spreadsheetId) {
+//             return res.status(404).json({ error: 'Пользователь или Google Таблица не найдены' });
+//         }
+//
+//         const data = query.productTables.flatMap((table) =>
+//             table.products.map((product) => {
+//                 const promoPosition = product?.page && product.page > 1
+//                     ? `${product.page}${product.position != null && product.position < 10 ? '0' + product.position : product.position}`
+//                     : String(product?.position);
+//
+//                 // const position = product?.page && product.page > 1
+//                 //     ? `${product.page}${product.position != null && product.position < 10 ? '0' + product.position : product.position}`
+//                 //     : String(product?.position);
+//
+//                 return [
+//                     String(product?.query || query.query),
+//                     String(product?.id),
+//                     String(product?.city || query.city),
+//                     String(product?.imageUrl),
+//                     String(product?.brand),
+//                     String(product?.name),
+//                     promoPosition,
+//                     // position,
+//                     new Date(product?.queryTime || query.createdAt).toLocaleTimeString(),
+//                     new Date(product?.queryTime || query.createdAt).toLocaleDateString(),
+//                 ];
+//             })
+//         );
+//
+//         await addDataToSheet(user.spreadsheetId, sheetName, data);
+//         res.json({ message: 'Данные успешно выгружены' });
+//     } catch (error) {
+//         console.error('Ошибка выгрузки данных:', error);
+//         res.status(500).json({ error: 'Ошибка выгрузки данных' });
+//     }
+// };
+//
+//
+// const exportToExcel = async (req, res) => {
+//     const { queryId, sheetName } = req.body;
+//     const userId = req.userId;
+//
+//     try {
+//
+//         // Получаем пользователя
+//         const user = await UserModel.findById(userId);
+//         if (!user) {
+//             return res.status(404).json({ error: 'Пользователь не найден' });
+//         }
+//
+//         // Если у пользователя еще нет Excel файла, создаем его
+//         if (!user.excelFileId) {
+//             await createExcelFileOnDemand(userId, user.email);
+//         }
+//
+//         const query = await QueryArticleModel.findOne({ _id: queryId, userId }).populate('productTables.products');
+//         if (!query) {
+//             return res.status(404).json({ error: 'Запрос не найден' });
+//         }
+//
+//         const data = query.productTables.flatMap((table) =>
+//             table.products.map((product) => {
+//                 const promoPosition = product?.log?.promoPosition ?? (product?.page && product.page > 1 ? `${product.page}${product.position < 10 ? '0' + product.position : product.position}` : String(product?.position));
+//                 // const position = product?.log?.position ?? (product?.page && product.page > 1 ? `${product.page}${product.position < 10 ? '0' + product.position : product.position}` : String(product?.position));
+//
+//                 return [
+//                     String(product?.query || query.query),
+//                     String(product?.id),
+//                     String(product?.city || query.city),
+//                     String(product?.imageUrl),
+//                     String(product?.brand),
+//                     String(product?.name),
+//                     promoPosition,
+//                     // position,
+//                     new Date(product?.queryTime || query.createdAt).toLocaleTimeString(),
+//                     new Date(product?.queryTime || query.createdAt).toLocaleDateString(),
+//                 ];
+//             })
+//         );
+//
+//         // Очищаем старые данные
+//         await cleanOldData(userId);
+//
+//         await addDataToExcel(userId, sheetName, data);
+//         res.json({ message: 'Данные успешно выгружены в Excel' });
+//     } catch (error) {
+//         console.error('Ошибка выгрузки данных:', error);
+//         res.status(500).json({ error: 'Ошибка выгрузки данных' });
+//     }
+// };
+
 // Экспорт в Google Таблицы
 const exportToGoogleSheet = async (req, res) => {
     const { queryId, sheetName } = req.body;
     const userId = req.userId;
-
     try {
         const query = await QueryArticleModel.findOne({ _id: queryId, userId }).populate('productTables.products');
         if (!query) {
             return res.status(404).json({ error: 'Запрос не найден' });
         }
-
         const user = await UserModel.findById(userId);
         if (!user || !user.spreadsheetId) {
             return res.status(404).json({ error: 'Пользователь или Google Таблица не найдены' });
         }
-
         const data = query.productTables.flatMap((table) =>
             table.products.map((product) => {
-                const promoPosition = product?.page && product.page > 1
+                const position = product?.page && product.page > 1
                     ? `${product.page}${product.position != null && product.position < 10 ? '0' + product.position : product.position}`
                     : String(product?.position);
 
-                // const position = product?.page && product.page > 1
-                //     ? `${product.page}${product.position != null && product.position < 10 ? '0' + product.position : product.position}`
-                //     : String(product?.position);
+                const promoPosition = product?.log?.promoPosition
+                    ? `${position}*`
+                    : position;
 
                 return [
                     String(product?.query || query.query),
@@ -111,14 +211,12 @@ const exportToGoogleSheet = async (req, res) => {
                     String(product?.brand),
                     String(product?.name),
                     promoPosition,
-                    // position,
                     new Date(product?.queryTime || query.createdAt).toLocaleTimeString(),
                     new Date(product?.queryTime || query.createdAt).toLocaleDateString(),
                 ];
             })
         );
-
-        await addDataToSheet(user.spreadsheetId, sheetName, data);
+        await addDataToSheet(user.spreadsheetId, sheetName, data, true); // Передаем флаг для звёздочки
         res.json({ message: 'Данные успешно выгружены' });
     } catch (error) {
         console.error('Ошибка выгрузки данных:', error);
@@ -126,20 +224,14 @@ const exportToGoogleSheet = async (req, res) => {
     }
 };
 
-
 const exportToExcel = async (req, res) => {
     const { queryId, sheetName } = req.body;
     const userId = req.userId;
-
     try {
-
-        // Получаем пользователя
         const user = await UserModel.findById(userId);
         if (!user) {
             return res.status(404).json({ error: 'Пользователь не найден' });
         }
-
-        // Если у пользователя еще нет Excel файла, создаем его
         if (!user.excelFileId) {
             await createExcelFileOnDemand(userId, user.email);
         }
@@ -148,11 +240,15 @@ const exportToExcel = async (req, res) => {
         if (!query) {
             return res.status(404).json({ error: 'Запрос не найден' });
         }
-
         const data = query.productTables.flatMap((table) =>
             table.products.map((product) => {
-                const promoPosition = product?.log?.promoPosition ?? (product?.page && product.page > 1 ? `${product.page}${product.position < 10 ? '0' + product.position : product.position}` : String(product?.position));
-                // const position = product?.log?.position ?? (product?.page && product.page > 1 ? `${product.page}${product.position < 10 ? '0' + product.position : product.position}` : String(product?.position));
+                const position = product?.page && product.page > 1
+                    ? `${product.page}${product.position < 10 ? '0' + product.position : product.position}`
+                    : String(product?.position);
+
+                const promoPosition = product?.log?.promoPosition
+                    ? `${position}*`
+                    : position;
 
                 return [
                     String(product?.query || query.query),
@@ -162,17 +258,13 @@ const exportToExcel = async (req, res) => {
                     String(product?.brand),
                     String(product?.name),
                     promoPosition,
-                    // position,
                     new Date(product?.queryTime || query.createdAt).toLocaleTimeString(),
                     new Date(product?.queryTime || query.createdAt).toLocaleDateString(),
                 ];
             })
         );
-
-        // Очищаем старые данные
         await cleanOldData(userId);
-
-        await addDataToExcel(userId, sheetName, data);
+        await addDataToExcel(userId, sheetName, data, true); // Передаем флаг для звёздочки
         res.json({ message: 'Данные успешно выгружены в Excel' });
     } catch (error) {
         console.error('Ошибка выгрузки данных:', error);
