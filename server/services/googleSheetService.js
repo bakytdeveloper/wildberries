@@ -73,49 +73,6 @@ async function getLastRow(sheetId, sheetName) {
     }
 }
 
-// async function addDataToSheet(sheetId, sheetName, data) {
-//     const sheets = getSheetsInstance();
-//     // console.log("ДАННЫЕ:", data);
-//     try {
-//         const lastRow = await getLastRow(sheetId, sheetName);
-//
-//         // Всегда вставляем пустую строку ПЕРЕД новыми данными
-//         await sheets.spreadsheets.values.append({
-//             spreadsheetId: sheetId,
-//             range: `${sheetName}!A${lastRow + 1}:I${lastRow + 1}`,
-//             valueInputOption: 'USER_ENTERED',
-//             requestBody: {
-//                 values: [Array(9).fill('')], // Пустая строка
-//             },
-//         });
-//
-//         // Форматируем данные перед вставкой
-//         const formattedData = data.map((row) => {
-//             const imageUrl = row[3];
-//             if (imageUrl) {
-//                 row[3] = `=IMAGE("${imageUrl}")`;
-//             }
-//             return row;
-//         });
-//
-//         // Добавляем данные после пустой строки
-//         const response = await sheets.spreadsheets.values.update({
-//             spreadsheetId: sheetId,
-//             range: `${sheetName}!A${lastRow + 1}:I${lastRow + 1 + formattedData.length}`,
-//             valueInputOption: 'USER_ENTERED',
-//             requestBody: {
-//                 values: formattedData,
-//             },
-//         });
-//
-//         console.log('Добавить данные response:', JSON.stringify(response.data, null, 2));
-//         return response.data;
-//     } catch (error) {
-//         console.error('Ошибка добавления данных в лист:', error);
-//         throw error;
-//     }
-// }
-
 async function addDataToSheet(sheetId, sheetName, data, hasStar = false) {
     const sheets = getSheetsInstance();
     try {

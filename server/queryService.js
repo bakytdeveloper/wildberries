@@ -72,21 +72,29 @@ const executeUserQueries = async (user) => {
             const { queryText, dest, city, brand } = request;
 
             const products = await fetchAndParseProducts(queryText, dest, brand, new Date().toISOString());
-            const data = products.map(product => [
-                String(product.query),
-                String(product.brand),
-                String(product.city),
-                String(product.imageUrl),
-                String(product.id),
-                String(product.name),
-                // Объединяем страницу и позицию в одну ячейку с учетом условий
-                `${product.page === 1 ? '' : product.page}${String(product.position).padStart(2, '0')}`,
-                String(product.log?.position || `${product.page === 1 ? '' : product.page}${String(product.position).padStart(2, '0')}`),
-                new Date(product.queryTime).toLocaleTimeString(),
-                new Date(product.queryTime).toLocaleDateString(),
-            ]);
+            const data = products.map(product => {
+                const position = product?.page && product.page > 1
+                    ? `${product.page}${product.position != null && product.position < 10 ? '0' + product.position : product.position}`
+                    : String(product?.position);
 
-            await addDataToSheet(user.spreadsheetId, 'Бренд', data);
+                const promoPosition = product?.log?.promoPosition
+                    ? `${position}*`
+                    : position;
+
+                return [
+                    String(product.query),
+                    String(product.brand),
+                    String(product.city),
+                    String(product.imageUrl),
+                    String(product.id),
+                    String(product.name),
+                    promoPosition,
+                    new Date(product.queryTime).toLocaleTimeString(),
+                    new Date(product.queryTime).toLocaleDateString(),
+                ];
+            });
+
+            await addDataToSheet(user.spreadsheetId, 'Бренд', data, true);
         }
 
         // Выполняем уникальные запросы по артикулу
@@ -95,21 +103,29 @@ const executeUserQueries = async (user) => {
 
             const products = await fetchAndParseProductsByArticle(queryText, dest, article, new Date().toISOString());
 
-            const data = products.map(product => [
-                String(product.query),
-                String(product.id),
-                String(product.city),
-                String(product.imageUrl),
-                String(product.brand),
-                String(product.name),
-                // Объединяем страницу и позицию в одну ячейку с учетом условий
-                `${product.page === 1 ? '' : product.page}${String(product.position).padStart(2, '0')}`,
-                String(product.log?.position || `${product.page === 1 ? '' : product.page}${String(product.position).padStart(2, '0')}`),
-                new Date(product.queryTime).toLocaleTimeString(),
-                new Date(product.queryTime).toLocaleDateString(),
-            ]);
+            const data = products.map(product => {
+                const position = product?.page && product.page > 1
+                    ? `${product.page}${product.position != null && product.position < 10 ? '0' + product.position : product.position}`
+                    : String(product?.position);
 
-            await addDataToSheet(user.spreadsheetId, 'Артикул', data);
+                const promoPosition = product?.log?.promoPosition
+                    ? `${position}*`
+                    : position;
+
+                return [
+                    String(product.query),
+                    String(product.id),
+                    String(product.city),
+                    String(product.imageUrl),
+                    String(product.brand),
+                    String(product.name),
+                    promoPosition,
+                    new Date(product.queryTime).toLocaleTimeString(),
+                    new Date(product.queryTime).toLocaleDateString(),
+                ];
+            });
+
+            await addDataToSheet(user.spreadsheetId, 'Артикул', data, true);
         }
     } catch (error) {
         console.error(`Ошибка выполнения запросов для пользователя ${user.email}:`, error);
