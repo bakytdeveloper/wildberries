@@ -887,7 +887,7 @@ function SearchByArticle() {
                                                                     <th className="th_table">Картинка</th>
                                                                     <th className="th_table">Артикул</th>
                                                                     <th className="th_table">Позиция</th>
-                                                                    <th className="th_table">Прежняя Позиция</th>
+                                                                    {/*<th className="th_table">Прежняя Позиция</th>*/}
                                                                     <th className="th_table">Бренд</th>
                                                                     <th className="th_table">Наименование</th>
                                                                     <th className="th_table">Время запроса</th>
@@ -913,7 +913,7 @@ function SearchByArticle() {
                                                                             <td className="td_table td_table_page" onClick={() => handleProductClick(queryData.query.split('; ')[tableIndex], page, position)}>
                                                                                 {product.log?.promoPosition || (page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position)}
                                                                             </td>
-                                                                            <td className="td_table">{product.log?.position || (page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position)}</td>
+                                                                            {/*<td className="td_table">{product.log?.position || (page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position)}</td>*/}
                                                                             <td className="td_table">{product.brand}</td>
                                                                             <td className="td_table">{product.name}</td>
                                                                             <td className="td_table">{time}</td>

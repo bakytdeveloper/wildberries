@@ -99,9 +99,9 @@ const exportToGoogleSheet = async (req, res) => {
                     ? `${product.page}${product.position != null && product.position < 10 ? '0' + product.position : product.position}`
                     : String(product?.position);
 
-                const position = product?.page && product.page > 1
-                    ? `${product.page}${product.position != null && product.position < 10 ? '0' + product.position : product.position}`
-                    : String(product?.position);
+                // const position = product?.page && product.page > 1
+                //     ? `${product.page}${product.position != null && product.position < 10 ? '0' + product.position : product.position}`
+                //     : String(product?.position);
 
                 return [
                     String(product?.query || query.query),
@@ -111,7 +111,7 @@ const exportToGoogleSheet = async (req, res) => {
                     String(product?.brand),
                     String(product?.name),
                     promoPosition,
-                    position,
+                    // position,
                     new Date(product?.queryTime || query.createdAt).toLocaleTimeString(),
                     new Date(product?.queryTime || query.createdAt).toLocaleDateString(),
                 ];
@@ -152,7 +152,7 @@ const exportToExcel = async (req, res) => {
         const data = query.productTables.flatMap((table) =>
             table.products.map((product) => {
                 const promoPosition = product?.log?.promoPosition ?? (product?.page && product.page > 1 ? `${product.page}${product.position < 10 ? '0' + product.position : product.position}` : String(product?.position));
-                const position = product?.log?.position ?? (product?.page && product.page > 1 ? `${product.page}${product.position < 10 ? '0' + product.position : product.position}` : String(product?.position));
+                // const position = product?.log?.position ?? (product?.page && product.page > 1 ? `${product.page}${product.position < 10 ? '0' + product.position : product.position}` : String(product?.position));
 
                 return [
                     String(product?.query || query.query),
@@ -162,7 +162,7 @@ const exportToExcel = async (req, res) => {
                     String(product?.brand),
                     String(product?.name),
                     promoPosition,
-                    position,
+                    // position,
                     new Date(product?.queryTime || query.createdAt).toLocaleTimeString(),
                     new Date(product?.queryTime || query.createdAt).toLocaleDateString(),
                 ];

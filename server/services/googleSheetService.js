@@ -82,10 +82,10 @@ async function addDataToSheet(sheetId, sheetName, data) {
         // Всегда вставляем пустую строку ПЕРЕД новыми данными
         await sheets.spreadsheets.values.append({
             spreadsheetId: sheetId,
-            range: `${sheetName}!A${lastRow + 1}:J${lastRow + 1}`,
+            range: `${sheetName}!A${lastRow + 1}:I${lastRow + 1}`,
             valueInputOption: 'USER_ENTERED',
             requestBody: {
-                values: [Array(10).fill('')], // Пустая строка
+                values: [Array(9).fill('')], // Пустая строка
             },
         });
 
@@ -101,7 +101,7 @@ async function addDataToSheet(sheetId, sheetName, data) {
         // Добавляем данные после пустой строки
         const response = await sheets.spreadsheets.values.update({
             spreadsheetId: sheetId,
-            range: `${sheetName}!A${lastRow + 1}:J${lastRow + 1 + formattedData.length}`,
+            range: `${sheetName}!A${lastRow + 1}:I${lastRow + 1 + formattedData.length}`,
             valueInputOption: 'USER_ENTERED',
             requestBody: {
                 values: formattedData,

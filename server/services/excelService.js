@@ -28,12 +28,12 @@ const createExcelFileForUser = async (userId) => {
 
     // Заголовки для страницы "Бренд"
     sheetBrand.addRow([
-        'Запрос', 'Бренд', 'Город', 'Картинка', 'Артикул', 'Описание товара', 'Позиция', 'Прежняя Позиция', 'Время запроса', 'Дата запроса'
+        'Запрос', 'Бренд', 'Город', 'Картинка', 'Артикул', 'Описание товара', 'Позиция', 'Время запроса', 'Дата запроса'
     ]);
 
     // Заголовки для страницы "Артикул"
     sheetArticle.addRow([
-        'Запрос', 'Артикул', 'Город', 'Картинка', 'Бренд', 'Описание товара', 'Позиция', 'Прежняя Позиция', 'Время запроса', 'Дата запроса'
+        'Запрос', 'Артикул', 'Город', 'Картинка', 'Бренд', 'Описание товара', 'Позиция', 'Время запроса', 'Дата запроса'
     ]);
 
     const filePath = path.join(__dirname, `../excelFiles/${userId}.xlsx`);
@@ -65,7 +65,7 @@ const addDataToExcel = async (userId, sheetName, data) => {
 
     const rowsToDelete = [];
     sheet.eachRow((row, rowNumber) => {
-        const dateCell = row.getCell(10); // Дата находится в 10-й колонке
+        const dateCell = row.getCell(9); // Дата находится в 9-й колонке
         if (dateCell.value && dateCell.value instanceof Date && dateCell.value < sevenDaysAgo) {
             rowsToDelete.push(rowNumber);
         }
@@ -134,7 +134,7 @@ const cleanOldData = async (userId) => {
     sheets.forEach((sheet) => {
         const rowsToDelete = [];
         sheet.eachRow((row, rowNumber) => {
-            const dateCell = row.getCell(10); // Дата находится в 10-й колонке
+            const dateCell = row.getCell(9); // Дата находится в 9-й колонке
             if (dateCell.value && dateCell.value instanceof Date && dateCell.value < sevenDaysAgo) {
                 rowsToDelete.push(rowNumber);
             }
