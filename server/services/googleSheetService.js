@@ -31,7 +31,7 @@ async function createSpreadsheetForUser(email) {
         const copyResponse = await drive.files.copy({
             fileId: TEMPLATE_SPREADSHEET_ID,
             requestBody: {
-                name: `${email} - Данные пользователя`,
+                name: `Данные - ${email}`,
             },
         });
 
