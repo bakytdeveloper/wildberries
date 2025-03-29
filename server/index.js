@@ -40,8 +40,8 @@ const connectWithRetry = () => {
 };
 
 // Задача для выполнения каждые 4 часов
-cron.schedule('*/5 * * * *', async () => {
-// cron.schedule('0 */4 * * *', async () => {
+// cron.schedule('*/5 * * * *', async () => {
+cron.schedule('0 */4 * * *', async () => {
     try {
         const users = await UserModel.find({});
         for (const user of users) {
