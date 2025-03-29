@@ -1,8 +1,8 @@
-const {fetchAndParseProductsByArticle} = require("./services/productService");
-const {fetchAndParseProducts} = require("./services/productService");
-const { QueryModel } = require("./models/queryModel");
-const { QueryArticleModel } = require("./models/queryArticleModel");
-const { addDataToSheet } = require("./services/googleSheetService");
+const {fetchAndParseProductsByArticle} = require("./productService");
+const {fetchAndParseProducts} = require("./productService");
+const { QueryModel } = require("../models/queryModel");
+const { QueryArticleModel } = require("../models/queryArticleModel");
+const { addDataToSheet } = require("./googleSheetService");
 
 // Функция для выполнения всех запросов пользователя
 const executeUserQueries = async (user) => {
@@ -69,7 +69,7 @@ const executeUserQueries = async (user) => {
 
         // Выполняем уникальные запросы по бренду
         for (const request of uniqueBrandRequests) {
-            const { queryText, dest, city, brand } = request;
+            const { queryText, dest, brand } = request;
 
             const products = await fetchAndParseProducts(queryText, dest, brand, new Date().toISOString());
             const data = products.map(product => {
@@ -78,7 +78,7 @@ const executeUserQueries = async (user) => {
                     : String(product?.position);
 
                 const promoPosition = product?.log?.promoPosition
-                    ? `${position}*`
+                    ? `${product?.log?.promoPosition}*`
                     : position;
 
                 return [
@@ -99,7 +99,7 @@ const executeUserQueries = async (user) => {
 
         // Выполняем уникальные запросы по артикулу
         for (const request of uniqueArticleRequests) {
-            const { queryText, dest, city, article } = request;
+            const { queryText, dest, article } = request;
 
             const products = await fetchAndParseProductsByArticle(queryText, dest, article, new Date().toISOString());
 
@@ -109,7 +109,7 @@ const executeUserQueries = async (user) => {
                     : String(product?.position);
 
                 const promoPosition = product?.log?.promoPosition
-                    ? `${position}*`
+                    ? `${product?.log?.promoPosition}*`
                     : position;
 
                 return [
