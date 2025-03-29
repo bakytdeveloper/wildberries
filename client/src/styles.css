@@ -302,6 +302,15 @@ header {
     width: 55%;
 }
 
+.star-mark {
+    margin-left: 5px;
+}
+
+.star {
+    color: red;
+    font-weight: bold;
+}
+
 .right-controls {
     width: 35%;
     display: flex;

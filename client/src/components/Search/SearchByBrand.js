@@ -632,6 +632,9 @@ function SearchByBrand() {
                                                 </InputGroup>
                                             </div>
                                         </div>
+                                        <div className="star-mark">
+                                            <span className="star">*</span> - это Реклама Аукцион
+                                        </div>
                                     </Form>
                                 )}
 

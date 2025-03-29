@@ -647,7 +647,9 @@ function SearchByArticle() {
                                                     <Button variant="secondary" onClick={() => clearInput(requestForms[0].id)} id="clearButton" disabled={isRequesting}>X</Button>
                                                 </InputGroup>
                                             </div>
-
+                                        </div>
+                                        <div className="star-mark">
+                                            <span className="star">*</span> - это Реклама Аукцион
                                         </div>
                                     </Form>
                                 )}
@@ -695,7 +697,11 @@ function SearchByArticle() {
                                                     </InputGroup>
                                                 </div>
                                             </div>
+                                            <div>
+                                                <span>*</span> - это Реклама Аукцион
+                                            </div>
                                         </Form>
+
                                     ))}
                             </div>
                             <div className="right-controls">
