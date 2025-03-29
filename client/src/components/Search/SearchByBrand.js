@@ -632,9 +632,6 @@ function SearchByBrand() {
                                                 </InputGroup>
                                             </div>
                                         </div>
-                                        <div className="star-mark">
-                                            <span className="star">*</span> - это Реклама Аукцион
-                                        </div>
                                     </Form>
                                 )}
 
@@ -694,6 +691,9 @@ function SearchByBrand() {
                                     <Form className="search" onSubmit={(e) => e.preventDefault()}>
                                         <Form.Control type="text" value={searchTerm} onChange={handleSortInputChange} placeholder="Поиск по заголовкам" />
                                     </Form>
+                                </div>
+                                <div className="star-mark">
+                                    <span className="star">*</span> - это Реклама Аукцион
                                 </div>
                             </div>
                         </div>

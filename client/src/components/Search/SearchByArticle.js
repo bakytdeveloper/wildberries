@@ -648,9 +648,6 @@ function SearchByArticle() {
                                                 </InputGroup>
                                             </div>
                                         </div>
-                                        <div className="star-mark">
-                                            <span className="star">*</span> - это Реклама Аукцион
-                                        </div>
                                     </Form>
                                 )}
 
@@ -697,11 +694,7 @@ function SearchByArticle() {
                                                     </InputGroup>
                                                 </div>
                                             </div>
-                                            <div>
-                                                <span>*</span> - это Реклама Аукцион
-                                            </div>
                                         </Form>
-
                                     ))}
                             </div>
                             <div className="right-controls">
@@ -714,6 +707,9 @@ function SearchByArticle() {
                                     <Form className="search" onSubmit={(e) => e.preventDefault()}>
                                         <Form.Control type="text" value={searchTerm} onChange={handleSortInputChange} placeholder="Поиск по заголовкам" />
                                     </Form>
+                                </div>
+                                <div className="star-mark">
+                                    <span className="star">*</span> - это Реклама Аукцион
                                 </div>
                             </div>
                         </div>
