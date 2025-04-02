@@ -316,6 +316,9 @@ header {
     width: 35%;
     display: flex;
     flex-direction: column;
+    position: sticky;
+    top: 100px; /* Отступ от верха */
+    align-self: flex-start; /* Для flex-контейнера */
     gap: 10px;
 }
 
