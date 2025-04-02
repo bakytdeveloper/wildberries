@@ -115,15 +115,6 @@ header {
     display: none !important;
 }
 
-.controls_success {
-    background: #69d003 !important;
-    border: none !important;
-}
-
-.controls_success:hover {
-    background: #4e9903 !important;
-}
-
 .page-link {
     text-align: center;
 }
@@ -198,6 +189,16 @@ header {
     position: absolute;
     top: 15px;
     right: 10px;
+    padding: 0 3px!important;
+    color: white !important;
+    background: #ee3e09!important;
+    height: 30px!important;
+    border-radius: 3px!important;
+    font-size: 12px !important;
+}
+
+.exit-button:hover {
+    background: #b82c04 !important;
 }
 
 .controls_primary_danger {
@@ -361,8 +362,37 @@ header {
     padding: 0 10px;
 }
 
+
+.controls_success {
+    background: #d98c07 !important;
+    border: none !important;
+    border-radius: 3px !important;
+    color: white !important;
+}
+
+.controls_success:hover {
+    background: #995103 !important;
+}
+
 .controls_primary {
     margin-left: 10px;
+    border-radius: 2px !important;
+    background: #0899b3 !important;
+    color: white !important;
+}
+
+.controls_primary:hover {
+    background: #036f83 !important;
+
+}
+
+.controls_primary_warning {
+    background: #25a908 !important;
+
+}
+.controls_primary_warning:hover {
+    background: #057202 !important;
+
 }
 
 .delete-button {
