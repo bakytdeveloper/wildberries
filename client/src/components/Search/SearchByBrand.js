@@ -48,6 +48,23 @@ function SearchByBrand() {
     const [exportingToExcelStates, setExportingToExcelStates] = useState({});
     const [showInitialForm, setShowInitialForm] = useState(true); // Состояние для управления видимостью начальной формы
     const [showResetButton, setShowResetButton] = useState(false);
+    const [formsDisabled, setFormsDisabled] = useState(false);
+
+    useEffect(() => {
+        if (formsDisabled) {
+            queryTypeaheadRefs.current.forEach(ref => {
+                if (ref && ref.hideMenu) {
+                    ref.hideMenu();
+                }
+            });
+            brandTypeaheadRefs.current.forEach(ref => {
+                if (ref && ref.hideMenu) {
+                    ref.hideMenu();
+                }
+            });
+        }
+    }, [formsDisabled]);
+
 
     useEffect(() => {
         document.body.setAttribute('data-theme', theme);
@@ -255,7 +272,9 @@ function SearchByBrand() {
     };
 
     const fetchProducts = async () => {
-        if (isRequesting) return;
+        if (isRequesting || formsDisabled) return;
+        setFormsDisabled(true);
+        setIsRequesting(true);
         const validForms = requestForms.filter(form => {
             const query = form.query && typeof form.query === 'string' ? form.query.trim() : '';
             const brand = form.brand && typeof form.brand === 'string' ? form.brand.trim() : '';
@@ -339,6 +358,8 @@ function SearchByBrand() {
             setErrorMessage('Ошибка выполнения запроса');
         } finally {
             setIsRequesting(false);
+            setFormsDisabled(false); // Разблокируем формы
+
         }
     };
 
@@ -550,6 +571,7 @@ function SearchByBrand() {
         });
     };
 
+
     return (
         <div className="app-page">
             <header>
@@ -605,6 +627,7 @@ function SearchByBrand() {
                                                         placeholder="Введите запрос"
                                                         defaultSelected={requestForms[0].query ? [{ label: requestForms[0].query.toString() }] : []}
                                                         allowNew
+                                                        disabled={formsDisabled || isRequesting}
                                                         newSelectionPrefix="Новый запрос: "
                                                         onKeyDown={(e) => handleKeyPress(e, requestForms[0].id)}
                                                         ref={(ref) => (queryTypeaheadRefs.current[0] = ref)} // Сохраняем ref
@@ -618,15 +641,21 @@ function SearchByBrand() {
                                                         placeholder="Введите бренд"
                                                         defaultSelected={requestForms[0].brand ? [{ label: requestForms[0].brand.toString() }] : []}
                                                         allowNew
+                                                        disabled={formsDisabled || isRequesting}
                                                         newSelectionPrefix="Новый бренд: "
                                                         onKeyDown={(e) => handleKeyPress(e, requestForms[0].id)}
                                                         ref={(ref) => (brandTypeaheadRefs.current[0] = ref)} // Сохраняем ref
                                                     />
-                                                    <DropdownButton id="dropdown-basic-button" title={requestForms[0].city} onSelect={(city) => handleCityChange(city, requestForms[0].id)}>
+                                                    <DropdownButton
+                                                        disabled={formsDisabled || isRequesting}
+                                                        id="dropdown-basic-button"
+                                                        title={requestForms[0].city}
+                                                        onSelect={(city) => handleCityChange(city, requestForms[0].id)}
+                                                    >
                                                         {Object.keys(cityDestinations).map((city) => (
                                                             <Dropdown.Item key={city} eventKey={city}>{city}</Dropdown.Item>
                                                         ))}
-                                                    </DropdownButton>
+                                                    </DropdownButton >
                                                     <Button variant="primary" onClick={fetchProducts} disabled={isRequesting}>Поиск</Button>
                                                     <Button variant="secondary" onClick={() => clearInput(requestForms[0].id)} id="clearButton" disabled={isRequesting}>X</Button>
                                                 </InputGroup>
@@ -644,6 +673,7 @@ function SearchByBrand() {
                                                     <InputGroup className="InputGroupForm">
                                                         <Typeahead
                                                             id={`query-input-${form.id}`}
+                                                            disabled={formsDisabled || isRequesting}
                                                             labelKey="label"
                                                             onChange={(selected) => handleQueryChange(selected, form.id)}
                                                             onInputChange={(text) => handleQueryInputChange({ target: { value: text } }, form.id)}
@@ -657,6 +687,7 @@ function SearchByBrand() {
                                                         />
                                                         <Typeahead
                                                             id={`brand-input-${form.id}`}
+                                                            disabled={formsDisabled || isRequesting}
                                                             labelKey="label"
                                                             onChange={(selected) => handleBrandChange(selected, form.id)}
                                                             onInputChange={(text) => handleBrandInputChange({ target: { value: text } }, form.id)}
@@ -668,7 +699,11 @@ function SearchByBrand() {
                                                             onKeyDown={(e) => handleKeyPress(e, form.id)}
                                                             ref={(ref) => (brandTypeaheadRefs.current[index + 1] = ref)} // Сохраняем ref
                                                         />
-                                                        <DropdownButton id="dropdown-basic-button" title={form.city} onSelect={(city) => handleCityChange(city, form.id)}>
+                                                        <DropdownButton
+                                                            disabled={formsDisabled || isRequesting}
+                                                            id="dropdown-basic-button"
+                                                            title={form.city}
+                                                            onSelect={(city) => handleCityChange(city, form.id)}>
                                                             {Object.keys(cityDestinations).map((city) => (
                                                                 <Dropdown.Item key={city} eventKey={city}>{city}</Dropdown.Item>
                                                             ))}

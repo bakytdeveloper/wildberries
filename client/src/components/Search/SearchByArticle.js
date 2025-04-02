@@ -47,6 +47,24 @@ function SearchByArticle() {
     const [exportingToExcelStates, setExportingToExcelStates] = useState({});
     const [showInitialForm, setShowInitialForm] = useState(true); // Состояние для управления видимостью начальной формы
     const [showResetButton, setShowResetButton] = useState(false);
+    const [formsDisabled, setFormsDisabled] = useState(false);
+
+    // Добавить эффект для скрытия меню:
+    useEffect(() => {
+        if (formsDisabled) {
+            queryTypeaheadRefs.current.forEach(ref => {
+                if (ref && ref.hideMenu) {
+                    ref.hideMenu();
+                }
+            });
+            articleTypeaheadRefs.current.forEach(ref => {
+                if (ref && ref.hideMenu) {
+                    ref.hideMenu();
+                }
+            });
+        }
+    }, [formsDisabled]);
+
 
     useEffect(() => {
         document.body.setAttribute('data-theme', theme);
@@ -256,7 +274,9 @@ function SearchByArticle() {
 
 
     const fetchProductsByArticle = async () => {
-        if (isRequesting) return;
+        if (isRequesting || formsDisabled) return;
+        setFormsDisabled(true);
+        setIsRequesting(true);
         // console.log('Request forms before validation:', requestForms);
 
         const validForms = requestForms.filter(form => {
@@ -365,6 +385,7 @@ function SearchByArticle() {
             setErrorMessage('Ошибка выполнения запроса');
         } finally {
             setIsRequesting(false);
+            setFormsDisabled(false);
         }
     };
 
@@ -614,6 +635,7 @@ function SearchByArticle() {
                                                 <InputGroup className="InputGroupForm">
                                                     <Typeahead
                                                         id="query-input-initial"
+                                                        disabled={formsDisabled || isRequesting}
                                                         labelKey="label"
                                                         onChange={(selected) => handleQueryChange(selected, requestForms[0].id)}
                                                         onInputChange={(text) => handleQueryInputChange({ target: { value: text } }, requestForms[0].id)}
@@ -627,6 +649,7 @@ function SearchByArticle() {
                                                     />
                                                     <Typeahead
                                                         id="article-input-initial"
+                                                        disabled={formsDisabled || isRequesting}
                                                         labelKey="label"
                                                         onChange={(selected) => handleArticleChange(selected, requestForms[0].id)}
                                                         onInputChange={(text) => handleArticleInputChange({ target: { value: text } }, requestForms[0].id)}
@@ -638,7 +661,11 @@ function SearchByArticle() {
                                                         onKeyDown={(e) => handleKeyPress(e, requestForms[0].id)}
                                                         ref={(ref) => (articleTypeaheadRefs.current[0] = ref)}
                                                     />
-                                                    <DropdownButton id="dropdown-basic-button" title={requestForms[0].city} onSelect={(city) => handleCityChange(city, requestForms[0].id)}>
+                                                    <DropdownButton
+                                                        disabled={formsDisabled || isRequesting}
+                                                        id="dropdown-basic-button"
+                                                        title={requestForms[0].city}
+                                                        onSelect={(city) => handleCityChange(city, requestForms[0].id)}>
                                                         {Object.keys(cityDestinations).map((city) => (
                                                             <Dropdown.Item key={city} eventKey={city}>{city}</Dropdown.Item>
                                                         ))}
@@ -660,6 +687,7 @@ function SearchByArticle() {
                                                     <InputGroup className="InputGroupForm">
                                                         <Typeahead
                                                             id={`query-input-${form.id}`}
+                                                            disabled={formsDisabled || isRequesting}
                                                             labelKey="label"
                                                             onChange={(selected) => handleQueryChange(selected, form.id)}
                                                             onInputChange={(text) => handleQueryInputChange({ target: { value: text } }, form.id)}
@@ -673,6 +701,7 @@ function SearchByArticle() {
                                                         />
                                                         <Typeahead
                                                             id={`article-input-${form.id}`}
+                                                            disabled={formsDisabled || isRequesting}
                                                             labelKey="label"
                                                             onChange={(selected) => handleArticleChange(selected, form.id)}
                                                             onInputChange={(text) => handleArticleInputChange({ target: { value: text } }, form.id)}
@@ -684,7 +713,11 @@ function SearchByArticle() {
                                                             onKeyDown={(e) => handleKeyPress(e, form.id)}
                                                             ref={(ref) => (articleTypeaheadRefs.current[index + 1] = ref)}
                                                         />
-                                                        <DropdownButton id="dropdown-basic-button" title={form.city} onSelect={(city) => handleCityChange(city, form.id)}>
+                                                        <DropdownButton
+                                                            disabled={formsDisabled || isRequesting}
+                                                            id="dropdown-basic-button"
+                                                            title={form.city}
+                                                            onSelect={(city) => handleCityChange(city, form.id)}>
                                                             {Object.keys(cityDestinations).map((city) => (
                                                                 <Dropdown.Item key={city} eventKey={city}>{city}</Dropdown.Item>
                                                             ))}
