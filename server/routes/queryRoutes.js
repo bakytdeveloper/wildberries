@@ -10,6 +10,6 @@ router.route('/')
 
 router.delete('/:id', protect, deleteQuery);
 router.route('/export').post(protect, exportToGoogleSheet); // экспорт данных в таблицу
-router.route('/export-excel').post(protect, exportToExcel);
+router.route('/export-excel').get(protect, exportToExcel);
 
 module.exports = router;

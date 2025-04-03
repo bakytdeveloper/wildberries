@@ -467,20 +467,133 @@ function SearchByArticle() {
         }
     };
 
-    const handleExportToExcelClick = async (queryId, sheetName) => {
+    // const handleExportToExcelClick = async (queryId, sheetName) => {
+    //     if (exportingToExcelStates[queryId]) return;
+    //     setExportingToExcelStates((prev) => ({ ...prev, [queryId]: true }));
+    //
+    //     try {
+    //         const token = sessionStorage.getItem('token');
+    //         const response = await axios.post(`${API_HOST}/api/article/export-excel`, { queryId, sheetName }, {
+    //             headers: {
+    //                 'Authorization': `Bearer ${token}`,
+    //                 'Content-Type': 'application/json'
+    //             }
+    //         });
+    //         Toastify({
+    //             text: 'Данные успешно выгружены в Excel.',
+    //             duration: 3000,
+    //             gravity: 'top',
+    //             position: 'right',
+    //             style: { background: '#00cc00' }
+    //         }).showToast();
+    //     } catch (error) {
+    //         console.error('Ошибка выгрузки данных:', error);
+    //         Toastify({
+    //             text: 'Ошибка выгрузки данных.',
+    //             duration: 3000,
+    //             gravity: 'top',
+    //             position: 'right',
+    //             style: { background: '#ff0000' }
+    //         }).showToast();
+    //     } finally {
+    //         setExportingToExcelStates((prev) => ({ ...prev, [queryId]: false }));
+    //     }
+    // };
+
+    // const handleExportToExcelClick = async (queryId) => {
+    //     if (exportingToExcelStates[queryId]) return; // Блокируем повторные клики
+    //     setExportingToExcelStates((prev) => ({ ...prev, [queryId]: true })); // Устанавливаем состояние выгрузки
+
+    //     try {
+    //         const token = sessionStorage.getItem('token');
+    //         const response = await fetch(`${API_HOST}/api/article/export-excel`, {
+    //             method: 'GET',
+    //             headers: {
+    //                 'Authorization': `Bearer ${token}`
+    //             }
+    //         });
+    //
+    //         if (!response.ok) {
+    //             throw new Error('Ошибка выгрузки данных');
+    //         }
+    //
+    //         const blob = await response.blob();
+    //         const url = window.URL.createObjectURL(blob);
+    //         const a = document.createElement('a');
+    //         a.href = url;
+    //         a.download = 'export.xlsx';
+    //         document.body.appendChild(a);
+    //         a.click();
+    //         window.URL.revokeObjectURL(url);
+    //         document.body.removeChild(a);
+    //
+    //         Toastify({
+    //             text: 'Данные успешно выгружены в Excel',
+    //             duration: 3000,
+    //             gravity: 'top',
+    //             position: 'right',
+    //             style: { background: '#00cc00' }
+    //         }).showToast();
+    //     } catch (error) {
+    //         console.error('Ошибка выгрузки данных:', error);
+    //         Toastify({
+    //             text: 'Ошибка выгрузки данных',
+    //             duration: 3000,
+    //             gravity: 'top',
+    //             position: 'right',
+    //             style: { background: '#ff0000' }
+    //         }).showToast();
+    //     } finally {
+    //         setExportingToExcelStates((prev) => ({ ...prev, [queryId]: false })); // Сбрасываем состояние выгрузки
+    //     }
+    // };
+
+    const handleExportToExcelClick = async (queryId) => {
         if (exportingToExcelStates[queryId]) return;
         setExportingToExcelStates((prev) => ({ ...prev, [queryId]: true }));
 
         try {
             const token = sessionStorage.getItem('token');
-            const response = await axios.post(`${API_HOST}/api/article/export-excel`, { queryId, sheetName }, {
+            const response = await fetch(`${API_HOST}/api/article/export-excel`, {
+                method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Authorization': `Bearer ${token}`
                 }
             });
+
+            if (!response.ok) {
+                throw new Error('Ошибка выгрузки данных');
+            }
+
+            // Формируем имя файла с текущей датой и временем
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+
+            const dateStr = `export_${day}-${month}-${year}_${hours}-${minutes}-${seconds}.xlsx`;
+
+            // Получаем имя файла из заголовка или используем сформированное
+            const contentDisposition = response.headers.get('Content-Disposition');
+            let fileName = contentDisposition
+                ? (contentDisposition.match(/filename=(.+)/)?.[1] || dateStr)
+                : dateStr;
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
             Toastify({
-                text: 'Данные успешно выгружены в Excel.',
+                text: 'Данные успешно выгружены в Excel',
                 duration: 3000,
                 gravity: 'top',
                 position: 'right',
@@ -489,7 +602,7 @@ function SearchByArticle() {
         } catch (error) {
             console.error('Ошибка выгрузки данных:', error);
             Toastify({
-                text: 'Ошибка выгрузки данных.',
+                text: 'Ошибка выгрузки данных',
                 duration: 3000,
                 gravity: 'top',
                 position: 'right',

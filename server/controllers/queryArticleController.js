@@ -1,3 +1,4 @@
+const {generateExcelForUser} = require("../services/excelService");
 const {createExcelFileOnDemand} = require("../services/excelService");
 const { QueryArticleModel } = require('../models/queryArticleModel');
 const { fetchAndParseProductsByArticle } = require('../services/productService');
@@ -122,48 +123,70 @@ const exportToGoogleSheet = async (req, res) => {
     }
 };
 
+// const exportToExcel = async (req, res) => {
+//     const { queryId, sheetName } = req.body;
+//     const userId = req.userId;
+//     try {
+//         const user = await UserModel.findById(userId);
+//         if (!user) {
+//             return res.status(404).json({ error: 'Пользователь не найден' });
+//         }
+//         if (!user.excelFileId) {
+//             await createExcelFileOnDemand(userId, user.email);
+//         }
+//
+//         const query = await QueryArticleModel.findOne({ _id: queryId, userId }).populate('productTables.products');
+//         if (!query) {
+//             return res.status(404).json({ error: 'Запрос не найден' });
+//         }
+//         const data = query.productTables.flatMap((table) =>
+//             table.products.map((product) => {
+//                 const position = product?.page && product.page > 1
+//                     ? `${product.page}${product.position < 10 ? '0' + product.position : product.position}`
+//                     : String(product?.position);
+//
+//                 const promoPosition = product?.log?.promoPosition
+//                     ? `${position}*`
+//                     : position;
+//
+//                 return [
+//                     String(product?.query || query.query),
+//                     String(product?.id),
+//                     String(product?.city || query.city),
+//                     String(product?.imageUrl),
+//                     String(product?.brand),
+//                     String(product?.name),
+//                     promoPosition,
+//                     new Date(product?.queryTime || query.createdAt).toLocaleTimeString(),
+//                     new Date(product?.queryTime || query.createdAt).toLocaleDateString(),
+//                 ];
+//             })
+//         );
+//         await cleanOldData(userId);
+//         await addDataToExcel(userId, sheetName, data, true); // Передаем флаг для звёздочки
+//         res.json({ message: 'Данные успешно выгружены в Excel' });
+//     } catch (error) {
+//         console.error('Ошибка выгрузки данных:', error);
+//         res.status(500).json({ error: 'Ошибка выгрузки данных' });
+//     }
+// };
+
 const exportToExcel = async (req, res) => {
-    const { queryId, sheetName } = req.body;
-    const userId = req.userId;
     try {
-        const user = await UserModel.findById(userId);
-        if (!user) {
-            return res.status(404).json({ error: 'Пользователь не найден' });
-        }
-        if (!user.excelFileId) {
-            await createExcelFileOnDemand(userId, user.email);
-        }
+        const userId = req.userId;
+        const excelBuffer = await generateExcelForUser(userId);
 
-        const query = await QueryArticleModel.findOne({ _id: queryId, userId }).populate('productTables.products');
-        if (!query) {
-            return res.status(404).json({ error: 'Запрос не найден' });
-        }
-        const data = query.productTables.flatMap((table) =>
-            table.products.map((product) => {
-                const position = product?.page && product.page > 1
-                    ? `${product.page}${product.position < 10 ? '0' + product.position : product.position}`
-                    : String(product?.position);
+        // Создаем имя файла с текущей датой и временем
+        const now = new Date();
+        const dateStr = now.toISOString()
+            .replace(/T/, '_')
+            .replace(/\..+/, '')
+            .replace(/:/g, '-');
+        const fileName = `export_${dateStr}.xlsx`;
 
-                const promoPosition = product?.log?.promoPosition
-                    ? `${position}*`
-                    : position;
-
-                return [
-                    String(product?.query || query.query),
-                    String(product?.id),
-                    String(product?.city || query.city),
-                    String(product?.imageUrl),
-                    String(product?.brand),
-                    String(product?.name),
-                    promoPosition,
-                    new Date(product?.queryTime || query.createdAt).toLocaleTimeString(),
-                    new Date(product?.queryTime || query.createdAt).toLocaleDateString(),
-                ];
-            })
-        );
-        await cleanOldData(userId);
-        await addDataToExcel(userId, sheetName, data, true); // Передаем флаг для звёздочки
-        res.json({ message: 'Данные успешно выгружены в Excel' });
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+        res.send(excelBuffer);
     } catch (error) {
         console.error('Ошибка выгрузки данных:', error);
         res.status(500).json({ error: 'Ошибка выгрузки данных' });
