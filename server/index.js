@@ -24,10 +24,6 @@ const port = process.env.PORT || 5505;
 app.use(cors());
 app.use(express.json());
 
-// Добавляем middleware для обслуживания статических файлов из папки excelFiles
-app.use('/excelFiles', express.static(path.join(__dirname, 'excelFiles')));
-
-
 const connectWithRetry = () => {
     mongoose.connect(urlMongo, { serverSelectionTimeoutMS: 5000 })
         .then(() => {

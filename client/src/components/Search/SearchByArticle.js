@@ -1062,7 +1062,7 @@ function SearchByArticle() {
                                                                             <td className="td_table td_table_page" onClick={() => handleProductClick(queryData.query.split('; ')[tableIndex], page, position)}>
                                                                                 {product.log?.promoPosition ? (
                                                                                     <span>
-                                                                                        {product.log.promoPosition}
+                                                                                        {product.log.promoPosition > 100 ? product.log.promoPosition + 100 : product.log.promoPosition}
                                                                                         <sup style={{ color: 'red', fontWeight: 'bold', marginLeft:'3px' }}>*</sup>
                                                                                     </span>
                                                                                 ) : (

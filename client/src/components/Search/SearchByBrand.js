@@ -1013,12 +1013,13 @@ function SearchByBrand() {
                                                                             <td className="td_table td_table_page" onClick={() => handleProductClick(queryData.query.split('; ')[tableIndex], page, position)}>
                                                                                 {product.log?.promoPosition ? (
                                                                                     <span>
-                                                                                        {product.log.promoPosition}
-                                                                                        <sup style={{ color: 'red', fontWeight: 'bold', marginLeft:'3px' }}>*</sup>
-                                                                                    </span>
+                                                                                        {product.log.promoPosition > 100 ? product.log.promoPosition + 100 : product.log.promoPosition}
+                                                                                        <sup style={{ color: 'red', fontWeight: 'bold', marginLeft: '3px' }}>*</sup>
+                                                                                   </span>
                                                                                 ) : (
                                                                                     (page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position)
-                                                                                )}                                                                            </td>
+                                                                                )}
+                                                                            </td>
                                                                             {/*<td className="td_table">{product.log?.position || (page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position)}</td>*/}
                                                                             <td className="td_table">{product.name}</td>
                                                                             <td className="td_table">{time}</td>

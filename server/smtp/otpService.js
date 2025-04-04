@@ -28,22 +28,27 @@ const verifyOTP = (email, otp) => {
     return otpStorage[email] === otp;
 };
 
-// Новая функция для отправки ссылки на Excel-файл
-const sendExcelLink = async (email, fileLink) => {
-    try {
-        await transporter.sendMail({
-            from: 'bakytdeveloper@gmail.com',
-            to: email,
-            subject: 'Ваша Excel-таблица готова',
-            text: `Здравствуйте! Ваша Excel-таблица готова.`,
-            html: `<p><b>Здравствуйте!</b> Ваша Excel-таблица готова. Это <a href="${fileLink}"><b>Ваша Excel-таблица</b></a>.</p>`
-        });
-        console.log('Письмо с ссылкой на Excel-таблицу отправлено.');
-    } catch (error) {
-        console.error('Ошибка при отправке письма:', error);
-        throw error;
-    }
+// // Новая функция для отправки ссылки на Excel-файл
+// const sendExcelLink = async (email, fileLink) => {
+//     try {
+//         await transporter.sendMail({
+//             from: 'bakytdeveloper@gmail.com',
+//             to: email,
+//             subject: 'Ваша Excel-таблица готова',
+//             text: `Здравствуйте! Ваша Excel-таблица готова.`,
+//             html: `<p><b>Здравствуйте!</b> Ваша Excel-таблица готова. Это <a href="${fileLink}"><b>Ваша Excel-таблица</b></a>.</p>`
+//         });
+//         console.log('Письмо с ссылкой на Excel-таблицу отправлено.');
+//     } catch (error) {
+//         console.error('Ошибка при отправке письма:', error);
+//         throw error;
+//     }
+// };
+
+
+module.exports = {
+    sendOTP,
+    verifyOTP,
+    transporter,
+    // sendExcelLink
 };
-
-
-module.exports = { sendOTP, verifyOTP, transporter, sendExcelLink };
