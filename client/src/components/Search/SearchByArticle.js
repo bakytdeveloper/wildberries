@@ -245,7 +245,18 @@ function SearchByArticle() {
         }
     };
 
+
     const addRequestForm = () => {
+        if (requestForms.length >= 15) {
+            Toastify({
+                text: "Максимальное количество запросов - 15",
+                duration: 3000,
+                gravity: "top",
+                position: "right",
+                style: { background: '#ff0000' }
+            }).showToast();
+            return;
+        }
         setRequestForms([...requestForms, { id: Date.now(), query: '', article: '', city: 'г.Москва', isMain: false }]);
     };
 
@@ -466,87 +477,6 @@ function SearchByArticle() {
             setExportingStates((prev) => ({ ...prev, [queryId]: false }));
         }
     };
-
-    // const handleExportToExcelClick = async (queryId, sheetName) => {
-    //     if (exportingToExcelStates[queryId]) return;
-    //     setExportingToExcelStates((prev) => ({ ...prev, [queryId]: true }));
-    //
-    //     try {
-    //         const token = sessionStorage.getItem('token');
-    //         const response = await axios.post(`${API_HOST}/api/article/export-excel`, { queryId, sheetName }, {
-    //             headers: {
-    //                 'Authorization': `Bearer ${token}`,
-    //                 'Content-Type': 'application/json'
-    //             }
-    //         });
-    //         Toastify({
-    //             text: 'Данные успешно выгружены в Excel.',
-    //             duration: 3000,
-    //             gravity: 'top',
-    //             position: 'right',
-    //             style: { background: '#00cc00' }
-    //         }).showToast();
-    //     } catch (error) {
-    //         console.error('Ошибка выгрузки данных:', error);
-    //         Toastify({
-    //             text: 'Ошибка выгрузки данных.',
-    //             duration: 3000,
-    //             gravity: 'top',
-    //             position: 'right',
-    //             style: { background: '#ff0000' }
-    //         }).showToast();
-    //     } finally {
-    //         setExportingToExcelStates((prev) => ({ ...prev, [queryId]: false }));
-    //     }
-    // };
-
-    // const handleExportToExcelClick = async (queryId) => {
-    //     if (exportingToExcelStates[queryId]) return; // Блокируем повторные клики
-    //     setExportingToExcelStates((prev) => ({ ...prev, [queryId]: true })); // Устанавливаем состояние выгрузки
-
-    //     try {
-    //         const token = sessionStorage.getItem('token');
-    //         const response = await fetch(`${API_HOST}/api/article/export-excel`, {
-    //             method: 'GET',
-    //             headers: {
-    //                 'Authorization': `Bearer ${token}`
-    //             }
-    //         });
-    //
-    //         if (!response.ok) {
-    //             throw new Error('Ошибка выгрузки данных');
-    //         }
-    //
-    //         const blob = await response.blob();
-    //         const url = window.URL.createObjectURL(blob);
-    //         const a = document.createElement('a');
-    //         a.href = url;
-    //         a.download = 'export.xlsx';
-    //         document.body.appendChild(a);
-    //         a.click();
-    //         window.URL.revokeObjectURL(url);
-    //         document.body.removeChild(a);
-    //
-    //         Toastify({
-    //             text: 'Данные успешно выгружены в Excel',
-    //             duration: 3000,
-    //             gravity: 'top',
-    //             position: 'right',
-    //             style: { background: '#00cc00' }
-    //         }).showToast();
-    //     } catch (error) {
-    //         console.error('Ошибка выгрузки данных:', error);
-    //         Toastify({
-    //             text: 'Ошибка выгрузки данных',
-    //             duration: 3000,
-    //             gravity: 'top',
-    //             position: 'right',
-    //             style: { background: '#ff0000' }
-    //         }).showToast();
-    //     } finally {
-    //         setExportingToExcelStates((prev) => ({ ...prev, [queryId]: false })); // Сбрасываем состояние выгрузки
-    //     }
-    // };
 
     const handleExportToExcelClick = async (queryId) => {
         if (exportingToExcelStates[queryId]) return;
@@ -845,7 +775,13 @@ function SearchByArticle() {
                             </div>
                             <div className="right-controls">
                                 <div className="controls">
-                                    <Button className="controls_success" onClick={addRequestForm}>Добавить запрос</Button>
+                                    <Button
+                                        className="controls_success"
+                                        onClick={addRequestForm}
+                                        disabled={requestForms.length >= 15}
+                                    >
+                                        Добавить запрос
+                                    </Button>
                                     <Button className="controls_primary" onClick={fetchProductsByArticle} disabled={isRequesting}>Поиск</Button>
                                     <Button className="controls_primary controls_primary_warning"  variant="warning" onClick={handleSearchAllQueries}>Все запросы</Button>
                                 </div>

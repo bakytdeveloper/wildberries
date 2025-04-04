@@ -11,6 +11,7 @@ const queryArticleRoutes = require('./routes/queryArticleRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const path = require('path');
 const cron = require("node-cron");
+const {cleanupOldData} = require("./services/googleSheetService");
 const { UserModel } = require("./models/userModel");
 const { executeUserQueries } = require("./services/queryService");
 const { autoQueryService } = require('./services/autoQueryService');
@@ -46,6 +47,23 @@ cron.schedule('0 */4 * * *', async () => {
         }
     } catch (error) {
         console.error('Ошибка выполнения задачи:', error);
+    }
+});
+
+// Задача для очистки старых данных каждые 24 часа
+cron.schedule('0 0 * * *', async () => {
+    try {
+        const users = await UserModel.find({ spreadsheetId: { $exists: true } });
+        for (const user of users) {
+            try {
+                await cleanupOldData(user.spreadsheetId, 'Бренд', 7); // Для SearchByBrand
+                await cleanupOldData(user.spreadsheetId, 'Артикул', 7); // Для SearchByArticle
+            } catch (error) {
+                console.error(`Ошибка очистки данных для пользователя ${user.email}:`, error);
+            }
+        }
+    } catch (error) {
+        console.error('Ошибка выполнения задачи очистки:', error);
     }
 });
 

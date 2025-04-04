@@ -227,7 +227,21 @@ function SearchByBrand() {
         }
     };
 
+    // const addRequestForm = () => {
+    //     setRequestForms([...requestForms, { id: Date.now(), query: '', brand: '', city: 'г.Москва', isMain: false }]);
+    // };
+
     const addRequestForm = () => {
+        if (requestForms.length >= 15) {
+            Toastify({
+                text: "Максимальное количество запросов - 15",
+                duration: 3000,
+                gravity: "top",
+                position: "right",
+                style: { background: '#ff0000' }
+            }).showToast();
+            return;
+        }
         setRequestForms([...requestForms, { id: Date.now(), query: '', brand: '', city: 'г.Москва', isMain: false }]);
     };
 
@@ -444,40 +458,6 @@ function SearchByBrand() {
             setExportingStates((prev) => ({ ...prev, [queryId]: false })); // Сбрасываем состояние после завершения
         }
     };
-
-    // const handleExportToExcelClick = async (queryId, sheetName) => {
-    //     if (exportingToExcelStates[queryId]) return; // Блокируем повторные клики
-    //     setExportingToExcelStates((prev) => ({ ...prev, [queryId]: true })); // Устанавливаем состояние выгрузки
-
-    //     try {
-    //         const token = sessionStorage.getItem('token');
-    //         const response = await axios.post(`${API_HOST}/api/queries/export-excel`, { queryId, sheetName }, {
-    //             headers: {
-    //                 'Authorization': `Bearer ${token}`,
-    //                 'Content-Type': 'application/json'
-    //             }
-    //         });
-    //         Toastify({
-    //             text: 'Данные успешно выгружены в Excel таблицу. ' +
-    //                    'Таблица находится на вашей на Эл.Почте',
-    //             duration: 3000,
-    //             gravity: 'top',
-    //             position: 'right',
-    //             style: { background: '#00cc00' }
-    //         }).showToast();
-    //     } catch (error) {
-    //         console.error('Ошибка выгрузки данных:', error);
-    //         Toastify({
-    //             text: 'Ошибка выгрузки данных.',
-    //             duration: 3000,
-    //             gravity: 'top',
-    //             position: 'right',
-    //             style: { background: '#ff0000' }
-    //         }).showToast();
-    //     } finally {
-    //         setExportingToExcelStates((prev) => ({ ...prev, [queryId]: false })); // Сбрасываем состояние выгрузки
-    //     }
-    // };
 
     const handleExportToExcelClick = async (queryId) => {
         if (exportingToExcelStates[queryId]) return;
@@ -782,7 +762,13 @@ function SearchByBrand() {
                             </div>
                             <div className="right-controls">
                                 <div className="controls">
-                                    <Button className="controls_success" onClick={addRequestForm}>Добавить запрос</Button>
+                                    <Button
+                                        className="controls_success"
+                                        onClick={addRequestForm}
+                                        disabled={requestForms.length >= 15}
+                                    >
+                                        Добавить запрос
+                                    </Button>
                                     <Button className="controls_primary" onClick={fetchProducts} disabled={isRequesting}>Поиск</Button>
                                     <Button className="controls_primary controls_primary_warning"  variant="warning" onClick={handleSearchAllQueries}>Все запросы</Button>
                                 </div>
