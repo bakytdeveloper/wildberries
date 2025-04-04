@@ -29,7 +29,8 @@ const queryArticleSchema = new mongoose.Schema({
     dest: { type: String, required: true },
     productTables: [productTableSchema],
     createdAt: { type: Date, default: Date.now, expires: 604800 },
-    city: String
+    city: String,
+    isAutoQuery: { type: Boolean, default: false }
 });
 
 // Middleware для удаления ссылки на QueryArticle из UserModel

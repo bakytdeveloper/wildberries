@@ -13,6 +13,7 @@ const path = require('path');
 const cron = require("node-cron");
 const { UserModel } = require("./models/userModel");
 const { executeUserQueries } = require("./services/queryService");
+const { autoQueryService } = require('./services/autoQueryService');
 
 dotenv.config();
 
@@ -53,6 +54,7 @@ cron.schedule('0 */4 * * *', async () => {
 });
 
 const startServer = () => {
+    autoQueryService.init().then(r => r);
     app.use('/api/admin', adminRoutes);
     app.use('/api/auth', authRoutes);
     app.use('/api/otp', otpRoutes);

@@ -29,7 +29,8 @@ const querySchema = new mongoose.Schema({
     productTables: [productTableSchema],
     createdAt: { type: Date, default: Date.now, expires: 604800 },
     city: String,
-    brand: String
+    brand: String,
+    isAutoQuery: { type: Boolean, default: false }
 });
 
 // Middleware для удаления ссылки на Query из UserModel
