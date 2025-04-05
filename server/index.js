@@ -46,33 +46,19 @@ const connectWithRetry = () => {
         });
 };
 
+// Основная задача выполнения запросов (каждые 4 часа в :10 минут)
 // Основная задача выполнения запросов (каждые 4 часа в :00)
 cron.schedule('0 */4 * * *', async () => {
-    if (taskState.isMainQueryRunning) {
-        console.log('Предыдущая задача выполнения запросов еще выполняется, пропускаем...');
-        return;
-    }
-
     try {
-        taskState.isMainQueryRunning = true;
-        console.log('Запуск основной задачи выполнения запросов...');
-
         const users = await UserModel.find({});
-        await Promise.all(users.map(async user => {
-            try {
-                await executeUserQueries(user);
-            } catch (error) {
-                console.error(`Ошибка выполнения запросов для пользователя ${user.email}:`, error);
-            }
-        }));
-
-        console.log('Основная задача выполнения запросов завершена');
+        for (const user of users) {
+            await executeUserQueries(user);
+        }
     } catch (error) {
-        console.error('Ошибка в основной задаче выполнения запросов:', error);
-    } finally {
-        taskState.isMainQueryRunning = false;
+        console.error('Ошибка выполнения задачи:', error);
     }
 });
+
 
 // Задача очистки Google Sheets (каждый день в 00:30)
 cron.schedule('30 0 * * *', async () => {
@@ -85,15 +71,22 @@ cron.schedule('30 0 * * *', async () => {
         taskState.isCleanupRunning = true;
         console.log('Запуск задачи очистки Google Sheets...');
 
-        const users = await UserModel.find({ spreadsheetId: { $exists: true } });
-        await Promise.all(users.map(async user => {
-            try {
-                await cleanupOldData(user.spreadsheetId, 'Бренд', 7);
-                await cleanupOldData(user.spreadsheetId, 'Артикул', 7);
-            } catch (error) {
-                console.error(`Ошибка очистки данных для пользователя ${user.email}:`, error);
+        // Получаем пользователей с существующими spreadsheetId
+        const users = await UserModel.find({ spreadsheetId: { $exists: true } }).lean();
+
+        // Проверяем, что users — массив
+        if (Array.isArray(users)) {
+            for (const user of users) {
+                try {
+                    await cleanupOldData(user.spreadsheetId, 'Бренд', 7);
+                    await cleanupOldData(user.spreadsheetId, 'Артикул', 7);
+                } catch (error) {
+                    console.error(`Ошибка очистки данных для пользователя ${user.email}:`, error);
+                }
             }
-        }));
+        } else {
+            console.error('Ошибка: ожидается массив пользователей');
+        }
 
         console.log('Задача очистки Google Sheets завершена');
     } catch (error) {
