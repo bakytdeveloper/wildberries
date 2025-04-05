@@ -11,6 +11,8 @@ const queryArticleRoutes = require('./routes/queryArticleRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const path = require('path');
 const cron = require("node-cron");
+const {QueryArticleModel} = require("./models/queryArticleModel");
+const {QueryModel} = require("./models/queryModel");
 const {cleanupOldData} = require("./services/googleSheetService");
 const { UserModel } = require("./models/userModel");
 const { executeUserQueries } = require("./services/queryService");
@@ -66,6 +68,29 @@ cron.schedule('0 0 * * *', async () => {
         console.error('Ошибка выполнения задачи очистки:', error);
     }
 });
+
+cron.schedule('0 3 * * *', async () => {
+    try {
+        const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+        // Удаляем Query
+        const oldQueries = await QueryModel.find({ createdAt: { $lt: weekAgo } }).exec();
+        if (oldQueries && Array.isArray(oldQueries)) {
+            await Promise.all(oldQueries.map(q => q.deleteOne()));
+        }
+
+        // Удаляем QueryArticle
+        const oldArticleQueries = await QueryArticleModel.find({ createdAt: { $lt: weekAgo } }).exec();
+        if (oldArticleQueries && Array.isArray(oldArticleQueries)) {
+            await Promise.all(oldArticleQueries.map(q => q.deleteOne()));
+        }
+
+        console.log(`Удалено ${(oldQueries?.length || 0) + (oldArticleQueries?.length || 0)} устаревших запросов`);
+    } catch (error) {
+        console.error('Ошибка при очистке устаревших данных:', error);
+    }
+});
+
 
 const startServer = () => {
     autoQueryService.init().then(r => r);

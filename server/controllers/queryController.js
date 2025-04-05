@@ -123,53 +123,6 @@ const exportToGoogleSheet = async (req, res) => {
     }
 };
 
-// const exportToExcel = async (req, res) => {
-//     const { queryId, sheetName } = req.body;
-//     const userId = req.userId;
-//     try {
-//         const user = await UserModel.findById(userId);
-//         if (!user) {
-//             return res.status(404).json({ error: 'Пользователь не найден' });
-//         }
-//         if (!user.excelFileId) {
-//             await createExcelFileOnDemand(userId, user.email);
-//         }
-//         const query = await QueryModel.findOne({ _id: queryId, userId }).populate('productTables.products');
-//         if (!query) {
-//             return res.status(404).json({ error: 'Запрос не найден' });
-//         }
-//         const data = query.productTables.flatMap((table) =>
-//             table.products.map((product) => {
-//                 const position = product?.page && product.page > 1
-//                     ? `${product.page}${product.position < 10 ? '0' + product.position : product.position}`
-//                     : String(product?.position);
-//
-//                 const promoPosition = product?.log?.promoPosition
-//                     ? `${position}*`
-//                     : position;
-//
-//                 return [
-//                     String(product?.query || query.query),
-//                     String(product?.brand || query.brand),
-//                     String(product?.city || query.city),
-//                     String(product?.imageUrl),
-//                     String(product?.id),
-//                     String(product?.name),
-//                     promoPosition,
-//                     new Date(product?.queryTime || query.createdAt).toLocaleTimeString(),
-//                     new Date(product?.queryTime || query.createdAt).toLocaleDateString(),
-//                 ];
-//             })
-//         );
-//         await cleanOldData(userId);
-//         await addDataToExcel(userId, sheetName, data, true);
-//         res.json({ message: 'Данные успешно выгружены в Excel' });
-//     } catch (error) {
-//         console.error('Ошибка выгрузки данных:', error);
-//         res.status(500).json({ error: 'Ошибка выгрузки данных' });
-//     }
-// };
-
 const exportToExcel = async (req, res) => {
     try {
         const userId = req.userId;
