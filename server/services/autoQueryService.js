@@ -37,8 +37,8 @@ class AutoQueryService {
             ]);
 
             if (brandCombinations.length > 0 || articleCombinations.length > 0) {
-                const job = cron.schedule('0 */4 * * *', async () => {
-                // const job = cron.schedule('*/5 * * * *', async () => {
+                // Изменил на 10 минут после часа
+                const job = cron.schedule('10 */4 * * *', async () => {
                     try {
                         console.log(`Running auto queries for user ${userId}`);
                         await this.executeAutoQueries(userId, brandCombinations, articleCombinations);
@@ -54,6 +54,7 @@ class AutoQueryService {
             console.error(`Error scheduling auto queries for user ${userId}:`, error);
         }
     }
+
 
     async getUniqueBrandCombinations(userId) {
         const queries = await QueryModel.find({ userId });
