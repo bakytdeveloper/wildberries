@@ -3,13 +3,18 @@ const axios = require('axios');
 const {QueryArticleModel} = require("../models/queryArticleModel");
 const {QueryModel} = require("../models/queryModel");
 
-// Функция для загрузки изображения по URL
+// Функция для загрузки изображения по URL с улучшенной обработкой ошибок
 const downloadImage = async (url) => {
     try {
-        const response = await axios.get(url, { responseType: 'arraybuffer' });
+        const response = await axios.get(url, {
+            responseType: 'arraybuffer',
+            validateStatus: function (status) {
+                return status >= 200 && status < 300; // Принимать только успешные статусы
+            }
+        });
         return Buffer.from(response.data, 'binary');
     } catch (error) {
-        console.error('Ошибка загрузки изображения:', error);
+        console.error('Ошибка загрузки изображения:', error.message);
         return null;
     }
 };
@@ -51,7 +56,7 @@ const generateExcelForUser = async (userId) => {
                         String(product?.query || query.query),
                         String(product?.brand || query.brand),
                         String(product?.city || query.city),
-                        String(product?.imageUrl),
+                        product?.imageUrl || '', // Пустая строка, если нет URL изображения
                         String(product?.id),
                         String(product?.name),
                         promoPosition,
@@ -63,7 +68,7 @@ const generateExcelForUser = async (userId) => {
 
                     // Форматирование позиции со звёздочкой
                     if (hasPromo) {
-                        const positionCell = row.getCell(7); // Позиция в 7-й колонке
+                        const positionCell = row.getCell(7);
                         const numValue = product?.log?.promoPosition;
 
                         positionCell.value = {
@@ -79,19 +84,24 @@ const generateExcelForUser = async (userId) => {
                         };
                     }
 
-                    // Добавляем изображение
-                    if (product.imageUrl) {
-                        const imageBuffer = await downloadImage(product.imageUrl);
-                        if (imageBuffer) {
-                            const imageId = workbook.addImage({
-                                buffer: imageBuffer,
-                                extension: 'jpeg',
-                            });
-                            sheetBrand.addImage(imageId, {
-                                tl: { col: 3, row: row.number - 1, offset: 5 },
-                                ext: { width: 30, height: 30 },
-                            });
-                            sheetBrand.getRow(row.number).height = 30;
+                    // Добавляем изображение, если URL существует и изображение успешно загружено
+                    if (product?.imageUrl) {
+                        try {
+                            const imageBuffer = await downloadImage(product.imageUrl);
+                            if (imageBuffer) {
+                                const imageId = workbook.addImage({
+                                    buffer: imageBuffer,
+                                    extension: product.imageUrl.endsWith('.png') ? 'png' : 'jpeg',
+                                });
+                                sheetBrand.addImage(imageId, {
+                                    tl: { col: 3, row: row.number - 1, offset: 5 },
+                                    ext: { width: 30, height: 30 },
+                                });
+                                sheetBrand.getRow(row.number).height = 30;
+                            }
+                        } catch (error) {
+                            console.error(`Не удалось добавить изображение для продукта ${product.id}:`, error.message);
+                            // Оставляем ячейку пустой
                         }
                     }
                 }
@@ -115,7 +125,7 @@ const generateExcelForUser = async (userId) => {
                         String(product?.query || query.query),
                         String(product?.id),
                         String(product?.city || query.city),
-                        String(product?.imageUrl),
+                        product?.imageUrl || '', // Пустая строка, если нет URL изображения
                         String(product?.brand),
                         String(product?.name),
                         promoPosition,
@@ -127,7 +137,7 @@ const generateExcelForUser = async (userId) => {
 
                     // Форматирование позиции со звёздочкой
                     if (hasPromo) {
-                        const positionCell = row.getCell(7); // Позиция в 7-й колонке
+                        const positionCell = row.getCell(7);
                         const numValue = product?.log?.promoPosition;
 
                         positionCell.value = {
@@ -143,19 +153,24 @@ const generateExcelForUser = async (userId) => {
                         };
                     }
 
-                    // Добавляем изображение
-                    if (product.imageUrl) {
-                        const imageBuffer = await downloadImage(product.imageUrl);
-                        if (imageBuffer) {
-                            const imageId = workbook.addImage({
-                                buffer: imageBuffer,
-                                extension: 'jpeg',
-                            });
-                            sheetArticle.addImage(imageId, {
-                                tl: { col: 3, row: row.number - 1, offset: 5 },
-                                ext: { width: 30, height: 30 },
-                            });
-                            sheetArticle.getRow(row.number).height = 30;
+                    // Добавляем изображение, если URL существует и изображение успешно загружено
+                    if (product?.imageUrl) {
+                        try {
+                            const imageBuffer = await downloadImage(product.imageUrl);
+                            if (imageBuffer) {
+                                const imageId = workbook.addImage({
+                                    buffer: imageBuffer,
+                                    extension: product.imageUrl.endsWith('.png') ? 'png' : 'jpeg',
+                                });
+                                sheetArticle.addImage(imageId, {
+                                    tl: { col: 3, row: row.number - 1, offset: 5 },
+                                    ext: { width: 30, height: 30 },
+                                });
+                                sheetArticle.getRow(row.number).height = 30;
+                            }
+                        } catch (error) {
+                            console.error(`Не удалось добавить изображение для продукта ${product.id}:`, error.message);
+                            // Оставляем ячейку пустой
                         }
                     }
                 }

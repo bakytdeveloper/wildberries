@@ -1,8 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
-const {sendExcelFileToUser} = require("../services/excelService");
-const {createExcelFileForUser} = require("../services/excelService");
 const { UserModel } = require('../models/userModel');
 const { sendOTP } = require('../smtp/otpService');
 const { createSpreadsheetForUser } = require('../services/googleSheetService');

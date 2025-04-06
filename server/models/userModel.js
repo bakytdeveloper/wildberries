@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     queries: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Query' }],
     spreadsheetId: { type: String },
-    excelFileId: { type: String }, // Новое поле для хранения пути к Excel-файлу
+    excelFileId: { type: String, required: false },
     createdAt: { type: Date, default: Date.now },
     isBlocked: { type: Boolean, default: false },
     blockedAt: { type: Date },

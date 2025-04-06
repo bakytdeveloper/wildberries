@@ -4,7 +4,6 @@ const { QueryModel } = require('../models/queryModel');
 const { fetchAndParseProducts } = require('../services/productService');
 const { UserModel } = require('../models/userModel');
 const { addDataToSheet } = require('../services/googleSheetService');
-const { addDataToExcel, cleanOldData } = require('../services/excelService');
 
 // Получение всех запросов
 const getQueries = async (req, res) => {
