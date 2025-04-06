@@ -22,7 +22,8 @@ function generateImageUrl(id) {
     const vol = `vol${t}`;
     const part = `part${Math.floor(id / 1e3)}`;
     // return `https://basket-${r}.wbbasket.ru/${vol}/${part}/${id}/images/c516x688/1.webp`;
-    return `https://basket-${r}.wbbasket.ru/${vol}/${part}/${id}/images/big/1.webp`;
+    return `https://basket-${r}.wbbasket.ru/${vol}/${part}/${id}/images/big/1.webp`
+        || `https://basket-${r}.wbbasket.ru/${vol}/${part}/${id}/images/c516x688/1.webp`;
 
 }
 
