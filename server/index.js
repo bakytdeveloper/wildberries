@@ -96,7 +96,7 @@ cron.schedule('30 0 * * *', async () => {
     }
 });
 
-// Задача удаления старых данных (каждый день в 03:00)
+// // Задача удаления старых данных (каждый день в 03:00)
 cron.schedule('0 3 * * *', async () => {
     if (taskState.isDataRemovalRunning) {
         console.log('Предыдущая задача удаления старых данных еще выполняется, пропускаем...');
@@ -109,18 +109,33 @@ cron.schedule('0 3 * * *', async () => {
 
         const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
+        // 1. Находим старые запросы
         const [oldQueries, oldArticleQueries] = await Promise.all([
             QueryModel.find({ createdAt: { $lt: weekAgo } }).lean().exec(),
             QueryArticleModel.find({ createdAt: { $lt: weekAgo } }).lean().exec()
         ]);
 
-        // Удаляем документы с вызовом middleware
+        // 2. Получаем ID всех запросов для удаления
+        const queryIdsToDelete = oldQueries.map(q => q._id);
+        const articleQueryIdsToDelete = oldArticleQueries.map(q => q._id);
+
+        // 3. Удаляем ссылки у пользователей перед удалением запросов
+        await UserModel.updateMany(
+            { queries: { $in: [...queryIdsToDelete, ...articleQueryIdsToDelete] } },
+            { $pull: { queries: { $in: [...queryIdsToDelete, ...articleQueryIdsToDelete] } } }
+        );
+
+        // 4. Удаляем сами запросы
         await Promise.all([
-            ...oldQueries.map(q => QueryModel.deleteOne({ _id: q._id }).exec()),
-            ...oldArticleQueries.map(q => QueryArticleModel.deleteOne({ _id: q._id }).exec())
+            QueryModel.deleteMany({ _id: { $in: queryIdsToDelete } }),
+            QueryArticleModel.deleteMany({ _id: { $in: articleQueryIdsToDelete } })
         ]);
 
-        console.log(`Удалено ${oldQueries.length} запросов и ${oldArticleQueries.length} запросов по артикулам`);
+        console.log(`Удалено: 
+          - ${oldQueries.length} запросов
+          - ${oldArticleQueries.length} запросов по артикулам
+          - Очищены ссылки у пользователей`);
+
     } catch (error) {
         console.error('Ошибка в задаче удаления старых данных:', error);
     } finally {
