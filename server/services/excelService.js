@@ -1,20 +1,27 @@
 const ExcelJS = require('exceljs');
 const axios = require('axios');
-const {QueryArticleModel} = require("../models/queryArticleModel");
-const {QueryModel} = require("../models/queryModel");
+const { QueryArticleModel } = require("../models/queryArticleModel");
+const { QueryModel } = require("../models/queryModel");
 
-// Функция для загрузки изображения по URL с улучшенной обработкой ошибок
-const downloadImage = async (url) => {
+// Улучшенная функция загрузки изображений с повторными попытками
+const downloadImage = async (url, retries = 3) => {
+    if (!url) return null;
+
     try {
         const response = await axios.get(url, {
             responseType: 'arraybuffer',
-            validateStatus: function (status) {
-                return status >= 200 && status < 300; // Принимать только успешные статусы
-            }
+            timeout: 5000, // Таймаут 5 секунд
+            validateStatus: (status) => status === 200 // Принимаем только статус 200
         });
+
         return Buffer.from(response.data, 'binary');
     } catch (error) {
-        console.error('Ошибка загрузки изображения:', error.message);
+        if (retries > 0) {
+            console.warn(`Retrying image download (${retries} left): ${url}`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            return downloadImage(url, retries - 1);
+        }
+        console.error(`Failed to download image after 3 attempts: ${url}`);
         return null;
     }
 };
@@ -25,167 +32,103 @@ const generateExcelForUser = async (userId) => {
         const sheetBrand = workbook.addWorksheet('Бренд');
         const sheetArticle = workbook.addWorksheet('Артикул');
 
-        // Заголовки для страницы "Бренд"
-        sheetBrand.addRow([
-            'Запрос', 'Бренд', 'Город', 'Картинка', 'Артикул', 'Описание товара', 'Позиция', 'Время запроса', 'Дата запроса'
+        // Заголовки таблиц
+        const headers = [
+            'Запрос', 'Бренд', 'Город', 'Картинка', 'Артикул',
+            'Описание товара', 'Позиция', 'Время запроса', 'Дата запроса'
+        ];
+        sheetBrand.addRow(headers);
+        sheetArticle.addRow([headers[0], 'Артикул', ...headers.slice(2)]);
+
+        // Получаем данные
+        const [brandQueries, articleQueries] = await Promise.all([
+            QueryModel.find({ userId }).populate('productTables.products'),
+            QueryArticleModel.find({ userId }).populate('productTables.products')
         ]);
 
-        // Заголовки для страницы "Артикул"
-        sheetArticle.addRow([
-            'Запрос', 'Артикул', 'Город', 'Картинка', 'Бренд', 'Описание товара', 'Позиция', 'Время запроса', 'Дата запроса'
-        ]);
+        // Функция для обработки изображений
+        const processImage = async (sheet, row, imageUrl) => {
+            if (!imageUrl) return;
 
-        // Получаем все запросы пользователя
-        const brandQueries = await QueryModel.find({ userId }).populate('productTables.products');
-        const articleQueries = await QueryArticleModel.find({ userId }).populate('productTables.products');
+            try {
+                const imageBuffer = await downloadImage(imageUrl);
+                if (imageBuffer) {
+                    const extension = imageUrl.endsWith('.png') ? 'png' : 'jpeg';
+                    const imageId = workbook.addImage({ buffer: imageBuffer, extension });
 
-        // Добавляем данные для брендов
+                    sheet.addImage(imageId, {
+                        tl: { col: 3, row: row.number - 1, offset: 5 },
+                        ext: { width: 30, height: 30 }
+                    });
+
+                    sheet.getRow(row.number).height = 30;
+                }
+            } catch (error) {
+                console.error(`Image processing error for ${imageUrl}:`, error.message);
+            }
+        };
+
+        // Обработка данных по брендам
         for (const query of brandQueries) {
             for (const table of query.productTables) {
                 for (const product of table.products) {
-                    const position = product?.page && product.page > 1
-                        ? `${product.page}${product.position < 10 ? '0' + product.position : product.position}`
-                        : String(product?.position);
+                    const position = product?.page > 1
+                        ? `${product.page}${String(product.position).padStart(2, '0')}`
+                        : String(product?.position || '');
 
-                    const hasPromo = !!product?.log?.promoPosition;
-                    const promoPosition = hasPromo
-                        ? `${product?.log?.promoPosition}*`
+                    const promoPosition = product?.log?.promoPosition
+                        ? `${product.log.promoPosition}*`
                         : position;
 
                     const rowData = [
-                        String(product?.query || query.query),
-                        String(product?.brand || query.brand),
-                        String(product?.city || query.city),
-                        product?.imageUrl || '', // Пустая строка, если нет URL изображения
-                        String(product?.id),
-                        String(product?.name),
+                        product?.query || query.query,
+                        product?.brand || query.brand,
+                        product?.city || query.city,
+                        product?.imageUrl || '', // URL для возможного ручного просмотра
+                        product?.id,
+                        product?.name,
                         promoPosition,
                         new Date(product?.queryTime || query.createdAt).toLocaleTimeString(),
-                        new Date(product?.queryTime || query.createdAt).toLocaleDateString(),
+                        new Date(product?.queryTime || query.createdAt).toLocaleDateString()
                     ];
 
                     const row = sheetBrand.addRow(rowData);
-
-                    // Форматирование позиции со звёздочкой
-                    if (hasPromo) {
-                        const positionCell = row.getCell(7);
-                        const numValue = product?.log?.promoPosition;
-
-                        positionCell.value = {
-                            richText: [
-                                { text: String(numValue) },
-                                { text: '*', font: { bold: true, color: { argb: 'FFD15E00' } } }
-                            ]
-                        };
-
-                        positionCell.font = {
-                            bold: true,
-                            color: { argb: 'FFFF0000' }
-                        };
-                    }
-
-                    // Добавляем изображение, если URL существует и изображение успешно загружено
-                    if (product?.imageUrl) {
-                        try {
-                            const imageBuffer = await downloadImage(product.imageUrl);
-                            if (imageBuffer) {
-                                const imageId = workbook.addImage({
-                                    buffer: imageBuffer,
-                                    extension: product.imageUrl.endsWith('.png') ? 'png' : 'jpeg',
-                                });
-                                sheetBrand.addImage(imageId, {
-                                    tl: { col: 3, row: row.number - 1, offset: 5 },
-                                    ext: { width: 30, height: 30 },
-                                });
-                                sheetBrand.getRow(row.number).height = 30;
-                            }
-                        } catch (error) {
-                            console.error(`Не удалось добавить изображение для продукта ${product.id}:`, error.message);
-                            // Оставляем ячейку пустой
-                        }
-                    }
+                    await processImage(sheetBrand, row, product?.imageUrl);
                 }
             }
         }
 
-        // Добавляем данные для артикулов
+        // Обработка данных по артикулам (аналогично)
         for (const query of articleQueries) {
             for (const table of query.productTables) {
                 for (const product of table.products) {
-                    const position = product?.page && product.page > 1
-                        ? `${product.page}${product.position < 10 ? '0' + product.position : product.position}`
-                        : String(product?.position);
-
-                    const hasPromo = !!product?.log?.promoPosition;
-                    const promoPosition = hasPromo
-                        ? `${product?.log?.promoPosition}*`
-                        : position;
+                    const position = product?.page > 1
+                        ? `${product.page}${String(product.position).padStart(2, '0')}`
+                        : String(product?.position || '');
 
                     const rowData = [
-                        String(product?.query || query.query),
-                        String(product?.id),
-                        String(product?.city || query.city),
-                        product?.imageUrl || '', // Пустая строка, если нет URL изображения
-                        String(product?.brand),
-                        String(product?.name),
-                        promoPosition,
+                        product?.query || query.query,
+                        product?.id,
+                        product?.city || query.city,
+                        product?.imageUrl || '',
+                        product?.brand,
+                        product?.name,
+                        product?.log?.promoPosition ? `${product.log.promoPosition}*` : position,
                         new Date(product?.queryTime || query.createdAt).toLocaleTimeString(),
-                        new Date(product?.queryTime || query.createdAt).toLocaleDateString(),
+                        new Date(product?.queryTime || query.createdAt).toLocaleDateString()
                     ];
 
                     const row = sheetArticle.addRow(rowData);
-
-                    // Форматирование позиции со звёздочкой
-                    if (hasPromo) {
-                        const positionCell = row.getCell(7);
-                        const numValue = product?.log?.promoPosition;
-
-                        positionCell.value = {
-                            richText: [
-                                { text: String(numValue) },
-                                { text: '*', font: { bold: true, color: { argb: 'FFD15E00' } } }
-                            ]
-                        };
-
-                        positionCell.font = {
-                            bold: true,
-                            color: { argb: 'FFFF0000' }
-                        };
-                    }
-
-                    // Добавляем изображение, если URL существует и изображение успешно загружено
-                    if (product?.imageUrl) {
-                        try {
-                            const imageBuffer = await downloadImage(product.imageUrl);
-                            if (imageBuffer) {
-                                const imageId = workbook.addImage({
-                                    buffer: imageBuffer,
-                                    extension: product.imageUrl.endsWith('.png') ? 'png' : 'jpeg',
-                                });
-                                sheetArticle.addImage(imageId, {
-                                    tl: { col: 3, row: row.number - 1, offset: 5 },
-                                    ext: { width: 30, height: 30 },
-                                });
-                                sheetArticle.getRow(row.number).height = 30;
-                            }
-                        } catch (error) {
-                            console.error(`Не удалось добавить изображение для продукта ${product.id}:`, error.message);
-                            // Оставляем ячейку пустой
-                        }
-                    }
+                    await processImage(sheetArticle, row, product?.imageUrl);
                 }
             }
         }
 
-        // Генерируем буфер Excel
-        const buffer = await workbook.xlsx.writeBuffer();
-        return buffer;
+        return workbook.xlsx.writeBuffer();
     } catch (error) {
-        console.error('Ошибка генерации Excel:', error);
+        console.error('Excel generation error:', error);
         throw error;
     }
 };
 
-module.exports = {
-    generateExcelForUser
-};
+module.exports = { generateExcelForUser };

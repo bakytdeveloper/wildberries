@@ -4,10 +4,12 @@ const { QueryArticleModel } = require('../models/queryArticleModel');
 const { UserModel } = require('../models/userModel');
 const { fetchAndParseProducts } = require('./productService');
 const { fetchAndParseProductsByArticle } = require('./productService');
+const { setTimeout } = require('timers/promises');
 
 class AutoQueryService {
     constructor() {
         this.scheduledJobs = new Map();
+        this.activeUsers = new Set();
         this.cityDestinations = {
             '-1275551': 'г.Москва',
             '-1123300': 'г.Санкт-Петербург',
@@ -16,47 +18,74 @@ class AutoQueryService {
             '-2133463': 'г.Казань',
             '286': 'г.Бишкек'
         };
+        this.BATCH_SIZE = 5; // Количество пользователей в одной порции
+        this.BATCH_DELAY = 10000; // Задержка между порциями (30 секунд)
     }
 
     async init() {
-        const users = await UserModel.find({});
-        for (const user of users) {
-            await this.scheduleAutoQueriesForUser(user._id);
+        // Запускаем основной процесс с интервалом 4 часа
+        // cron.schedule('*/5 * * * *', async () => this.processAllUsers());
+        cron.schedule('0 */4 * * *', () => this.processAllUsers());
+        console.log('AutoQueryService инициализирован с пакетной обработкой');
+    }
+
+    async processAllUsers() {
+        try {
+            const users = await UserModel.find({});
+
+            if (!Array.isArray(users)) {
+                throw new Error('Expected users to be an array');
+            }
+
+            if (users.length === 0) {
+                console.log('No users to process');
+                return;
+            }
+
+            console.log(`Обработка ${users.length} пользователей партиями ${this.BATCH_SIZE}`);
+
+            for (let i = 0; i < users.length; i += this.BATCH_SIZE) {
+                const batch = users.slice(i, i + this.BATCH_SIZE);
+                await this.processUserBatch(batch);
+
+                if (i + this.BATCH_SIZE < users.length) {
+                    await setTimeout(this.BATCH_DELAY);
+                }
+            }
+        } catch (error) {
+            console.error('Error in processAllUsers:', error);
         }
     }
 
-    async scheduleAutoQueriesForUser(userId) {
-        try {
-            this.stopAutoQueriesForUser(userId);
-            const user = await UserModel.findById(userId).populate('queries');
-            if (!user) return;
+    async processUserBatch(users) {
+        await Promise.all(users.map(user =>
+            this.scheduleAutoQueriesForUser(user._id).catch(error =>
+                console.error(`Error processing user ${user._id}:`, error)
+            )));
+    }
 
+    async scheduleAutoQueriesForUser(userId) {
+        if (this.activeUsers.has(userId.toString())) {
+            console.log(`Пользователь ${userId} уже обрабатывается`);
+            return;
+        }
+
+        this.activeUsers.add(userId.toString());
+        try {
             const [brandCombinations, articleCombinations] = await Promise.all([
                 this.getUniqueBrandCombinations(userId),
                 this.getUniqueArticleCombinations(userId)
             ]);
 
             if (brandCombinations.length > 0 || articleCombinations.length > 0) {
-                // Изменил на 10 минут после часа
-
-                    // const job = cron.schedule('0 */4 * * *', async () => {
-                    const job = cron.schedule('10 */4 * * *', async () => {
-                    try {
-                        console.log(`Running auto queries for user ${userId}`);
-                        await this.executeAutoQueries(userId, brandCombinations, articleCombinations);
-                    } catch (error) {
-                        console.error(`Error in auto queries for user ${userId}:`, error);
-                    }
-                });
-
-                this.scheduledJobs.set(userId.toString(), job);
-                console.log(`Scheduled auto queries for user ${userId}`);
+                await this.executeAutoQueries(userId, brandCombinations, articleCombinations);
             }
         } catch (error) {
-            console.error(`Error scheduling auto queries for user ${userId}:`, error);
+            console.error(`Error in auto queries for user ${userId}:`, error);
+        } finally {
+            this.activeUsers.delete(userId.toString());
         }
     }
-
 
     async getUniqueBrandCombinations(userId) {
         const queries = await QueryModel.find({ userId });

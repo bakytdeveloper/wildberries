@@ -144,11 +144,14 @@ cron.schedule('0 3 * * *', async () => {
 });
 
 const startServer = () => {
-    autoQueryService.init().then(() => {
-        console.log('AutoQueryService инициализирован');
-    }).catch(err => {
-        console.error('Ошибка инициализации AutoQueryService:', err);
-    });
+
+    setTimeout(() => {
+        autoQueryService.init().then(() => {
+            console.log('AutoQueryService инициализирован');
+        }).catch(error =>
+            console.error('Ошибка инициализации AutoQueryService:', error)
+        );
+    }, 5000);
 
     app.use('/api/admin', adminRoutes);
     app.use('/api/auth', authRoutes);
