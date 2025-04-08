@@ -47,6 +47,7 @@ const connectWithRetry = () => {
 };
 
 // Основная задача выполнения запросов (каждые 4 часа в :10)
+// cron.schedule('*/5 * * * *', async () => {
 cron.schedule('10 */4 * * *', async () => {
     try {
         const users = await UserModel.find({});

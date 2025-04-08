@@ -120,32 +120,46 @@ async function addDataToSheet(sheetId, sheetName, data, hasStar = false) {
             },
         });
 
-        // 6. Форматирование звёздочки (только если есть звёздочки в данных)
-        if (hasStar) {
-            const requests = [];
-            formattedData.forEach((row, index) => { // Используем formattedData вместо data
-                const cellValue = row[6]; // Получаем значение из столбца G (индекс 6)
+        // 6. Форматирование для столбца G (позиция)
+        const requests = [];
+        formattedData.forEach((row, index) => {
+            const cellValue = row[6]; // Получаем значение из столбца G (индекс 6)
+            const cellRange = {
+                sheetId: sheetIdValue,
+                startRowIndex: lastRow + index,
+                endRowIndex: lastRow + index + 1,
+                startColumnIndex: 6, // Столбец G
+                endColumnIndex: 7
+            };
 
-                // Проверяем, что значение существует и содержит звёздочку
+            // Для страницы "Артикул" всегда применяем форматирование
+            if (sheetName === 'Артикул') {
                 if (cellValue && typeof cellValue === 'string' && cellValue.includes('*')) {
+                    // Красный цвет для значений со звёздочкой
                     requests.push({
                         repeatCell: {
-                            range: {
-                                sheetId: sheetIdValue,
-                                startRowIndex: lastRow + index,
-                                endRowIndex: lastRow + index + 1,
-                                startColumnIndex: 6, // Столбец G
-                                endColumnIndex: 7
-                            },
+                            range: cellRange,
                             cell: {
                                 userEnteredFormat: {
                                     textFormat: {
                                         bold: true,
-                                        foregroundColor: {
-                                            red: 1,
-                                            green: 0,
-                                            blue: 0
-                                        }
+                                        foregroundColor: { red: 1, green: 0, blue: 0 }
+                                    }
+                                }
+                            },
+                            fields: "userEnteredFormat.textFormat"
+                        }
+                    });
+                } else {
+                    // Чёрный цвет для обычных значений
+                    requests.push({
+                        repeatCell: {
+                            range: cellRange,
+                            cell: {
+                                userEnteredFormat: {
+                                    textFormat: {
+                                        bold: false,
+                                        foregroundColor: { red: 0, green: 0, blue: 0 }
                                     }
                                 }
                             },
@@ -153,18 +167,55 @@ async function addDataToSheet(sheetId, sheetName, data, hasStar = false) {
                         }
                     });
                 }
-            });
-
-            if (requests.length > 0) {
-                try {
-                    await sheets.spreadsheets.batchUpdate({
-                        spreadsheetId: sheetId,
-                        requestBody: { requests }
+            }
+            // Для страницы "Бренд" применяем форматирование только если hasStar=true
+            else if (sheetName === 'Бренд' && hasStar) {
+                if (cellValue && typeof cellValue === 'string' && cellValue.includes('*')) {
+                    requests.push({
+                        repeatCell: {
+                            range: cellRange,
+                            cell: {
+                                userEnteredFormat: {
+                                    textFormat: {
+                                        bold: true,
+                                        foregroundColor: { red: 1, green: 0, blue: 0 }
+                                    }
+                                }
+                            },
+                            fields: "userEnteredFormat.textFormat"
+                        }
                     });
-                } catch (error) {
-                    console.error('Ошибка форматирования:', error);
-                    throw error;
                 }
+            }
+            else {
+                // Чёрный цвет для обычных значений
+                requests.push({
+                    repeatCell: {
+                        range: cellRange,
+                        cell: {
+                            userEnteredFormat: {
+                                textFormat: {
+                                    bold: false,
+                                    foregroundColor: { red: 0, green: 0, blue: 0 }
+                                }
+                            }
+                        },
+                        fields: "userEnteredFormat.textFormat"
+                    }
+                });
+            }
+        });
+
+        // Применяем все изменения форматирования
+        if (requests.length > 0) {
+            try {
+                await sheets.spreadsheets.batchUpdate({
+                    spreadsheetId: sheetId,
+                    requestBody: { requests }
+                });
+            } catch (error) {
+                console.error('Ошибка форматирования:', error);
+                throw error;
             }
         }
 
@@ -174,6 +225,7 @@ async function addDataToSheet(sheetId, sheetName, data, hasStar = false) {
         throw error;
     }
 }
+
 
 async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
     const sheets = getSheetsInstance();
