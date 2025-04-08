@@ -243,38 +243,79 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
                     endColumnIndex: 7
                 };
 
-                if (row[6] && typeof row[6] === 'string' && row[6].includes('*')) {
-                    // Форматирование для ячеек со звёздочкой
-                    requests.push({
-                        repeatCell: {
-                            range: cellRange,
-                            cell: {
-                                userEnteredFormat: {
-                                    textFormat: {
-                                        bold: true,
-                                        foregroundColor: { red: 1, green: 0, blue: 0 }
+                const positionValue = row[6]; // Значение в столбце G (позиция)
+
+                // Для страницы "Артикул" проверяем только наличие звёздочки
+                if (sheetName === 'Артикул') {
+                    if (positionValue && typeof positionValue === 'string' && positionValue.includes('*')) {
+                        // Форматирование для ячеек со звёздочкой (красный)
+                        requests.push({
+                            repeatCell: {
+                                range: cellRange,
+                                cell: {
+                                    userEnteredFormat: {
+                                        textFormat: {
+                                            bold: true,
+                                            foregroundColor: { red: 1, green: 0, blue: 0 }
+                                        }
                                     }
-                                }
-                            },
-                            fields: "userEnteredFormat.textFormat"
-                        }
-                    });
-                } else {
-                    // Форматирование для обычных ячеек (чёрный, не жирный)
-                    requests.push({
-                        repeatCell: {
-                            range: cellRange,
-                            cell: {
-                                userEnteredFormat: {
-                                    textFormat: {
-                                        bold: false,
-                                        foregroundColor: { red: 0, green: 0, blue: 0 }
+                                },
+                                fields: "userEnteredFormat.textFormat"
+                            }
+                        });
+                    } else {
+                        // Форматирование для обычных ячеек (чёрный, не жирный)
+                        requests.push({
+                            repeatCell: {
+                                range: cellRange,
+                                cell: {
+                                    userEnteredFormat: {
+                                        textFormat: {
+                                            bold: false,
+                                            foregroundColor: { red: 0, green: 0, blue: 0 }
+                                        }
                                     }
-                                }
-                            },
-                            fields: "userEnteredFormat.textFormat"
-                        }
-                    });
+                                },
+                                fields: "userEnteredFormat.textFormat"
+                            }
+                        });
+                    }
+                }
+                // Для страницы "Бренд" оставляем существующую логику
+                else if (sheetName === 'Бренд') {
+                    if (positionValue && typeof positionValue === 'string' && positionValue.includes('*')) {
+                        requests.push({
+                            repeatCell: {
+                                range: cellRange,
+                                cell: {
+                                    userEnteredFormat: {
+                                        textFormat: {
+                                            bold: true,
+                                            foregroundColor: { red: 1, green: 0, blue: 0 }
+                                        }
+                                    }
+                                },
+                                fields: "userEnteredFormat.textFormat"
+                            }
+                        });
+                    }
+                    else {
+                        // Форматирование для обычных ячеек (чёрный, не жирный)
+                        requests.push({
+                            repeatCell: {
+                                range: cellRange,
+                                cell: {
+                                    userEnteredFormat: {
+                                        textFormat: {
+                                            bold: false,
+                                            foregroundColor: { red: 0, green: 0, blue: 0 }
+                                        }
+                                    }
+                                },
+                                fields: "userEnteredFormat.textFormat"
+                            }
+                        });
+                    }
                 }
             });
 
@@ -293,7 +334,6 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
         throw error;
     }
 }
-
 
 module.exports = {
     createSpreadsheetForUser,

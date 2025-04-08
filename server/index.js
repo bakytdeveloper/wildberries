@@ -46,8 +46,8 @@ const connectWithRetry = () => {
         });
 };
 
-// Основная задача выполнения запросов (каждые 4 часа в :00)
-cron.schedule('0 */4 * * *', async () => {
+// Основная задача выполнения запросов (каждые 4 часа в :10)
+cron.schedule('10 */4 * * *', async () => {
     try {
         const users = await UserModel.find({});
         for (const user of users) {
@@ -60,8 +60,8 @@ cron.schedule('0 */4 * * *', async () => {
 
 
 // Задача очистки Google Sheets (каждый день в 00:30)
-// cron.schedule('*/10 * * * *', async () => {
-cron.schedule('30 0 * * *', async () => {
+// cron.schedule('*/5 * * * *', async () => {
+cron.schedule('0 1 * * *', async () => {
     if (taskState.isCleanupRunning) {
         console.log('Предыдущая задача очистки Google Sheets еще выполняется, пропускаем...');
         return;
