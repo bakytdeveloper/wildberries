@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Table, Button, Modal } from 'react-bootstrap';
+import { Table, Button, Modal, Spinner } from 'react-bootstrap';
 import Toastify from 'toastify-js';
 
 const AdminPanel = ({ API_HOST }) => {
     const [users, setUsers] = useState([]);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false); // Новое состояние для отслеживания процесса удаления
 
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
@@ -54,6 +55,7 @@ const AdminPanel = ({ API_HOST }) => {
     };
 
     const handleDeleteConfirm = async () => {
+        setIsDeleting(true); // Начинаем процесс удаления
         try {
             const token = sessionStorage.getItem('token');
             await axios.delete(`${API_HOST}/api/admin/users/${selectedUserId}`, {
@@ -77,6 +79,8 @@ const AdminPanel = ({ API_HOST }) => {
                 position: 'right',
                 style: { background: '#ff0000' }
             }).showToast();
+        } finally {
+            setIsDeleting(false); // Завершаем процесс удаления (в любом случае)
         }
     };
 
@@ -96,12 +100,9 @@ const AdminPanel = ({ API_HOST }) => {
                     Выход
                 </Button>
 
-            {/*<div className="logout-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>*/}
                 <h2 className="query-form-title">Админ панель</h2>
-
             </div>
             <table id="productsTable">
-                {/*<Table striped bordered hover>*/}
                 <thead>
                 <tr>
                     <th className="th_table">Имя</th>
@@ -143,19 +144,29 @@ const AdminPanel = ({ API_HOST }) => {
                     </tr>
                 ))}
                 </tbody>
-            {/*</Table>*/}
             </table>
-            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
+            <Modal show={showDeleteModal} onHide={() => !isDeleting && setShowDeleteModal(false)}>
                 <Modal.Header closeButton>
                     <Modal.Title>Подтверждение удаления</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>Вы уверены, что хотите удалить этого пользователя?</Modal.Body>
                 <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+                    <Button variant="secondary" onClick={() => setShowDeleteModal(false)} disabled={isDeleting}>
                         Отменить
                     </Button>
-                    <Button variant="danger" onClick={handleDeleteConfirm}>
-                        Удалить
+                    <Button variant="danger" onClick={handleDeleteConfirm} disabled={isDeleting}>
+                        {isDeleting ? (
+                            <>
+                                <Spinner
+                                    as="span"
+                                    animation="border"
+                                    size="sm"
+                                    role="status"
+                                    aria-hidden="true"
+                                />
+                                <span className="ms-2">Удаление...</span>
+                            </>
+                        ) : 'Удалить'}
                     </Button>
                 </Modal.Footer>
             </Modal>
