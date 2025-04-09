@@ -227,157 +227,259 @@ async function addDataToSheet(sheetId, sheetName, data, hasStar = false) {
 }
 
 
+// async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
+//     const sheets = getSheetsInstance();
+//     try {
+//         // 1. Получаем все данные из листа (начиная со строки 2)
+//         const response = await sheets.spreadsheets.values.get({
+//             spreadsheetId: sheetId,
+//             range: `${sheetName}!A2:I`,
+//         });
+//
+//         const now = new Date();
+//         const thresholdDate = new Date(now.setDate(now.getDate() - daysThreshold));
+//
+//         // 2. Получаем заголовки
+//         const headersResponse = await sheets.spreadsheets.values.get({
+//             spreadsheetId: sheetId,
+//             range: `${sheetName}!A1:I1`,
+//         });
+//         const headers = headersResponse.data.values?.[0] || [];
+//
+//         // 3. Фильтруем строки
+//         const values = response.data.values || [];
+//         const newValues = values.filter(row => {
+//             const rowDate = new Date(row[8]); // Дата в столбце I
+//             return rowDate >= thresholdDate;
+//         });
+//
+//         // 4. Очищаем лист (кроме заголовков)
+//         await sheets.spreadsheets.values.clear({
+//             spreadsheetId: sheetId,
+//             range: `${sheetName}!A2:I`,
+//         });
+//
+//         if (newValues.length > 0) {
+//             // 5. Восстанавливаем заголовки
+//             await sheets.spreadsheets.values.update({
+//                 spreadsheetId: sheetId,
+//                 range: `${sheetName}!A1`,
+//                 valueInputOption: 'USER_ENTERED',
+//                 requestBody: { values: [headers] },
+//             });
+//
+//             // 6. Вставляем отфильтрованные данные
+//             await sheets.spreadsheets.values.update({
+//                 spreadsheetId: sheetId,
+//                 range: `${sheetName}!A2`,
+//                 valueInputOption: 'USER_ENTERED',
+//                 requestBody: { values: newValues },
+//             });
+//
+//             // 7. Настраиваем форматирование для столбца G
+//             const spreadsheet = await sheets.spreadsheets.get({
+//                 spreadsheetId: sheetId,
+//                 fields: 'sheets(properties(sheetId,title))'
+//             });
+//
+//             const sheet = spreadsheet.data.sheets.find(s => s.properties.title === sheetName);
+//             if (!sheet) throw new Error(`Лист "${sheetName}" не найден`);
+//
+//             const requests = [];
+//             newValues.forEach((row, index) => {
+//                 const cellRange = {
+//                     sheetId: sheet.properties.sheetId,
+//                     startRowIndex: 1 + index,
+//                     endRowIndex: 2 + index,
+//                     startColumnIndex: 6, // Столбец G
+//                     endColumnIndex: 7
+//                 };
+//
+//                 const positionValue = row[6]; // Значение в столбце G (позиция)
+//
+//                 // Для страницы "Артикул" проверяем только наличие звёздочки
+//                 if (sheetName === 'Артикул') {
+//                     if (positionValue && typeof positionValue === 'string' && positionValue.includes('*')) {
+//                         // Форматирование для ячеек со звёздочкой (красный)
+//                         requests.push({
+//                             repeatCell: {
+//                                 range: cellRange,
+//                                 cell: {
+//                                     userEnteredFormat: {
+//                                         textFormat: {
+//                                             bold: true,
+//                                             foregroundColor: { red: 1, green: 0, blue: 0 }
+//                                         }
+//                                     }
+//                                 },
+//                                 fields: "userEnteredFormat.textFormat"
+//                             }
+//                         });
+//                     } else {
+//                         // Форматирование для обычных ячеек (чёрный, не жирный)
+//                         requests.push({
+//                             repeatCell: {
+//                                 range: cellRange,
+//                                 cell: {
+//                                     userEnteredFormat: {
+//                                         textFormat: {
+//                                             bold: false,
+//                                             foregroundColor: { red: 0, green: 0, blue: 0 }
+//                                         }
+//                                     }
+//                                 },
+//                                 fields: "userEnteredFormat.textFormat"
+//                             }
+//                         });
+//                     }
+//                 }
+//                 // Для страницы "Бренд" оставляем существующую логику
+//                 else if (sheetName === 'Бренд') {
+//                     if (positionValue && typeof positionValue === 'string' && positionValue.includes('*')) {
+//                         requests.push({
+//                             repeatCell: {
+//                                 range: cellRange,
+//                                 cell: {
+//                                     userEnteredFormat: {
+//                                         textFormat: {
+//                                             bold: true,
+//                                             foregroundColor: { red: 1, green: 0, blue: 0 }
+//                                         }
+//                                     }
+//                                 },
+//                                 fields: "userEnteredFormat.textFormat"
+//                             }
+//                         });
+//                     }
+//                     else {
+//                         // Форматирование для обычных ячеек (чёрный, не жирный)
+//                         requests.push({
+//                             repeatCell: {
+//                                 range: cellRange,
+//                                 cell: {
+//                                     userEnteredFormat: {
+//                                         textFormat: {
+//                                             bold: false,
+//                                             foregroundColor: { red: 0, green: 0, blue: 0 }
+//                                         }
+//                                     }
+//                                 },
+//                                 fields: "userEnteredFormat.textFormat"
+//                             }
+//                         });
+//                     }
+//                 }
+//             });
+//
+//             // Применяем все изменения форматирования
+//             if (requests.length > 0) {
+//                 await sheets.spreadsheets.batchUpdate({
+//                     spreadsheetId: sheetId,
+//                     requestBody: { requests }
+//                 });
+//             }
+//         }
+//
+//         console.log(`Удалены данные старше ${daysThreshold} дней`);
+//     } catch (error) {
+//         console.error('Ошибка очистки старых данных:', error);
+//         throw error;
+//     }
+// }
+
+
 async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
     const sheets = getSheetsInstance();
     try {
-        // 1. Получаем все данные из листа (начиная со строки 2)
-        const response = await sheets.spreadsheets.values.get({
+        // 1. Получаем все данные из листа (начиная со строки 2) включая формулы
+        const response = await sheets.spreadsheets.get({
             spreadsheetId: sheetId,
-            range: `${sheetName}!A2:I`,
+            ranges: [`${sheetName}!A2:I`],
+            includeGridData: true
         });
 
         const now = new Date();
         const thresholdDate = new Date(now.setDate(now.getDate() - daysThreshold));
 
-        // 2. Получаем заголовки
-        const headersResponse = await sheets.spreadsheets.values.get({
+        // 2. Получаем данные строк
+        const gridData = response.data.sheets?.[0]?.data?.[0]?.rowData || [];
+
+        // 3. Фильтруем строки по дате и сохраняем все данные ячеек
+        const rowsToKeep = [];
+        for (let i = 0; i < gridData.length; i++) {
+            const row = gridData[i];
+            const dateCell = row.values?.[8]; // Столбец I (индекс 8)
+            if (!dateCell) continue;
+
+            const dateValue = dateCell.effectiveValue?.numberValue
+                ? new Date((dateCell.effectiveValue.numberValue - 25569) * 86400 * 1000)
+                : new Date(dateCell.formattedValue);
+
+            if (dateValue >= thresholdDate) {
+                // Сохраняем все данные ячейки (значения, формулы, форматы)
+                const rowData = row.values.map(cell => {
+                    return {
+                        userEnteredValue: cell.userEnteredValue,
+                        userEnteredFormat: cell.userEnteredFormat
+                    };
+                });
+                rowsToKeep.push({ values: rowData });
+            }
+        }
+
+        // 4. Получаем заголовки с их форматированием
+        const headersResponse = await sheets.spreadsheets.get({
             spreadsheetId: sheetId,
-            range: `${sheetName}!A1:I1`,
+            ranges: [`${sheetName}!A1:I1`],
+            includeGridData: true
         });
-        const headers = headersResponse.data.values?.[0] || [];
+        const headerRow = headersResponse.data.sheets?.[0]?.data?.[0]?.rowData?.[0];
 
-        // 3. Фильтруем строки
-        const values = response.data.values || [];
-        const newValues = values.filter(row => {
-            const rowDate = new Date(row[8]); // Дата в столбце I
-            return rowDate >= thresholdDate;
-        });
-
-        // 4. Очищаем лист (кроме заголовков)
+        // 5. Очищаем лист (кроме заголовков)
         await sheets.spreadsheets.values.clear({
             spreadsheetId: sheetId,
             range: `${sheetName}!A2:I`,
         });
 
-        if (newValues.length > 0) {
-            // 5. Восстанавливаем заголовки
-            await sheets.spreadsheets.values.update({
-                spreadsheetId: sheetId,
-                range: `${sheetName}!A1`,
-                valueInputOption: 'USER_ENTERED',
-                requestBody: { values: [headers] },
-            });
-
-            // 6. Вставляем отфильтрованные данные
-            await sheets.spreadsheets.values.update({
-                spreadsheetId: sheetId,
-                range: `${sheetName}!A2`,
-                valueInputOption: 'USER_ENTERED',
-                requestBody: { values: newValues },
-            });
-
-            // 7. Настраиваем форматирование для столбца G
-            const spreadsheet = await sheets.spreadsheets.get({
-                spreadsheetId: sheetId,
-                fields: 'sheets(properties(sheetId,title))'
-            });
-
-            const sheet = spreadsheet.data.sheets.find(s => s.properties.title === sheetName);
-            if (!sheet) throw new Error(`Лист "${sheetName}" не найден`);
-
+        if (rowsToKeep.length > 0) {
+            // 6. Подготавливаем запрос на обновление
             const requests = [];
-            newValues.forEach((row, index) => {
-                const cellRange = {
-                    sheetId: sheet.properties.sheetId,
-                    startRowIndex: 1 + index,
-                    endRowIndex: 2 + index,
-                    startColumnIndex: 6, // Столбец G
-                    endColumnIndex: 7
-                };
 
-                const positionValue = row[6]; // Значение в столбце G (позиция)
-
-                // Для страницы "Артикул" проверяем только наличие звёздочки
-                if (sheetName === 'Артикул') {
-                    if (positionValue && typeof positionValue === 'string' && positionValue.includes('*')) {
-                        // Форматирование для ячеек со звёздочкой (красный)
-                        requests.push({
-                            repeatCell: {
-                                range: cellRange,
-                                cell: {
-                                    userEnteredFormat: {
-                                        textFormat: {
-                                            bold: true,
-                                            foregroundColor: { red: 1, green: 0, blue: 0 }
-                                        }
-                                    }
-                                },
-                                fields: "userEnteredFormat.textFormat"
-                            }
-                        });
-                    } else {
-                        // Форматирование для обычных ячеек (чёрный, не жирный)
-                        requests.push({
-                            repeatCell: {
-                                range: cellRange,
-                                cell: {
-                                    userEnteredFormat: {
-                                        textFormat: {
-                                            bold: false,
-                                            foregroundColor: { red: 0, green: 0, blue: 0 }
-                                        }
-                                    }
-                                },
-                                fields: "userEnteredFormat.textFormat"
-                            }
-                        });
-                    }
-                }
-                // Для страницы "Бренд" оставляем существующую логику
-                else if (sheetName === 'Бренд') {
-                    if (positionValue && typeof positionValue === 'string' && positionValue.includes('*')) {
-                        requests.push({
-                            repeatCell: {
-                                range: cellRange,
-                                cell: {
-                                    userEnteredFormat: {
-                                        textFormat: {
-                                            bold: true,
-                                            foregroundColor: { red: 1, green: 0, blue: 0 }
-                                        }
-                                    }
-                                },
-                                fields: "userEnteredFormat.textFormat"
-                            }
-                        });
-                    }
-                    else {
-                        // Форматирование для обычных ячеек (чёрный, не жирный)
-                        requests.push({
-                            repeatCell: {
-                                range: cellRange,
-                                cell: {
-                                    userEnteredFormat: {
-                                        textFormat: {
-                                            bold: false,
-                                            foregroundColor: { red: 0, green: 0, blue: 0 }
-                                        }
-                                    }
-                                },
-                                fields: "userEnteredFormat.textFormat"
-                            }
-                        });
-                    }
+            // Добавляем заголовки
+            requests.push({
+                updateCells: {
+                    range: {
+                        sheetId: response.data.sheets[0].properties.sheetId,
+                        startRowIndex: 0,
+                        endRowIndex: 1,
+                        startColumnIndex: 0,
+                        endColumnIndex: 9 // I column
+                    },
+                    rows: [headerRow],
+                    fields: 'userEnteredValue,userEnteredFormat'
                 }
             });
 
-            // Применяем все изменения форматирования
-            if (requests.length > 0) {
-                await sheets.spreadsheets.batchUpdate({
-                    spreadsheetId: sheetId,
-                    requestBody: { requests }
-                });
-            }
+            // Добавляем оставшиеся строки
+            requests.push({
+                updateCells: {
+                    range: {
+                        sheetId: response.data.sheets[0].properties.sheetId,
+                        startRowIndex: 1,
+                        endRowIndex: 1 + rowsToKeep.length,
+                        startColumnIndex: 0,
+                        endColumnIndex: 9 // I column
+                    },
+                    rows: rowsToKeep,
+                    fields: 'userEnteredValue,userEnteredFormat'
+                }
+            });
+
+            // 7. Выполняем запрос
+            await sheets.spreadsheets.batchUpdate({
+                spreadsheetId: sheetId,
+                requestBody: { requests }
+            });
         }
 
         console.log(`Удалены данные старше ${daysThreshold} дней`);
