@@ -7,6 +7,9 @@ const { createSpreadsheetForUser } = require('../services/googleSheetService');
 dotenv.config();
 
 const jwtSecret = process.env.JWT_SECRET || 'yourSecretKey';
+const adminEmail = process.env.ADMIN_EMAIL;
+const adminPassword = process.env.ADMIN_PASSWORD;
+
 
 const registerUser = async (req, res) => {
     const { username, password, email } = req.body;
@@ -14,6 +17,10 @@ const registerUser = async (req, res) => {
     try {
         if (!username || !email || !password) {
             return res.status(400).json({ message: 'Все поля обязательны для заполнения' });
+        }
+
+        if (email === adminEmail) {
+            return res.status(400).json({ message: 'Этот email зарезервирован' });
         }
 
         const existingUser = await UserModel.findOne({ email });
@@ -48,7 +55,7 @@ const loginUser = async (req, res) => {
 
     try {
         // Проверка на админа
-        if (email === 'admin@gmail.com' && password === 'admin') {
+        if (email === adminEmail && password === adminPassword) {
             const token = jwt.sign({ userId: 'admin', isAdmin: true }, jwtSecret, { expiresIn: '24h' });
             return res.json({ token, isAdmin: true });
         }

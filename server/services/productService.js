@@ -146,12 +146,14 @@ async function fetchAndParseProducts(query, dest, selectedBrand, queryTime) {
     }
 }
 
+
 async function fetchAndParseProductsByArticle(query, dest, article, queryTime) {
     try {
         const products = [];
         let page = 1;
         let hasMoreData = true;
         const searchQuery = query.toLowerCase();
+        let foundProduct = null;
 
         const processPage = async (pageNum, retryCount = 0) => {
             try {
@@ -162,11 +164,12 @@ async function fetchAndParseProductsByArticle(query, dest, article, queryTime) {
                     return { products: [], hasMore: false };
                 }
 
-                const filteredProducts = productsRaw
-                    .map((product, index) => ({ ...product, originalIndex: index + 1 }))
-                    .filter(product => product.id == article)
-                    .map(product => ({
-                        position: product.originalIndex,
+                // Ищем товар с точным совпадением артикула
+                const product = productsRaw.find(p => String(p.id) === String(article));
+
+                if (product) {
+                    const productWithDetails = {
+                        position: productsRaw.findIndex(p => String(p.id) === String(article)) + 1,
                         id: product.id,
                         brand: product.brand,
                         name: product.name,
@@ -177,12 +180,11 @@ async function fetchAndParseProductsByArticle(query, dest, article, queryTime) {
                         queryTime: queryTime,
                         imageUrl: generateImageUrl(product.id),
                         log: product.log
-                    }));
+                    };
+                    return { products: [productWithDetails], hasMore: false }; // Останавливаем поиск после нахождения
+                }
 
-                return {
-                    products: filteredProducts,
-                    hasMore: filteredProducts.length > 0 && pageNum < CONFIG.MAX_PAGES
-                };
+                return { products: [], hasMore: true };
             } catch (error) {
                 if (retryCount < CONFIG.MAX_RETRIES) {
                     const delay = CONFIG.RETRY_DELAY * (retryCount + 1);
@@ -195,7 +197,7 @@ async function fetchAndParseProductsByArticle(query, dest, article, queryTime) {
             }
         };
 
-        while (hasMoreData && page <= CONFIG.MAX_PAGES) {
+        while (hasMoreData && page <= CONFIG.MAX_PAGES && !foundProduct) {
             const promises = [];
             const pagesToProcess = Math.min(
                 CONFIG.MAX_CONCURRENT_PAGES,
@@ -208,7 +210,10 @@ async function fetchAndParseProductsByArticle(query, dest, article, queryTime) {
 
             const results = await Promise.all(promises);
             for (const result of results) {
-                products.push(...result.products);
+                if (result.products.length > 0) {
+                    products.push(...result.products);
+                    foundProduct = true; // Товар найден, прекращаем поиск
+                }
                 if (!result.hasMore) {
                     hasMoreData = false;
                 }
@@ -216,18 +221,13 @@ async function fetchAndParseProductsByArticle(query, dest, article, queryTime) {
 
             page += pagesToProcess;
 
-            if (hasMoreData && page <= CONFIG.MAX_PAGES) {
+            if (hasMoreData && page <= CONFIG.MAX_PAGES && !foundProduct) {
                 await setTimeout(CONFIG.BATCH_DELAY);
             }
         }
 
-        // Обновляем позицию товара с учетом всех страниц
-        const productWithArticle = products.find(p => p.id === article);
-        if (productWithArticle) {
-            productWithArticle.position = products.findIndex(p => p.id === article) + 1;
-        }
-
-        return products;
+        // Если товар не найден, возвращаю пустой массив
+        return products.length > 0 ? products : [];
     } catch (error) {
         console.error(`Error parsing products for article "${article}":`, error);
         throw error;
@@ -237,5 +237,5 @@ async function fetchAndParseProductsByArticle(query, dest, article, queryTime) {
 module.exports = {
     fetchAndParseProducts,
     fetchAndParseProductsByArticle,
-    CONFIG // Экспортируем конфиг для возможности настройки
+    CONFIG
 };

@@ -93,6 +93,15 @@ const generateExcelForUser = async (userId) => {
                     ];
 
                     const row = sheetBrand.addRow(rowData);
+                    // Форматируем ячейку с позицией, если есть звёздочка
+                    if (promoPosition.includes('*')) {
+                        const positionCell = row.getCell(7); // 7-я колонка (G) - Позиция
+                        positionCell.font = {
+                            bold: true,
+                            color: { argb: 'FFFF0000' } // Красный цвет
+                        };
+                    }
+
                     await processImage(sheetBrand, row, product?.imageUrl);
                 }
             }
@@ -105,7 +114,7 @@ const generateExcelForUser = async (userId) => {
                     const position = product?.page > 1
                         ? `${product.page}${String(product.position).padStart(2, '0')}`
                         : String(product?.position || '');
-
+                    const hasPromo = !!product?.log?.promoPosition;
                     const rowData = [
                         product?.query || query.query,
                         product?.id,
@@ -119,6 +128,20 @@ const generateExcelForUser = async (userId) => {
                     ];
 
                     const row = sheetArticle.addRow(rowData);
+                    // Форматируем ячейку с позицией, если есть звёздочка
+                    if (hasPromo) {
+                        const positionCell = row.getCell(7);
+                        const numValue = product?.log?.promoPosition;
+                        positionCell.value = {
+                            richText: [ { text: String(numValue) },
+                                { text: '*',
+                                    font: {
+                                        bold: true,
+                                        color: {
+                                            argb: 'FFD15E00' } } } ] };
+                        positionCell.font = {
+                            bold: true,
+                            color: { argb: 'FFFF0000' } }; }
                     await processImage(sheetArticle, row, product?.imageUrl);
                 }
             }
