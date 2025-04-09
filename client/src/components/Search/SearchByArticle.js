@@ -305,6 +305,8 @@ function SearchByArticle() {
                 position: "right",
                 style: { background: '#ff0000' }
             }).showToast();
+            setFormsDisabled(false);
+            setIsRequesting(false);
             return;
         }
 

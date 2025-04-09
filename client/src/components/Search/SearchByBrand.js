@@ -227,10 +227,6 @@ function SearchByBrand() {
         }
     };
 
-    // const addRequestForm = () => {
-    //     setRequestForms([...requestForms, { id: Date.now(), query: '', brand: '', city: 'г.Москва', isMain: false }]);
-    // };
-
     const addRequestForm = () => {
         if (requestForms.length >= 15) {
             Toastify({
@@ -303,6 +299,8 @@ function SearchByBrand() {
                 position: "right",
                 style: { background: '#ff0000' }
             }).showToast();
+            setFormsDisabled(false);
+            setIsRequesting(false);
             return;
         }
 
