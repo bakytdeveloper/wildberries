@@ -105,4 +105,22 @@ const forgotPassword = async (req, res) => {
     }
 };
 
-module.exports = { registerUser, loginUser, forgotPassword };
+const getUserSpreadsheet = async (req, res) => {
+    try {
+        // Для совместимости проверяем оба варианта
+        const userId = req.user?.userId || req.userId;
+
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'Пользователь не найден' });
+        }
+
+        res.json({ spreadsheetId: user.spreadsheetId });
+    } catch (error) {
+        console.error('Error getting user spreadsheet:', error);
+        res.status(500).json({ error: 'Ошибка получения Google Таблицы' });
+    }
+};
+
+
+module.exports = { registerUser, loginUser, forgotPassword, getUserSpreadsheet };

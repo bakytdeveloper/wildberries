@@ -632,6 +632,40 @@ function SearchByArticle() {
         });
     };
 
+    const handleOpenGoogleSheet = async () => {
+        try {
+            const token = sessionStorage.getItem('token');
+            const response = await axios.get(`${API_HOST}/api/user/spreadsheet`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.data.spreadsheetId) {
+                const url = `https://docs.google.com/spreadsheets/d/${response.data.spreadsheetId}`;
+                window.open(url, '_blank');
+            } else {
+                Toastify({
+                    text: 'Google Таблица не найдена',
+                    duration: 3000,
+                    gravity: 'top',
+                    position: 'right',
+                    style: { background: '#ff0000' }
+                }).showToast();
+            }
+        } catch (error) {
+            console.error('Ошибка получения Google Таблицы:', error);
+            Toastify({
+                text: 'Ошибка открытия Google Таблицы',
+                duration: 3000,
+                gravity: 'top',
+                position: 'right',
+                style: { background: '#ff0000' }
+            }).showToast();
+        }
+    };
+
+
     return (
         <div className="article-page">
             <header>
@@ -785,6 +819,14 @@ function SearchByArticle() {
                                     </Button>
                                     <Button className="controls_primary" onClick={fetchProductsByArticle} disabled={isRequesting}>Поиск</Button>
                                     <Button className="controls_primary controls_primary_warning"  variant="warning" onClick={handleSearchAllQueries}>Все запросы</Button>
+                                    <Button
+                                        className="controls_primary controls_primary_info"
+                                        variant="info"
+                                        onClick={handleOpenGoogleSheet}
+                                        title="Открыть мою Google Таблицу"
+                                    >
+                                        Гугл таблица
+                                    </Button>
                                 </div>
                                 <div className="search-bar">
                                     <Form className="search" onSubmit={(e) => e.preventDefault()}>

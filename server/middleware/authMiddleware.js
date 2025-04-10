@@ -54,5 +54,33 @@ const isAdmin = async (req, res, next) => {
     }
 };
 
+// Добавьте это в authMiddleware.js
+const forGoogleSheets = async (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
 
-module.exports = { protect, isAdmin };
+    try {
+        const decoded = jwt.verify(token, jwtSecret);
+
+        if (decoded.userId === 'admin') {
+            req.user = { userId: 'admin', isAdmin: true };
+            return next();
+        }
+
+        const user = await UserModel.findById(decoded.userId);
+        if (!user) {
+            return res.status(401).json({ error: 'User not found' });
+        }
+
+        req.user = { userId: decoded.userId, isAdmin: false };
+        next();
+    } catch (error) {
+        res.status(401).json({ error: 'Invalid token' });
+    }
+};
+
+module.exports = { protect, isAdmin, forGoogleSheets };
+
+
