@@ -808,7 +808,7 @@ function SearchByBrand() {
                                         onClick={handleOpenGoogleSheet}
                                         title="Открыть мою Google Таблицу"
                                     >
-                                        Гугл таблица
+                                       Открыть Google таблицу
                                     </Button>
                                 </div>
                                 <div className="search-bar">
