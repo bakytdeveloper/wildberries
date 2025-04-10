@@ -59,8 +59,8 @@ cron.schedule('10 */4 * * *', async () => {
     }
 });
 // Задача очистки Google Sheets (каждый день в 02:00)
-cron.schedule('*/5 * * * *', async () => {
-// cron.schedule('0 2 * * *', async () => {
+// cron.schedule('*/5 * * * *', async () => {
+cron.schedule('0 2 * * *', async () => {
     if (taskState.isCleanupRunning) {
         console.log('Предыдущая задача очистки Google Sheets еще выполняется, пропускаем...');
         return;
