@@ -189,7 +189,6 @@ function SearchByArticle() {
             setArticleSuggestions(prevArticleSuggestions => [...prevArticleSuggestions, { label: value }]);
         }
 
-
     };
 
     const handleQueryInputChange = (event, formId) => {
@@ -806,9 +805,14 @@ function SearchByArticle() {
                                 {successMessage}
                             </Alert>
                         )}
+
                         <Accordion ref={accordionRef} activeKey={activeKey} onSelect={(key) => setActiveKey(key)}>
                             {filteredQueries.map((queryData, index) => {
-                                const hasProducts = queryData.productTables && queryData.productTables.some(table => table.products.length > 0);
+                                const hasProducts = queryData.productTables &&
+                                    queryData.productTables.length > 0 &&
+                                    queryData.productTables.some(table =>
+                                        table.products && table.products.length > 0
+                                    );
                                 const createdAt = new Date(queryData.createdAt);
                                 const date = createdAt.toLocaleDateString();
                                 const time = createdAt.toLocaleTimeString();
@@ -966,7 +970,7 @@ function SearchByArticle() {
                                                             <p>Артикул: <strong>{queryData.article?.split('; ')[tableIndex]}</strong></p>
                                                             <p>Город: <strong>{queryData.city?.split('; ')[tableIndex]}</strong></p>
                                                         </div>
-                                                        {table.products.length > 0 ? (
+                                                        {table.products && table.products.length > 0 ? (
                                                             <table id="productsTable">
                                                                 <thead>
                                                                 <tr>
@@ -1018,11 +1022,11 @@ function SearchByArticle() {
                                                             </table>
                                                         ) : (
                                                             <div className="no-products-message" style={{ backgroundColor: '#ffcccb', color: '#000000', padding: '10px', borderRadius: '5px' }}>
-                                                                <strong>По Запросу:</strong> {queryData.query?.split('; ')[tableIndex]}
+                                                                <strong>По Запросу:</strong> {queryData.query?.split('; ')[tableIndex] || 'Не указан'}
                                                                 <br />
-                                                                <strong>Артикул:</strong> {queryData.article?.split('; ')[tableIndex]}
+                                                                <strong>Артикул:</strong> {queryData.article?.split('; ')[tableIndex] || 'Не указан'}
                                                                 <br />
-                                                                <strong>Город:</strong> {queryData.city?.split('; ')[tableIndex]}
+                                                                <strong>Город:</strong> {queryData.city?.split('; ')[tableIndex] || 'Не указан'}
                                                                 <br />
                                                                 <strong>Товары не найдены.</strong>
                                                             </div>
@@ -1031,11 +1035,11 @@ function SearchByArticle() {
                                                 ))
                                             ) : (
                                                 <div className="no-products-message" style={{ backgroundColor: '#ffcccb', color: '#000000', padding: '10px', borderRadius: '5px' }}>
-                                                    <strong>Запрос:</strong> {queryData?.query}
+                                                    <strong>Запрос:</strong> {queryData?.query || 'Не указан'}
                                                     <br />
-                                                    <strong>Артикул:</strong> {queryData?.article}
+                                                    <strong>Артикул:</strong> {queryData?.article || 'Не указан'}
                                                     <br />
-                                                    <strong>Город:</strong> {queryData?.city}
+                                                    <strong>Город:</strong> {queryData?.city || 'Не указан'}
                                                     <br />
                                                     <strong>Товары не найдены.</strong>
                                                 </div>
@@ -1045,6 +1049,8 @@ function SearchByArticle() {
                                 );
                             })}
                         </Accordion>
+
+
                         <ImageModal show={modalImage !== null} handleClose={closeModal} imageUrl={modalImage} />
                     </div>
                 ) : null}
