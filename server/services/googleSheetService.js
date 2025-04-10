@@ -403,9 +403,12 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
 
         // 2. Получаем данные строк
         const gridData = response.data.sheets?.[0]?.data?.[0]?.rowData || [];
+        const sheetIdValue = response.data.sheets?.[0]?.properties?.sheetId;
 
         // 3. Фильтруем строки по дате и сохраняем все данные ячеек
         const rowsToKeep = [];
+        const formattingUpdates = [];
+
         for (let i = 0; i < gridData.length; i++) {
             const row = gridData[i];
             const dateCell = row.values?.[8]; // Столбец I (индекс 8)
@@ -424,6 +427,37 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
                     };
                 });
                 rowsToKeep.push({ values: rowData });
+
+                // Проверяем позицию (столбец G, индекс 6) на наличие звёздочки
+                const positionCell = row.values?.[6];
+                if (positionCell) {
+                    const positionValue = positionCell.formattedValue || '';
+                    const hasStar = positionValue.includes('*');
+
+                    // Добавляем запрос на обновление форматирования
+                    formattingUpdates.push({
+                        repeatCell: {
+                            range: {
+                                sheetId: sheetIdValue,
+                                startRowIndex: 1 + rowsToKeep.length - 1, // Текущая строка
+                                endRowIndex: 1 + rowsToKeep.length,
+                                startColumnIndex: 6, // Столбец G
+                                endColumnIndex: 7
+                            },
+                            cell: {
+                                userEnteredFormat: {
+                                    textFormat: {
+                                        foregroundColor: hasStar
+                                            ? { red: 1, green: 0, blue: 0 } // Красный
+                                            : { red: 0, green: 0, blue: 0 }, // Чёрный
+                                        bold: hasStar
+                                    }
+                                }
+                            },
+                            fields: "userEnteredFormat.textFormat(foregroundColor,bold)"
+                        }
+                    });
+                }
             }
         }
 
@@ -449,7 +483,7 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
             requests.push({
                 updateCells: {
                     range: {
-                        sheetId: response.data.sheets[0].properties.sheetId,
+                        sheetId: sheetIdValue,
                         startRowIndex: 0,
                         endRowIndex: 1,
                         startColumnIndex: 0,
@@ -464,7 +498,7 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
             requests.push({
                 updateCells: {
                     range: {
-                        sheetId: response.data.sheets[0].properties.sheetId,
+                        sheetId: sheetIdValue,
                         startRowIndex: 1,
                         endRowIndex: 1 + rowsToKeep.length,
                         startColumnIndex: 0,
@@ -474,6 +508,11 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
                     fields: 'userEnteredValue,userEnteredFormat'
                 }
             });
+
+            // Добавляем запросы на форматирование
+            if (formattingUpdates.length > 0) {
+                requests.push(...formattingUpdates);
+            }
 
             // 7. Выполняем запрос
             await sheets.spreadsheets.batchUpdate({
@@ -488,6 +527,7 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
         throw error;
     }
 }
+
 
 module.exports = {
     createSpreadsheetForUser,
