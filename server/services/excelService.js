@@ -17,7 +17,7 @@ const downloadImage = async (url, retries = 3) => {
         return Buffer.from(response.data, 'binary');
     } catch (error) {
         if (retries > 0) {
-            console.warn(`Повторная попытка загрузки изображения (${retries} осталось): ${url}`);
+            // console.warn(`Повторная попытка загрузки изображения (${retries} осталось): ${url}`);
             await new Promise(resolve => setTimeout(resolve, 1000));
             return downloadImage(url, retries - 1);
         }
