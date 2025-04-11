@@ -37,16 +37,24 @@ const processImagesInBatches = async (items, batchSize, processFunction) => {
 const generateExcelForUser = async (userId) => {
     try {
         const workbook = new ExcelJS.Workbook();
+
+        // Создаем листы с разными заголовками
         const sheetBrand = workbook.addWorksheet('Бренд');
         const sheetArticle = workbook.addWorksheet('Артикул');
 
-        // Заголовки таблиц
-        const headers = [
+        // Заголовки для страницы "Бренд"
+        const brandHeaders = [
             'Запрос', 'Бренд', 'Город', 'Картинка', 'Артикул',
             'Описание товара', 'Позиция', 'Время запроса', 'Дата запроса'
         ];
-        sheetBrand.addRow(headers);
-        sheetArticle.addRow([headers[0], 'Артикул', ...headers.slice(2)]);
+        sheetBrand.addRow(brandHeaders);
+
+        // Заголовки для страницы "Артикул"
+        const articleHeaders = [
+            'Запрос', 'Артикул', 'Город', 'Картинка', 'Бренд',
+            'Описание товара', 'Позиция', 'Время запроса', 'Дата запроса'
+        ];
+        sheetArticle.addRow(articleHeaders);
 
         // Получаем данные
         const [brandQueries, articleQueries] = await Promise.all([
@@ -114,7 +122,7 @@ const generateExcelForUser = async (userId) => {
                     }
                 }
             }
-            await processImagesInBatches(brandTasks, 20, task => task()); // Batch size: 10
+            await processImagesInBatches(brandTasks, 20, task => task());
         };
 
         // Обработка данных по артикулам
@@ -126,7 +134,10 @@ const generateExcelForUser = async (userId) => {
                         const position = product?.page > 1
                             ? `${product.page}${String(product.position).padStart(2, '0')}`
                             : String(product?.position || '');
-                        const hasPromo = !!product?.log?.promoPosition;
+
+                        const promoPosition = product?.log?.promoPosition
+                            ? `${product.log.promoPosition}*`
+                            : position;
 
                         const rowData = [
                             product?.query || query.query,
@@ -135,20 +146,14 @@ const generateExcelForUser = async (userId) => {
                             product?.imageUrl || '',
                             product?.brand,
                             product?.name,
-                            product?.log?.promoPosition ? `${product.log.promoPosition}*` : position,
+                            promoPosition,
                             new Date(product?.queryTime || query.createdAt).toLocaleTimeString(),
                             new Date(product?.queryTime || query.createdAt).toLocaleDateString()
                         ];
 
                         const row = sheetArticle.addRow(rowData);
-                        if (hasPromo) {
+                        if (promoPosition.includes('*')) {
                             const positionCell = row.getCell(7);
-                            positionCell.value = {
-                                richText: [
-                                    { text: String(product?.log?.promoPosition) },
-                                    { text: '*', font: { bold: true, color: { argb: 'FFD15E00' } } }
-                                ]
-                            };
                             positionCell.font = {
                                 bold: true,
                                 color: { argb: 'FFFF0000' }
@@ -159,10 +164,36 @@ const generateExcelForUser = async (userId) => {
                     }
                 }
             }
-            await processImagesInBatches(articleTasks, 10, task => task()); // Batch size: 10
+            await processImagesInBatches(articleTasks, 20, task => task());
         };
 
         await Promise.all([processBrandData(), processArticleData()]);
+
+        // Настраиваем ширину колонок для лучшего отображения
+        sheetBrand.columns = [
+            { width: 30 }, // Запрос
+            { width: 20 }, // Бренд
+            { width: 15 }, // Город
+            { width: 15 }, // Картинка
+            { width: 15 }, // Артикул
+            { width: 50 }, // Описание товара
+            { width: 15 }, // Позиция
+            { width: 15 }, // Время запроса
+            { width: 15 }  // Дата запроса
+        ];
+
+        sheetArticle.columns = [
+            { width: 30 }, // Запрос
+            { width: 15 }, // Артикул
+            { width: 15 }, // Город
+            { width: 15 }, // Картинка
+            { width: 20 }, // Бренд
+            { width: 50 }, // Описание товара
+            { width: 15 }, // Позиция
+            { width: 15 }, // Время запроса
+            { width: 15 }  // Дата запроса
+        ];
+
         return workbook.xlsx.writeBuffer();
     } catch (error) {
         console.error('Ошибка создания Excel:', error);
