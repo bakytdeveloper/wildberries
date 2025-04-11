@@ -438,12 +438,27 @@ button:hover:enabled {
     background-color: #17a2b8;
     border-color: #17a2b8;
     color: white;
-    width: 82%;
+    width: 40%;
     margin-left: 0;
     margin-top: 10px;
 }
 
 .controls_primary_info:hover {
+    background-color: #138496;
+    border-color: #117a8b;
+}
+
+.controls_primary_success {
+    background-color: #17a2b8;
+    color: white;
+    border: #176db8 2px !important;
+    width: 40%;
+    margin-left: 10px;
+    margin-top: 10px;
+    cursor: pointer;
+}
+
+.controls_primary_success:hover {
     background-color: #138496;
     border-color: #117a8b;
 }
@@ -456,7 +471,6 @@ table {
 }
 
 .upload-to-excel {
-    /*margin-left: 10px;*/
     background: #08d4cd;
     border: 2px solid #06b9f1;
     border-radius: 4px;
@@ -491,9 +505,9 @@ table {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 4px 7px;
-    font-weight: bold;
-    font-size: 14px;
+    padding: 4px 9px;
+    /*font-weight: bold;*/
+    font-size: 17px;
     border: 2px solid #ccc;
     border-radius: 4px;
     background-color: #04b808;
@@ -519,9 +533,9 @@ table {
     align-items: center;
     justify-content: center;
     min-width: 170px; /* Фиксированная минимальная ширина */
-    padding: 4px 7px;
-    font-weight: bold;
-    font-size: 14px;
+    padding: 4px 9px;
+    /*font-weight: bold;*/
+    font-size: 17px;
     border: 2px solid #ccc;
     border-radius: 4px;
     background-color: #07a6ee;
@@ -820,8 +834,29 @@ tr:hover {
     }
 
     .controls_primary_info {
-        width: 100%;
+        width: 47%;
+        margin-right: 5px;
+        padding: 0!important;
     }
+
+
+
+    .controls_primary_success {
+        width: 48%;
+        margin-left: 5px;
+        padding: 0!important;
+    }
+
+    .upload-requests {
+        font-size: 17px;
+        padding: 7px 17px;
+    }
+
+    .upload-to-google-spreadsheet {
+        font-size: 17px!important;
+        padding: 7px 17px!important;
+    }
+
 
     .btn.btn-secondary {
         border-radius: 4px!important;
@@ -977,11 +1012,11 @@ tr:hover {
     .exit-button.btn.btn-danger {
         margin-top: 10px;
         padding: 0 3px;
-        font-size: 12px;
+        font-size: 13px;
     }
 
     .controls_success.btn.btn-primary {
-        font-size: 12px;
+        font-size: 14px;
         padding: 0 5px;
     }
 
