@@ -17,11 +17,11 @@ const downloadImage = async (url, retries = 3) => {
         return Buffer.from(response.data, 'binary');
     } catch (error) {
         if (retries > 0) {
-            console.warn(`Retrying image download (${retries} left): ${url}`);
+            console.warn(`Повторная попытка загрузки изображения (${retries} осталось): ${url}`);
             await new Promise(resolve => setTimeout(resolve, 1000));
             return downloadImage(url, retries - 1);
         }
-        console.error(`Failed to download image after 3 attempts: ${url}`);
+        console.error(`Не удалось загрузить изображение после 3 попыток: ${url}`);
         return null;
     }
 };
@@ -46,8 +46,7 @@ const generateExcelForUser = async (userId) => {
             QueryArticleModel.find({ userId }).populate('productTables.products')
         ]);
 
-        // Функция для обработки изображений
-        const processImage = async (sheet, row, imageUrl) => {
+        const processImage = async (sheet, rowIndex, imageUrl) => {
             if (!imageUrl) return;
 
             try {
@@ -57,99 +56,104 @@ const generateExcelForUser = async (userId) => {
                     const imageId = workbook.addImage({ buffer: imageBuffer, extension });
 
                     sheet.addImage(imageId, {
-                        tl: { col: 3, row: row.number - 1, offset: 5 },
+                        tl: { col: 3, row: rowIndex - 1, offset: 5 },
                         ext: { width: 30, height: 30 }
                     });
 
-                    sheet.getRow(row.number).height = 30;
+                    sheet.getRow(rowIndex).height = 30;
                 }
             } catch (error) {
-                console.error(`Image processing error for ${imageUrl}:`, error.message);
+                console.error(`Ошибка обработки изображения для ${imageUrl}:`, error.message);
             }
         };
 
         // Обработка данных по брендам
-        for (const query of brandQueries) {
-            for (const table of query.productTables) {
-                for (const product of table.products) {
-                    const position = product?.page > 1
-                        ? `${product.page}${String(product.position).padStart(2, '0')}`
-                        : String(product?.position || '');
+        const processBrandData = async () => {
+            for (const query of brandQueries) {
+                for (const table of query.productTables) {
+                    for (const product of table.products) {
+                        const position = product?.page > 1
+                            ? `${product.page}${String(product.position).padStart(2, '0')}`
+                            : String(product?.position || '');
 
-                    const promoPosition = product?.log?.promoPosition
-                        ? `${product.log.promoPosition}*`
-                        : position;
+                        const promoPosition = product?.log?.promoPosition
+                            ? `${product.log.promoPosition}*`
+                            : position;
 
-                    const rowData = [
-                        product?.query || query.query,
-                        product?.brand || query.brand,
-                        product?.city || query.city,
-                        product?.imageUrl || '', // URL для возможного ручного просмотра
-                        product?.id,
-                        product?.name,
-                        promoPosition,
-                        new Date(product?.queryTime || query.createdAt).toLocaleTimeString(),
-                        new Date(product?.queryTime || query.createdAt).toLocaleDateString()
-                    ];
+                        const rowData = [
+                            product?.query || query.query,
+                            product?.brand || query.brand,
+                            product?.city || query.city,
+                            product?.imageUrl || '',
+                            product?.id,
+                            product?.name,
+                            promoPosition,
+                            new Date(product?.queryTime || query.createdAt).toLocaleTimeString(),
+                            new Date(product?.queryTime || query.createdAt).toLocaleDateString()
+                        ];
 
-                    const row = sheetBrand.addRow(rowData);
-                    // Форматируем ячейку с позицией, если есть звёздочка
-                    if (promoPosition.includes('*')) {
-                        const positionCell = row.getCell(7); // 7-я колонка (G) - Позиция
-                        positionCell.font = {
-                            bold: true,
-                            color: { argb: 'FFFF0000' } // Красный цвет
-                        };
+                        const row = sheetBrand.addRow(rowData);
+                        if (promoPosition.includes('*')) {
+                            const positionCell = row.getCell(7);
+                            positionCell.font = {
+                                bold: true,
+                                color: { argb: 'FFFF0000' }
+                            };
+                        }
+
+                        await processImage(sheetBrand, row.number, product?.imageUrl);
                     }
-
-                    await processImage(sheetBrand, row, product?.imageUrl);
                 }
             }
-        }
+        };
 
-        // Обработка данных по артикулам (аналогично)
-        for (const query of articleQueries) {
-            for (const table of query.productTables) {
-                for (const product of table.products) {
-                    const position = product?.page > 1
-                        ? `${product.page}${String(product.position).padStart(2, '0')}`
-                        : String(product?.position || '');
-                    const hasPromo = !!product?.log?.promoPosition;
-                    const rowData = [
-                        product?.query || query.query,
-                        product?.id,
-                        product?.city || query.city,
-                        product?.imageUrl || '',
-                        product?.brand,
-                        product?.name,
-                        product?.log?.promoPosition ? `${product.log.promoPosition}*` : position,
-                        new Date(product?.queryTime || query.createdAt).toLocaleTimeString(),
-                        new Date(product?.queryTime || query.createdAt).toLocaleDateString()
-                    ];
+        // Обработка данных по артикулам
+        const processArticleData = async () => {
+            for (const query of articleQueries) {
+                for (const table of query.productTables) {
+                    for (const product of table.products) {
+                        const position = product?.page > 1
+                            ? `${product.page}${String(product.position).padStart(2, '0')}`
+                            : String(product?.position || '');
+                        const hasPromo = !!product?.log?.promoPosition;
 
-                    const row = sheetArticle.addRow(rowData);
-                    // Форматируем ячейку с позицией, если есть звёздочка
-                    if (hasPromo) {
-                        const positionCell = row.getCell(7);
-                        const numValue = product?.log?.promoPosition;
-                        positionCell.value = {
-                            richText: [ { text: String(numValue) },
-                                { text: '*',
-                                    font: {
-                                        bold: true,
-                                        color: {
-                                            argb: 'FFD15E00' } } } ] };
-                        positionCell.font = {
-                            bold: true,
-                            color: { argb: 'FFFF0000' } }; }
-                    await processImage(sheetArticle, row, product?.imageUrl);
+                        const rowData = [
+                            product?.query || query.query,
+                            product?.id,
+                            product?.city || query.city,
+                            product?.imageUrl || '',
+                            product?.brand,
+                            product?.name,
+                            product?.log?.promoPosition ? `${product.log.promoPosition}*` : position,
+                            new Date(product?.queryTime || query.createdAt).toLocaleTimeString(),
+                            new Date(product?.queryTime || query.createdAt).toLocaleDateString()
+                        ];
+
+                        const row = sheetArticle.addRow(rowData);
+                        if (hasPromo) {
+                            const positionCell = row.getCell(7);
+                            positionCell.value = {
+                                richText: [
+                                    { text: String(product?.log?.promoPosition) },
+                                    { text: '*', font: { bold: true, color: { argb: 'FFD15E00' } } }
+                                ]
+                            };
+                            positionCell.font = {
+                                bold: true,
+                                color: { argb: 'FFFF0000' }
+                            };
+                        }
+
+                        await processImage(sheetArticle, row.number, product?.imageUrl);
+                    }
                 }
             }
-        }
+        };
 
+        await Promise.all([processBrandData(), processArticleData()]);
         return workbook.xlsx.writeBuffer();
     } catch (error) {
-        console.error('Excel generation error:', error);
+        console.error('Ошибка создания Excel:', error);
         throw error;
     }
 };
