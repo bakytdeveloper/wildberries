@@ -831,7 +831,10 @@ tr:hover {
 
     .btn.btn-primary {
         border-radius: 4px!important;
+
+        font-size: 14px!important;
     }
+
 
     .controls_primary_info {
         width: 47%;
@@ -897,13 +900,26 @@ tr:hover {
         gap: 5px;
     }
 
+    .controls {
+        justify-content: space-around!important; /* Равномерно распределяем элементы */
+        align-items: center; /* Выравнивание по вертикали, если нужно */
+        text-align: center; /* Опционально, если внутри текста требуется центрирование */
+    }
+
     .controls_primary {
         margin-left: 0;
     }
 
+    .controls_primary.btn.btn-primary {
+        padding-left: 3px!important;
+        padding-right: 3px !important;
+    }
+
     .controls_primary_warning {
         margin-left: 10px;
-        font-size: 13px!important;
+        font-size: 14px!important;
+        padding-left: 3px!important;
+        padding-right: 3px !important;
     }
 
     .accordion {
