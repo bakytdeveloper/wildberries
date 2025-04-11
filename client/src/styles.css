@@ -847,14 +847,18 @@ tr:hover {
         padding: 0!important;
     }
 
+    .buttons-sheets {
+        margin-left: 9%;
+    }
+
     .upload-requests {
-        font-size: 17px;
-        padding: 7px 17px;
+        font-size: 15px;
+        padding: 7px 10px;
     }
 
     .upload-to-google-spreadsheet {
-        font-size: 17px!important;
-        padding: 7px 17px!important;
+        font-size: 15px!important;
+        padding: 7px 10px!important;
     }
 
 
