@@ -26,6 +26,14 @@ const downloadImage = async (url, retries = 3) => {
     }
 };
 
+// Функция обработки изображений батчами
+const processImagesInBatches = async (items, batchSize, processFunction) => {
+    for (let i = 0; i < items.length; i += batchSize) {
+        const batch = items.slice(i, i + batchSize);
+        await Promise.all(batch.map(processFunction));
+    }
+};
+
 const generateExcelForUser = async (userId) => {
     try {
         const workbook = new ExcelJS.Workbook();
@@ -69,6 +77,7 @@ const generateExcelForUser = async (userId) => {
 
         // Обработка данных по брендам
         const processBrandData = async () => {
+            const brandTasks = [];
             for (const query of brandQueries) {
                 for (const table of query.productTables) {
                     for (const product of table.products) {
@@ -101,14 +110,16 @@ const generateExcelForUser = async (userId) => {
                             };
                         }
 
-                        await processImage(sheetBrand, row.number, product?.imageUrl);
+                        brandTasks.push(async () => processImage(sheetBrand, row.number, product?.imageUrl));
                     }
                 }
             }
+            await processImagesInBatches(brandTasks, 20, task => task()); // Batch size: 10
         };
 
         // Обработка данных по артикулам
         const processArticleData = async () => {
+            const articleTasks = [];
             for (const query of articleQueries) {
                 for (const table of query.productTables) {
                     for (const product of table.products) {
@@ -144,10 +155,11 @@ const generateExcelForUser = async (userId) => {
                             };
                         }
 
-                        await processImage(sheetArticle, row.number, product?.imageUrl);
+                        articleTasks.push(async () => processImage(sheetArticle, row.number, product?.imageUrl));
                     }
                 }
             }
+            await processImagesInBatches(articleTasks, 10, task => task()); // Batch size: 10
         };
 
         await Promise.all([processBrandData(), processArticleData()]);
