@@ -18,8 +18,12 @@
 
 # misc
 .DS_Store
+# Игнорируем все .env файлы
+.env
+*/**/.env
 .env.local
-#.env
+/client/.env
+/server/.env
 .env.development.local
 .env.test.local
 .env.production.local

@@ -10,14 +10,13 @@ const downloadImage = async (url, retries = 3) => {
     try {
         const response = await axios.get(url, {
             responseType: 'arraybuffer',
-            timeout: 5000, // Таймаут 5 секунд
-            validateStatus: (status) => status === 200 // Принимаем только статус 200
+            timeout: 5000,
+            validateStatus: (status) => status === 200
         });
 
         return Buffer.from(response.data, 'binary');
     } catch (error) {
         if (retries > 0) {
-            // console.warn(`Повторная попытка загрузки изображения (${retries} осталось): ${url}`);
             await new Promise(resolve => setTimeout(resolve, 1000));
             return downloadImage(url, retries - 1);
         }

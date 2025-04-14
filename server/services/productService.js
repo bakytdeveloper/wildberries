@@ -181,7 +181,7 @@ async function fetchAndParseProductsByArticle(query, dest, article, queryTime) {
                         imageUrl: generateImageUrl(product.id),
                         log: product.log
                     };
-                    return { products: [productWithDetails], hasMore: false }; // Останавливаем поиск после нахождения
+                    return { products: [productWithDetails], hasMore: false };
                 }
 
                 return { products: [], hasMore: true };

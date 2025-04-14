@@ -18,13 +18,12 @@ class AutoQueryService {
             '-2133463': 'г.Казань',
             '286': 'г.Бишкек'
         };
-        this.BATCH_SIZE = 5; // Количество пользователей в одной порции
-        this.BATCH_DELAY = 10000; // Задержка между порциями (10 секунд)
+        this.BATCH_SIZE = 5;
+        this.BATCH_DELAY = 10000;
     }
 
     async init() {
         // Запускаем основной процесс с интервалом 4 часа
-        // cron.schedule('*/5 * * * *', async () => this.processAllUsers());
         cron.schedule('0 */4 * * *', () => this.processAllUsers());
         console.log('AutoQueryService инициализирован с пакетной обработкой');
     }
@@ -41,8 +40,6 @@ class AutoQueryService {
                 console.log('No users to process');
                 return;
             }
-
-            console.log(`Обработка ${users.length} пользователей партиями ${this.BATCH_SIZE}`);
 
             for (let i = 0; i < users.length; i += this.BATCH_SIZE) {
                 const batch = users.slice(i, i + this.BATCH_SIZE);
@@ -66,7 +63,6 @@ class AutoQueryService {
 
     async scheduleAutoQueriesForUser(userId) {
         if (this.activeUsers.has(userId.toString())) {
-            console.log(`Пользователь ${userId} уже обрабатывается`);
             return;
         }
 
@@ -285,7 +281,6 @@ class AutoQueryService {
         if (this.scheduledJobs.has(userIdStr)) {
             this.scheduledJobs.get(userIdStr).stop();
             this.scheduledJobs.delete(userIdStr);
-            console.log(`Stopped auto queries for user ${userId}`);
         }
     }
 }

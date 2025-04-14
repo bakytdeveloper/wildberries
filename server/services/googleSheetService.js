@@ -49,7 +49,6 @@ async function createSpreadsheetForUser(email) {
             },
         });
 
-        console.log('Spreadsheet created and access granted:', spreadsheetId);
         return spreadsheetId;
     } catch (error) {
         console.error('Error creating spreadsheet:', error);

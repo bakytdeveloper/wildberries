@@ -1,14 +1,15 @@
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+require('dotenv').config();
 
 // Хранилище OTP
 let otpStorage = {};
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    service: process.env.SMTP_SERVICE,
     auth: {
-        user: 'bakytdeveloper@gmail.com',
-        pass: 'vlud glov uens emlz' // Обратите внимание, что для реального использования важно безопасно хранить такие данные
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASSWORD
     }
 });
 
@@ -16,7 +17,7 @@ const sendOTP = (email) => {
     const otp = crypto.randomInt(100000, 999999).toString();
     otpStorage[email] = otp;
     transporter.sendMail({
-        from: 'bakytdeveloper@gmail.com',
+        from: process.env.SMTP_FROM,
         to: email,
         subject: 'Здравствуйте',
         text: `Мы обновили ваш пароль для авторизации, это ваш обновлённый пароль: ${otp}`
@@ -28,27 +29,8 @@ const verifyOTP = (email, otp) => {
     return otpStorage[email] === otp;
 };
 
-// // Новая функция для отправки ссылки на Excel-файл
-// const sendExcelLink = async (email, fileLink) => {
-//     try {
-//         await transporter.sendMail({
-//             from: 'bakytdeveloper@gmail.com',
-//             to: email,
-//             subject: 'Ваша Excel-таблица готова',
-//             text: `Здравствуйте! Ваша Excel-таблица готова.`,
-//             html: `<p><b>Здравствуйте!</b> Ваша Excel-таблица готова. Это <a href="${fileLink}"><b>Ваша Excel-таблица</b></a>.</p>`
-//         });
-//         console.log('Письмо с ссылкой на Excel-таблицу отправлено.');
-//     } catch (error) {
-//         console.error('Ошибка при отправке письма:', error);
-//         throw error;
-//     }
-// };
-
-
 module.exports = {
     sendOTP,
     verifyOTP,
     transporter,
-    // sendExcelLink
 };

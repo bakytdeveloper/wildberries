@@ -9,7 +9,6 @@ const otpRoutes = require('./routes/otpRoutes');
 const userRoutes = require('./routes/userRoutes');
 const queryArticleRoutes = require('./routes/queryArticleRoutes');
 const adminRoutes = require('./routes/adminRoutes');
-const path = require('path');
 const cron = require("node-cron");
 const {QueryArticleModel} = require("./models/queryArticleModel");
 const {QueryModel} = require("./models/queryModel");
@@ -47,7 +46,6 @@ const connectWithRetry = () => {
 };
 
 // Основная задача выполнения запросов (каждые 4 часа в :10) google sheet
-// cron.schedule('*/5 * * * *', async () => {
 cron.schedule('10 */4 * * *', async () => {
     try {
         const users = await UserModel.find({});
@@ -59,10 +57,8 @@ cron.schedule('10 */4 * * *', async () => {
     }
 });
 // Задача очистки Google Sheets (каждый день в 02:00)
-// cron.schedule('*/5 * * * *', async () => {
 cron.schedule('0 2 * * *', async () => {
     if (taskState.isCleanupRunning) {
-        console.log('Предыдущая задача очистки Google Sheets еще выполняется, пропускаем...');
         return;
     }
 
@@ -73,7 +69,6 @@ cron.schedule('0 2 * * *', async () => {
         // Получаем пользователей с существующими spreadsheetId
         const users = await UserModel.find({ spreadsheetId: { $exists: true } }).lean();
 
-        // Проверяем, что users — массив
         if (Array.isArray(users)) {
             for (const user of users) {
                 try {
@@ -129,11 +124,6 @@ cron.schedule('0 3 * * *', async () => {
             QueryModel.deleteMany({ _id: { $in: queryIdsToDelete } }),
             QueryArticleModel.deleteMany({ _id: { $in: articleQueryIdsToDelete } })
         ]);
-
-        console.log(`Удалено: 
-          - ${oldQueries.length} запросов
-          - ${oldArticleQueries.length} запросов по артикулам
-          - Очищены ссылки у пользователей`);
 
     } catch (error) {
         console.error('Ошибка в задаче удаления старых данных:', error);
