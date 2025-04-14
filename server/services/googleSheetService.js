@@ -230,8 +230,149 @@ async function addDataToSheet(sheetId, sheetName, data, hasStar = false) {
 }
 
 
+// async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
+//     const sheets = getSheetsInstance();
+//     try {
+//         // 1. Получаем все данные из листа (начиная со строки 2) включая формулы
+//         const response = await sheets.spreadsheets.get({
+//             spreadsheetId: sheetId,
+//             ranges: [`${sheetName}!A2:I`],
+//             includeGridData: true
+//         });
+//
+//         const now = new Date();
+//         const thresholdDate = new Date(now.setDate(now.getDate() - daysThreshold));
+//
+//         // 2. Получаем данные строк
+//         const gridData = response.data.sheets?.[0]?.data?.[0]?.rowData || [];
+//         const sheetIdValue = response.data.sheets?.[0]?.properties?.sheetId;
+//
+//         // 3. Фильтруем строки по дате и сохраняем все данные ячеек
+//         const rowsToKeep = [];
+//         const formattingUpdates = [];
+//
+//         for (let i = 0; i < gridData.length; i++) {
+//             const row = gridData[i];
+//             const dateCell = row.values?.[8]; // Столбец I (индекс 8)
+//             if (!dateCell) continue;
+//
+//             const dateValue = dateCell.effectiveValue?.numberValue
+//                 ? new Date((dateCell.effectiveValue.numberValue - 25569) * 86400 * 1000)
+//                 : new Date(dateCell.formattedValue);
+//
+//             if (dateValue >= thresholdDate) {
+//                 // Сохраняем все данные ячейки (значения, формулы, форматы)
+//                 const rowData = row.values.map(cell => {
+//                     return {
+//                         userEnteredValue: cell.userEnteredValue,
+//                         userEnteredFormat: cell.userEnteredFormat
+//                     };
+//                 });
+//                 rowsToKeep.push({ values: rowData });
+//
+//                 // Проверяем позицию (столбец G, индекс 6) на наличие звёздочки
+//                 const positionCell = row.values?.[6];
+//                 if (positionCell) {
+//                     const positionValue = positionCell.formattedValue || '';
+//                     const hasStar = positionValue.includes('*');
+//
+//                     // Добавляем запрос на обновление форматирования
+//                     formattingUpdates.push({
+//                         repeatCell: {
+//                             range: {
+//                                 sheetId: sheetIdValue,
+//                                 startRowIndex: 1 + rowsToKeep.length - 1, // Текущая строка
+//                                 endRowIndex: 1 + rowsToKeep.length,
+//                                 startColumnIndex: 6, // Столбец G
+//                                 endColumnIndex: 7
+//                             },
+//                             cell: {
+//                                 userEnteredFormat: {
+//                                     textFormat: {
+//                                         foregroundColor: hasStar
+//                                             ? { red: 1, green: 0, blue: 0 } // Красный
+//                                             : { red: 0, green: 0, blue: 0 }, // Чёрный
+//                                         bold: hasStar
+//                                     }
+//                                 }
+//                             },
+//                             fields: "userEnteredFormat.textFormat(foregroundColor,bold)"
+//                         }
+//                     });
+//                 }
+//             }
+//         }
+//
+//         // 4. Получаем заголовки с их форматированием
+//         const headersResponse = await sheets.spreadsheets.get({
+//             spreadsheetId: sheetId,
+//             ranges: [`${sheetName}!A1:I1`],
+//             includeGridData: true
+//         });
+//         const headerRow = headersResponse.data.sheets?.[0]?.data?.[0]?.rowData?.[0];
+//
+//         // 5. Очищаем лист (кроме заголовков)
+//         await sheets.spreadsheets.values.clear({
+//             spreadsheetId: sheetId,
+//             range: `${sheetName}!A2:I`,
+//         });
+//
+//         if (rowsToKeep.length > 0) {
+//             // 6. Подготавливаем запрос на обновление
+//             const requests = [];
+//
+//             // Добавляем заголовки
+//             requests.push({
+//                 updateCells: {
+//                     range: {
+//                         sheetId: sheetIdValue,
+//                         startRowIndex: 0,
+//                         endRowIndex: 1,
+//                         startColumnIndex: 0,
+//                         endColumnIndex: 9 // I column
+//                     },
+//                     rows: [headerRow],
+//                     fields: 'userEnteredValue,userEnteredFormat'
+//                 }
+//             });
+//
+//             // Добавляем оставшиеся строки
+//             requests.push({
+//                 updateCells: {
+//                     range: {
+//                         sheetId: sheetIdValue,
+//                         startRowIndex: 1,
+//                         endRowIndex: 1 + rowsToKeep.length,
+//                         startColumnIndex: 0,
+//                         endColumnIndex: 9 // I column
+//                     },
+//                     rows: rowsToKeep,
+//                     fields: 'userEnteredValue,userEnteredFormat'
+//                 }
+//             });
+//
+//             // Добавляем запросы на форматирование
+//             if (formattingUpdates.length > 0) {
+//                 requests.push(...formattingUpdates);
+//             }
+//
+//             // 7. Выполняем запрос
+//             await sheets.spreadsheets.batchUpdate({
+//                 spreadsheetId: sheetId,
+//                 requestBody: { requests }
+//             });
+//         }
+//
+//         console.log(`Удалены данные старше ${daysThreshold} дней`);
+//     } catch (error) {
+//         console.error('Ошибка очистки старых данных:', error);
+//         throw error;
+//     }
+// }
+
 async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
     const sheets = getSheetsInstance();
+
     try {
         // 1. Получаем все данные из листа (начиная со строки 2) включая формулы
         const response = await sheets.spreadsheets.get({
@@ -249,8 +390,6 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
 
         // 3. Фильтруем строки по дате и сохраняем все данные ячеек
         const rowsToKeep = [];
-        const formattingUpdates = [];
-
         for (let i = 0; i < gridData.length; i++) {
             const row = gridData[i];
             const dateCell = row.values?.[8]; // Столбец I (индекс 8)
@@ -261,45 +400,11 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
                 : new Date(dateCell.formattedValue);
 
             if (dateValue >= thresholdDate) {
-                // Сохраняем все данные ячейки (значения, формулы, форматы)
-                const rowData = row.values.map(cell => {
-                    return {
-                        userEnteredValue: cell.userEnteredValue,
-                        userEnteredFormat: cell.userEnteredFormat
-                    };
-                });
+                const rowData = row.values.map(cell => ({
+                    userEnteredValue: cell.userEnteredValue || { stringValue: '' },
+                    userEnteredFormat: cell.userEnteredFormat || {}
+                }));
                 rowsToKeep.push({ values: rowData });
-
-                // Проверяем позицию (столбец G, индекс 6) на наличие звёздочки
-                const positionCell = row.values?.[6];
-                if (positionCell) {
-                    const positionValue = positionCell.formattedValue || '';
-                    const hasStar = positionValue.includes('*');
-
-                    // Добавляем запрос на обновление форматирования
-                    formattingUpdates.push({
-                        repeatCell: {
-                            range: {
-                                sheetId: sheetIdValue,
-                                startRowIndex: 1 + rowsToKeep.length - 1, // Текущая строка
-                                endRowIndex: 1 + rowsToKeep.length,
-                                startColumnIndex: 6, // Столбец G
-                                endColumnIndex: 7
-                            },
-                            cell: {
-                                userEnteredFormat: {
-                                    textFormat: {
-                                        foregroundColor: hasStar
-                                            ? { red: 1, green: 0, blue: 0 } // Красный
-                                            : { red: 0, green: 0, blue: 0 }, // Чёрный
-                                        bold: hasStar
-                                    }
-                                }
-                            },
-                            fields: "userEnteredFormat.textFormat(foregroundColor,bold)"
-                        }
-                    });
-                }
             }
         }
 
@@ -314,7 +419,7 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
         // 5. Очищаем лист (кроме заголовков)
         await sheets.spreadsheets.values.clear({
             spreadsheetId: sheetId,
-            range: `${sheetName}!A2:I`,
+            range: `${sheetName}!A2:I`
         });
 
         if (rowsToKeep.length > 0) {
@@ -329,7 +434,7 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
                         startRowIndex: 0,
                         endRowIndex: 1,
                         startColumnIndex: 0,
-                        endColumnIndex: 9 // I column
+                        endColumnIndex: 9 // Столбец I
                     },
                     rows: [headerRow],
                     fields: 'userEnteredValue,userEnteredFormat'
@@ -344,17 +449,12 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
                         startRowIndex: 1,
                         endRowIndex: 1 + rowsToKeep.length,
                         startColumnIndex: 0,
-                        endColumnIndex: 9 // I column
+                        endColumnIndex: 9 // Столбец I
                     },
                     rows: rowsToKeep,
                     fields: 'userEnteredValue,userEnteredFormat'
                 }
             });
-
-            // Добавляем запросы на форматирование
-            if (formattingUpdates.length > 0) {
-                requests.push(...formattingUpdates);
-            }
 
             // 7. Выполняем запрос
             await sheets.spreadsheets.batchUpdate({
@@ -365,7 +465,8 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
 
         console.log(`Удалены данные старше ${daysThreshold} дней`);
     } catch (error) {
-        console.error('Ошибка очистки старых данных:', error);
+        console.error('Ошибка очистки старых данных:', error.message);
+        console.error('Полный вывод ошибки:', JSON.stringify(error, null, 2));
         throw error;
     }
 }

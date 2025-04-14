@@ -56,8 +56,9 @@ cron.schedule('10 */4 * * *', async () => {
         console.error('Ошибка выполнения задачи:', error);
     }
 });
+
 // Задача очистки Google Sheets (каждый день в 02:00)
-cron.schedule('0 2 * * *', async () => {
+    cron.schedule('0 2 * * *', async () => {
     if (taskState.isCleanupRunning) {
         return;
     }
