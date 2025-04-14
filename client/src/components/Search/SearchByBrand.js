@@ -524,8 +524,6 @@ function SearchByBrand() {
         setShowResetButton(false);
     };
 
-
-
     const handleFillForm = (queryData) => {
         const queries = queryData.query.split('; ');
         const brands = queryData.brand.split('; ');
@@ -885,31 +883,6 @@ function SearchByBrand() {
                                                             <span>Запросы</span>
                                                         </div>
 
-
-                                                        {/*<div*/}
-                                                        {/*    className="upload-to-excel"*/}
-                                                        {/*    onClick={(event) => {*/}
-                                                        {/*        if (exportingToExcelStates[queryData._id]) return;*/}
-                                                        {/*        event.stopPropagation();*/}
-                                                        {/*        handleExportToExcelClick(queryData._id, 'Бренд').then(r => r);*/}
-                                                        {/*    }}*/}
-                                                        {/*    style={{ cursor: exportingToExcelStates[queryData._id] ? 'not-allowed' : 'pointer' }}*/}
-                                                        {/*    title={exportingToExcelStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Excel'}*/}
-                                                        {/*>*/}
-                                                        {/*    {exportingToExcelStates[queryData._id] ? (*/}
-                                                        {/*        <Spinner*/}
-                                                        {/*            as="span"*/}
-                                                        {/*            animation="border"*/}
-                                                        {/*            size="sm"*/}
-                                                        {/*            role="status"*/}
-                                                        {/*            aria-hidden="true"*/}
-                                                        {/*            style={{ width: '1rem', height: '1rem' }}*/}
-                                                        {/*        />*/}
-                                                        {/*    ) : (*/}
-                                                        {/*        <span>Excel</span>*/}
-                                                        {/*    )}*/}
-                                                        {/*</div>*/}
-
                                                         <div
                                                             className="upload-to-google-spreadsheet"
                                                             onClick={(event) => {
@@ -949,31 +922,6 @@ function SearchByBrand() {
                                                     >
                                                         <span>Использовать эти Запросы</span>
                                                     </div>
-
-                                                    {/*<div*/}
-                                                    {/*    className="upload-to-excel"*/}
-                                                    {/*    onClick={(event) => {*/}
-                                                    {/*        if (exportingToExcelStates[queryData._id]) return;*/}
-                                                    {/*        event.stopPropagation();*/}
-                                                    {/*        handleExportToExcelClick(queryData._id, 'Бренд').then(r => r);*/}
-                                                    {/*    }}*/}
-                                                    {/*    style={{ cursor: exportingToExcelStates[queryData._id] ? 'not-allowed' : 'pointer' }}*/}
-                                                    {/*    title={exportingToExcelStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Excel'}*/}
-                                                    {/*>*/}
-                                                    {/*    {exportingToExcelStates[queryData._id] ? (*/}
-                                                    {/*        <Spinner*/}
-                                                    {/*            as="span"*/}
-                                                    {/*            animation="border"*/}
-                                                    {/*            size="sm"*/}
-                                                    {/*            role="status"*/}
-                                                    {/*            aria-hidden="true"*/}
-                                                    {/*            style={{ width: '1rem', height: '1rem' }}*/}
-                                                    {/*        />*/}
-                                                    {/*    ) : (*/}
-                                                    {/*        <span>Выгрузить в Excel</span>*/}
-                                                    {/*    )}*/}
-                                                    {/*</div>*/}
-
                                                     <div
                                                         className="upload-to-google-spreadsheet"
                                                         onClick={(event) => {
@@ -1061,7 +1009,6 @@ function SearchByBrand() {
                                                                                     (page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position)
                                                                                 )}
                                                                             </td>
-                                                                            {/*<td className="td_table">{product.log?.position || (page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position)}</td>*/}
                                                                             <td className="td_table">{product.name}</td>
                                                                             <td className="td_table">{time}</td>
                                                                             <td className="td_table">{date}</td>
@@ -1072,7 +1019,6 @@ function SearchByBrand() {
                                                             </table>
                                                         ) : (
                                                             <div className="no-products-message" >
-                                                                {/*<div className="no-products-message" style={{ backgroundColor: '#ffcccb', color: '#000000', padding: '10px', borderRadius: '5px' }}>*/}
                                                                 <strong>По Запросу:</strong> {queryData.query.split('; ')[tableIndex]}
                                                                 <br />
                                                                 <strong>Бренд:</strong> {queryData.brand.split('; ')[tableIndex]}

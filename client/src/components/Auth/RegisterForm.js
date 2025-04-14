@@ -13,7 +13,7 @@ const RegisterForm = ({ API_HOST, setIsAuthenticated, setShowProfile, setShowReg
 
     const handleRegister = async (e) => {
         e.preventDefault();
-        setLoading(true); // Блокируем форму
+        setLoading(true);
         try {
             const response = await axios.post(`${API_HOST}/api/auth/register`, { username, email, password });
             sessionStorage.setItem('token', response.data.token);
@@ -24,7 +24,7 @@ const RegisterForm = ({ API_HOST, setIsAuthenticated, setShowProfile, setShowReg
                 text: `Здравствуйте, ${username}!
                      Вы успешно зарегистрированы.
            Ссылки на ваши таблицы отправлена на Вашу эл.почту.`,
-                duration: 3000,
+                duration: 4000,
                 gravity: 'top',
                 position: 'right',
                 style: { background: '#00cc00' },
@@ -58,7 +58,7 @@ const RegisterForm = ({ API_HOST, setIsAuthenticated, setShowProfile, setShowReg
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
-                    disabled={loading} // Делаем поле неактивным
+                    disabled={loading}
                 />
             </Form.Group>
             <Form.Group controlId="email">
@@ -68,7 +68,7 @@ const RegisterForm = ({ API_HOST, setIsAuthenticated, setShowProfile, setShowReg
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    disabled={loading} // Делаем поле неактивным
+                    disabled={loading}
                 />
             </Form.Group>
             <Form.Group controlId="password">
@@ -79,7 +79,7 @@ const RegisterForm = ({ API_HOST, setIsAuthenticated, setShowProfile, setShowReg
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        disabled={loading} // Делаем поле неактивным
+                        disabled={loading}
                     />
                     <InputGroup.Text
                         className="FaEye-button"
@@ -96,7 +96,7 @@ const RegisterForm = ({ API_HOST, setIsAuthenticated, setShowProfile, setShowReg
             <Button
                 variant="link"
                 onClick={() => setShowRegisterForm(false)}
-                disabled={loading} // Блокируем кнопку
+                disabled={loading}
             >
                 Авторизация
             </Button>

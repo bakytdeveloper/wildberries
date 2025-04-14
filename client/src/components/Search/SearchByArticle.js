@@ -79,7 +79,6 @@ function SearchByArticle() {
         const handleResize = () => {
             setWindowWidth(window.innerWidth);
         };
-
         window.addEventListener('resize', handleResize);
 
         return () => {
@@ -193,7 +192,6 @@ function SearchByArticle() {
 
     const handleQueryInputChange = (event, formId) => {
         const text = event.target.value;
-        // console.log('Query input change:', text.target.value);
         setRequestForms(prevForms => prevForms.map(f =>
             f.id === formId ? { ...f, query: text.target.value } : f
         ));
@@ -201,7 +199,6 @@ function SearchByArticle() {
 
     const handleArticleInputChange = (event, formId) => {
         const text = event.target.value;
-        // console.log('Brand input change:', text);
         setRequestForms(prevForms => prevForms.map(f =>
             f.id === formId ? { ...f, article: text.target.value } : f ));
     };
@@ -287,7 +284,6 @@ function SearchByArticle() {
         if (isRequesting || formsDisabled) return;
         setFormsDisabled(true);
         setIsRequesting(true);
-        // console.log('Request forms before validation:', requestForms);
 
         const validForms = requestForms.filter(form => {
             const query = form.query && typeof form.query === 'string' ? form.query.trim() : '';
@@ -295,7 +291,6 @@ function SearchByArticle() {
             return query !== '' && article !== '';
         });
 
-        // console.log('Valid forms after validation:', validForms);
         if (validForms.length === 0) {
             Toastify({
                 text: "Все формы должны быть заполнены.",
@@ -325,7 +320,6 @@ function SearchByArticle() {
                 queryTime: new Date().toISOString()
             }));
 
-            // console.log('Trimmed forms before sending:', trimmedForms);
             const response = await fetch(`${API_HOST}/api/article`, {
                 method: 'POST',
                 headers: {
@@ -341,8 +335,6 @@ function SearchByArticle() {
             }
 
             const result = await response.json();
-            // console.log('Response from server:', result);
-
             const totalRequests = validForms.length;
             const successfulRequests = result.productTables.filter(table => table.products.length > 0).length;
 
@@ -374,12 +366,11 @@ function SearchByArticle() {
                 }
             });
             setArticleSuggestions(newArticleSuggestions);
-
             setLoadingMessage('');
             clearInput(requestForms[0].id);
             setRequestForms([{ id: Date.now(), query: '', article: '', city: 'г.Москва', isMain: true }]);
-            setShowInitialForm(true); // Показываем начальную форму после выполнения поиска
-            setShowResetButton(false); // Скрываем кнопку "Сбросить"
+            setShowInitialForm(true);
+            setShowResetButton(false);
             setActiveKey('0');
 
             setTimeout(() => {
@@ -504,7 +495,6 @@ function SearchByArticle() {
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
             const seconds = String(now.getSeconds()).padStart(2, '0');
-
             const dateStr = `export_all_${day}-${month}-${year}_${hours}-${minutes}-${seconds}.xlsx`;
 
             // Получаем имя файла из заголовка или используем сформированное
@@ -567,7 +557,6 @@ function SearchByArticle() {
         setRequestForms((prevForms) => {
             const mainForm = prevForms.find((form) => form.isMain);
             const otherForms = prevForms.filter((form) => !form.isMain);
-
             const uniqueNewForms = newForms.filter((newForm) => {
                 return !prevForms.some(
                     (existingForm) =>
@@ -578,8 +567,8 @@ function SearchByArticle() {
             });
 
             if (uniqueNewForms.length > 0) {
-                setShowInitialForm(false); // Скрываем начальную форму
-                setShowResetButton(true); // Показываем кнопку сброса
+                setShowInitialForm(false);
+                setShowResetButton(true);
                 return [mainForm, ...otherForms, ...uniqueNewForms];
             }
 
@@ -624,8 +613,8 @@ function SearchByArticle() {
             });
 
             if (uniqueNewForms.length > 0) {
-                setShowInitialForm(false); // Скрываем начальную форму
-                setShowResetButton(true); // Показываем кнопку сброса
+                setShowInitialForm(false);
+                setShowResetButton(true);
                 return [mainForm, ...otherForms, ...uniqueNewForms];
             }
 
@@ -910,30 +899,6 @@ function SearchByArticle() {
                                                         >
                                                             <span>Запросы</span>
                                                         </div>
-                                                        {/*<div*/}
-                                                        {/*    className="upload-to-excel"*/}
-                                                        {/*    onClick={(event) => {*/}
-                                                        {/*        if (exportingToExcelStates[queryData._id]) return;*/}
-                                                        {/*        event.stopPropagation();*/}
-                                                        {/*        handleExportToExcelClick(queryData._id, 'Артикул').then(r => r);*/}
-                                                        {/*    }}*/}
-                                                        {/*    style={{ cursor: exportingToExcelStates[queryData._id] ? 'not-allowed' : 'pointer' }}*/}
-                                                        {/*    title={exportingToExcelStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Excel'}*/}
-                                                        {/*>*/}
-                                                        {/*    {exportingToExcelStates[queryData._id] ? (*/}
-                                                        {/*        <Spinner*/}
-                                                        {/*            as="span"*/}
-                                                        {/*            animation="border"*/}
-                                                        {/*            size="sm"*/}
-                                                        {/*            role="status"*/}
-                                                        {/*            aria-hidden="true"*/}
-                                                        {/*            style={{ width: '1rem', height: '1rem' }}*/}
-                                                        {/*        />*/}
-                                                        {/*    ) : (*/}
-                                                        {/*        <span>Excel</span>*/}
-                                                        {/*    )}*/}
-                                                        {/*</div>*/}
-
                                                         <div
                                                             className="upload-to-google-spreadsheet"
                                                             onClick={(event) => {
@@ -972,30 +937,6 @@ function SearchByArticle() {
                                                     >
                                                         <span>Использовать эти Запросы</span>
                                                     </div>
-                                                    {/*<div*/}
-                                                    {/*    className="upload-to-excel"*/}
-                                                    {/*    onClick={(event) => {*/}
-                                                    {/*        if (exportingToExcelStates[queryData._id]) return;*/}
-                                                    {/*        event.stopPropagation();*/}
-                                                    {/*        handleExportToExcelClick(queryData._id, 'Артикул').then(r => r);*/}
-                                                    {/*    }}*/}
-                                                    {/*    style={{ cursor: exportingToExcelStates[queryData._id] ? 'not-allowed' : 'pointer' }}*/}
-                                                    {/*    title={exportingToExcelStates[queryData._id] ? 'Идет выгрузка...' : 'Выгрузить в Excel'}*/}
-                                                    {/*>*/}
-                                                    {/*    {exportingToExcelStates[queryData._id] ? (*/}
-                                                    {/*        <Spinner*/}
-                                                    {/*            as="span"*/}
-                                                    {/*            animation="border"*/}
-                                                    {/*            size="sm"*/}
-                                                    {/*            role="status"*/}
-                                                    {/*            aria-hidden="true"*/}
-                                                    {/*            style={{ width: '1rem', height: '1rem' }}*/}
-                                                    {/*        />*/}
-                                                    {/*    ) : (*/}
-                                                    {/*        <span>Выгрузить в Excel</span>*/}
-                                                    {/*    )}*/}
-                                                    {/*</div>*/}
-
                                                     <div
                                                         className="upload-to-google-spreadsheet"
                                                         onClick={(event) => {
@@ -1114,8 +1055,6 @@ function SearchByArticle() {
                                 );
                             })}
                         </Accordion>
-
-
                         <ImageModal show={modalImage !== null} handleClose={closeModal} imageUrl={modalImage} />
                     </div>
                 ) : null}

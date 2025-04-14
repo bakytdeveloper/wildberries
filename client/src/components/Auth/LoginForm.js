@@ -8,14 +8,11 @@ const LoginForm = ({ API_HOST, setIsAuthenticated, setShowProfile, setShowForgot
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [loading, setLoading] = useState(false); // Добавлено состояние loading
+    const [loading, setLoading] = useState(false);
 
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
-
-        // console.log('Sending request to:', `${API_HOST}/api/auth/login`);
-        // console.log('Request data:', { email, password });
 
         try {
             const response = await axios.post(`${API_HOST}/api/auth/login`, { email, password });
@@ -66,7 +63,7 @@ const LoginForm = ({ API_HOST, setIsAuthenticated, setShowProfile, setShowForgot
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    disabled={loading} // Делаем поле неактивным
+                    disabled={loading}
                 />
             </Form.Group>
             <Form.Group controlId="password">

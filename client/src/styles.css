@@ -1,4 +1,3 @@
-/* Общие стили */
 :root {
     --background-color: #ffffff;
     --text-color: #333333;
@@ -91,7 +90,6 @@ header {
     padding: 2px;
     background: linear-gradient(to bottom, var(--header-background-color));
     color: white;
-    /*text-shadow: 2px 2px 6px black, -2px -2px 4px gray;*/
     box-shadow: var(--header-box-shadow-background);
     font-family: 'Roboto', sans-serif;
     font-style: normal;
@@ -127,20 +125,18 @@ header {
 }
 
 .active-link {
-    background-color: var(--shadow-color); /* Цвет фона для активной ссылки */
+    background-color: var(--shadow-color);
 }
 
 .brand-link, .article-link {
-    transition: background-color 0.3s, color 0.3s; /* Плавный переход */
+    transition: background-color 0.3s, color 0.3s;
 }
 
 .article-link {
-    /*margin-left: 10px;*/
     padding: 7px 20px 10px;
 }
 
 .brand-link {
-    /*margin-right: 10px;*/
     padding: 7px 20px 10px;
 }
 
@@ -182,7 +178,7 @@ header {
 .query-form-title {
     text-align: center;
     margin-bottom: 25px;
-    color: var(--text-color); /* Цвет заголовка формы */
+    color: var(--text-color);
 }
 
 .exit-button {
@@ -210,7 +206,7 @@ header {
 .auth-form h2 {
     text-align: center;
     margin-bottom: 20px;
-    color: var(--text-color); /* Цвет заголовка формы */
+    color: var(--text-color);
 }
 
 .auth-form .form-control {
@@ -264,7 +260,7 @@ header {
 
 .accordion-button {
     background-color: var(--accordion-background) !important;
-    color: var(--light-text-color); /* Используем светло-серый цвет для текста */
+    color: var(--light-text-color);
     border: none;
     padding: 15px;
     width: 100%;
@@ -288,7 +284,7 @@ header {
 .accordion-body {
     padding: 15px;
     background-color: var(--accordion-background);
-    color: var(--light-text-color); /* Используем светло-серый цвет для текста */
+    color: var(--light-text-color);
     border-top: 1px solid var(--accordion-border-color);
 }
 
@@ -480,7 +476,7 @@ table {
     align-items: center;
     justify-content: center;
     gap: 5px;
-    min-width: 170px; /* Фиксированная минимальная ширина */
+    min-width: 170px;
     text-align: center;
     color: white;
 }
@@ -515,6 +511,8 @@ table {
     transition: background-color 0.3s ease;
     margin-right: 10px;
     color: white;
+    text-align: center;
+
 }
 
 
@@ -532,9 +530,8 @@ table {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 170px; /* Фиксированная минимальная ширина */
+    min-width: 170px;
     padding: 4px 9px;
-    /*font-weight: bold;*/
     font-size: 17px;
     border: 2px solid #ccc;
     border-radius: 4px;
@@ -542,6 +539,8 @@ table {
     cursor: pointer;
     transition: background-color 0.3s ease;
     color: white;
+    text-align: center;
+
 }
 
 .upload-to-google-spreadsheet:hover {
@@ -620,7 +619,7 @@ tr:hover {
 .tableIndexDescription p {
     margin-left: 10px;
     font-weight: bold;
-    color: var(--light-text-color); /* Используем светло-серый цвет для текста */
+    color: var(--light-text-color);
 }
 
 .th_table {
@@ -645,19 +644,19 @@ tr:hover {
 .flex-grow-0 {
     margin-right: 10px;
     font-weight: bold;
-    color: var(--light-text-color); /* Используем светло-серый цвет для текста */
+    color: var(--light-text-color);
 }
 
 .flex-grow-1 {
     flex-grow: 1;
-    color: var(--light-text-color); /* Используем светло-серый цвет для текста */
+    color: var(--light-text-color);
 }
 
 .date-time {
     margin-left: auto;
     margin-right: 20px;
     text-align: right;
-    color: var(--light-text-color); /* Используем светло-серый цвет для текста */
+    color: var(--light-text-color);
 }
 
 .search input {
@@ -762,8 +761,6 @@ tr:hover {
     background-color: #c9302c;
 }
 
-
-/* Адаптивные стили */
 @media (max-width: 768px) {
 
     html, body, #root {
@@ -797,14 +794,12 @@ tr:hover {
     }
 
     .article-link {
-        /*margin-left: 12px;*/
         padding: 7px 15px 10px 12px;
         font-size: 15px;
         width: 50%;
     }
 
     .brand-link {
-        /*margin-right: 12px;*/
         padding: 7px 15px 10px 12px;
         font-size: 15px;
         width: 50%;
@@ -901,9 +896,9 @@ tr:hover {
     }
 
     .controls {
-        justify-content: space-around!important; /* Равномерно распределяем элементы */
-        align-items: center; /* Выравнивание по вертикали, если нужно */
-        text-align: center; /* Опционально, если внутри текста требуется центрирование */
+        justify-content: space-around!important;
+        align-items: center;
+        text-align: center;
     }
 
     .controls_primary {
@@ -996,11 +991,6 @@ tr:hover {
 
     }
 
-    .registration-button {
-        /*margin-left: 13px !important;*/
-        /*margin-top: 10px;*/
-    }
-
     .exit-button {
         position: static;
         margin-bottom: 10px;
@@ -1008,7 +998,6 @@ tr:hover {
 
     .controls_primary_danger {
         position: static;
-        /*margin-bottom: 10px;*/
         margin-right: 10px;
     }
 

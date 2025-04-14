@@ -7,8 +7,7 @@ const AdminPanel = ({ API_HOST }) => {
     const [users, setUsers] = useState([]);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState(null);
-    const [isDeleting, setIsDeleting] = useState(false); // Новое состояние для отслеживания процесса удаления
-
+    const [isDeleting, setIsDeleting] = useState(false);
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
     useEffect(() => {
@@ -61,7 +60,7 @@ const AdminPanel = ({ API_HOST }) => {
             await axios.delete(`${API_HOST}/api/admin/users/${selectedUserId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            await fetchUsers(); // Обновляем список пользователей после удаления
+            await fetchUsers();
             setShowDeleteModal(false);
             Toastify({
                 text: 'Пользователь и все связанные данные успешно удалены',
@@ -80,13 +79,13 @@ const AdminPanel = ({ API_HOST }) => {
                 style: { background: '#ff0000' }
             }).showToast();
         } finally {
-            setIsDeleting(false); // Завершаем процесс удаления (в любом случае)
+            setIsDeleting(false);
         }
     };
 
     const handleLogout = () => {
-        sessionStorage.removeItem('token'); // Удаляем токен
-        window.location.href = '/'; // Перенаправляем на страницу входа
+        sessionStorage.removeItem('token');
+        window.location.href = '/';
     };
 
     return (
@@ -95,7 +94,7 @@ const AdminPanel = ({ API_HOST }) => {
                 <Button
                     className="admin-panel-logout-container"
                     variant="danger"
-                    onClick={handleLogout} // Добавляем обработчик выхода
+                    onClick={handleLogout}
                 >
                     Выход
                 </Button>
