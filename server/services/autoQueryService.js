@@ -32,7 +32,7 @@ class AutoQueryService {
 
     async processAllUsers() {
         try {
-            const users = await UserModel.find({});
+            const users = await UserModel.find({ isBlocked: false });
 
             if (!Array.isArray(users)) {
                 throw new Error('Expected users to be an array');
@@ -59,11 +59,17 @@ class AutoQueryService {
     // В классе AutoQueryService добавляем новый метод
     async processUserWithDataExport(userId) {
         try {
+            // Сначала проверяем статус блокировки пользователя
+            const user = await UserModel.findById(userId);
+            if (!user || user.isBlocked) {
+                console.log(`Пользователь ${userId} заблокирован, пропускаем обработку`);
+                return;
+            }
+
             // 1. Выполняем автоматические запросы как обычно
             await this.scheduleAutoQueriesForUser(userId);
 
             // 2. Получаем пользователя с его spreadsheetId
-            const user = await UserModel.findById(userId);
             if (!user || !user.spreadsheetId) return;
 
             // 3. Получаем последние сохраненные данные
@@ -96,6 +102,13 @@ class AutoQueryService {
     }
 
     async scheduleAutoQueriesForUser(userId) {
+        // Проверяем блокировку перед началом обработки
+        const user = await UserModel.findById(userId);
+        if (!user || user.isBlocked) {
+            console.log(`Пользователь ${userId} заблокирован, запросы отменены`);
+            return;
+        }
+
         if (this.activeUsers.has(userId.toString())) {
             return;
         }
@@ -118,7 +131,12 @@ class AutoQueryService {
     }
 
     async getUniqueBrandCombinations(userId) {
+        // Проверяем блокировку
+        const user = await UserModel.findById(userId);
+        if (!user || user.isBlocked) return [];
+
         const queries = await QueryModel.find({ userId });
+
         const combinations = new Map();
 
         for (const query of queries) {
@@ -165,6 +183,10 @@ class AutoQueryService {
     }
 
     async getUniqueArticleCombinations(userId) {
+        // Проверяем блокировку
+        const user = await UserModel.findById(userId);
+        if (!user || user.isBlocked) return [];
+
         const queries = await QueryArticleModel.find({ userId });
         const combinations = new Map();
 
@@ -230,7 +252,11 @@ class AutoQueryService {
 
     async sendLatestDataToGoogleSheets() {
         try {
-            const users = await UserModel.find({ spreadsheetId: { $exists: true } });
+            // Добавляем проверку isBlocked: false
+            const users = await UserModel.find({
+                spreadsheetId: { $exists: true },
+                isBlocked: false
+            });
 
             for (const user of users) {
                 try {
