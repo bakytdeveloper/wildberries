@@ -1,4 +1,5 @@
 const cron = require('node-cron');
+const {executeUserQueries} = require("./queryService");
 const { QueryModel } = require('../models/queryModel');
 const { QueryArticleModel } = require('../models/queryArticleModel');
 const { UserModel } = require('../models/userModel');
@@ -23,8 +24,9 @@ class AutoQueryService {
     }
 
     async init() {
-        // Запускаем основной процесс с интервалом 4 часа
-        cron.schedule('0 */4 * * *', () => this.processAllUsers());
+        cron.schedule('0 */4 * * *', () => {
+            this.processAllUsers();
+        });
         console.log('AutoQueryService инициализирован с пакетной обработкой');
     }
 
@@ -54,11 +56,43 @@ class AutoQueryService {
         }
     }
 
+    // В классе AutoQueryService добавляем новый метод
+    async processUserWithDataExport(userId) {
+        try {
+            // 1. Выполняем автоматические запросы как обычно
+            await this.scheduleAutoQueriesForUser(userId);
+
+            // 2. Получаем пользователя с его spreadsheetId
+            const user = await UserModel.findById(userId);
+            if (!user || !user.spreadsheetId) return;
+
+            // 3. Получаем последние сохраненные данные
+            const [latestBrandQuery, latestArticleQuery] = await Promise.all([
+                QueryModel.findOne({ userId, isAutoQuery: true })
+                    .sort({ createdAt: -1 })
+                    .populate('productTables.products'),
+                QueryArticleModel.findOne({ userId, isAutoQuery: true })
+                    .sort({ createdAt: -1 })
+                    .populate('productTables.products')
+            ]);
+
+            // 4. Если есть новые данные - отправляем в Google Sheets
+            if (latestBrandQuery || latestArticleQuery) {
+                await executeUserQueries(user);
+                console.log(`Данные для пользователя ${user.email} успешно экспортированы`);
+            }
+        } catch (error) {
+            console.error(`Ошибка обработки пользователя ${userId}:`, error);
+        }
+    }
+
+// Модифицируем метод processUserBatch
     async processUserBatch(users) {
         await Promise.all(users.map(user =>
-            this.scheduleAutoQueriesForUser(user._id).catch(error =>
+            this.processUserWithDataExport(user._id).catch(error =>
                 console.error(`Error processing user ${user._id}:`, error)
-            )));
+            )
+        ));
     }
 
     async scheduleAutoQueriesForUser(userId) {
@@ -191,6 +225,32 @@ class AutoQueryService {
         } catch (error) {
             console.error(`Error executing auto queries for user ${userId}:`, error);
             throw error;
+        }
+    }
+
+    async sendLatestDataToGoogleSheets() {
+        try {
+            const users = await UserModel.find({ spreadsheetId: { $exists: true } });
+
+            for (const user of users) {
+                try {
+                    // Получаем последние автоматические запросы
+                    const [latestBrandQuery, latestArticleQuery] = await Promise.all([
+                        QueryModel.findOne({ userId: user._id, isAutoQuery: true })
+                            .sort({ createdAt: -1 }),
+                        QueryArticleModel.findOne({ userId: user._id, isAutoQuery: true })
+                            .sort({ createdAt: -1 })
+                    ]);
+
+                    if (latestBrandQuery || latestArticleQuery) {
+                        await executeUserQueries(user);
+                    }
+                } catch (error) {
+                    console.error(`Ошибка отправки данных для пользователя ${user.email}:`, error);
+                }
+            }
+        } catch (error) {
+            console.error('Ошибка в sendLatestDataToGoogleSheets:', error);
         }
     }
 

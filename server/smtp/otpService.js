@@ -16,12 +16,26 @@ const transporter = nodemailer.createTransport({
 const sendOTP = (email) => {
     const otp = crypto.randomInt(100000, 999999).toString();
     otpStorage[email] = otp;
+
     transporter.sendMail({
         from: process.env.SMTP_FROM,
         to: email,
         subject: 'Здравствуйте',
-        text: `Мы обновили ваш пароль для авторизации, это ваш обновлённый пароль: ${otp}`
+        html: `
+            <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+                <p>Мы обновили ваш пароль для авторизации.</p>
+                <p>Это ваш обновлённый пароль, запишите его в надёжное место и используйте для входа в ваш аккаунт:</p>
+                <p style="font-size: 18px; font-weight: bold; color: #2c3e50; background-color: #f8f9fa; 
+                   padding: 10px; border-radius: 5px; display: inline-block;">
+                    ${otp}
+                </p>
+                <p style="margin-top: 20px;">С уважением,<br>Команда сервиса</p>
+            </div>
+        `,
+        // Оставляем text-версию для клиентов, которые не поддерживают HTML
+        text: `Мы обновили ваш пароль для авторизации. Это ваш обновлённый пароль, запишите его в надёжное место и используйте для входа в ваш аккаунт: ${otp}`
     });
+
     return otp;
 };
 

@@ -45,18 +45,6 @@ const connectWithRetry = () => {
         });
 };
 
-// Основная задача выполнения запросов (каждые 4 часа в :10) google sheet
-cron.schedule('10 */4 * * *', async () => {
-    try {
-        const users = await UserModel.find({});
-        for (const user of users) {
-            await executeUserQueries(user);
-        }
-    } catch (error) {
-        console.error('Ошибка выполнения задачи:', error);
-    }
-});
-
 // Задача очистки Google Sheets (каждый день в 02:00)
     cron.schedule('0 2 * * *', async () => {
     if (taskState.isCleanupRunning) {
