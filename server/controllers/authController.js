@@ -65,7 +65,6 @@ const loginUser = async (req, res) => {
             return res.status(400).json({ message: 'Неверный адрес электронной почты или пароль' });
         }
 
-        // Проверяем, заблокирован ли пользователь
         if (user.isBlocked) {
             return res.status(403).json({ message: 'Пользователь заблокирован. Обратитесь в службу поддержки.' });
         }

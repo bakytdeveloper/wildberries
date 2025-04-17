@@ -8,15 +8,14 @@ const { addDataToSheet } = require('../services/googleSheetService');
 // Получение всех запросов
 const getQueries = async (req, res) => {
     try {
-        const userId = req.userId; // Получаем идентификатор пользователя из запроса
+        const userId = req.userId;
 
-        // Если userId равен "admin", возвращаем пустой массив или пропускаем запрос
         if (userId === 'admin') {
             return res.json([]);
         }
 
         const queries = await QueryModel.find({ userId }).sort({ createdAt: -1 });
-        res.json(queries); // Отправляем JSON ответ
+        res.json(queries);
     } catch (error) {
         console.error('Error fetching queries:', error);
         res.status(500).json({ error: 'Не удалось получить запросы' });
@@ -26,7 +25,7 @@ const getQueries = async (req, res) => {
 // Создание нового запроса
 const createQuery = async (req, res) => {
     const { forms } = req.body;
-    const userId = req.userId; // Получаем идентификатор пользователя из запроса
+    const userId = req.userId;
 
     if (!forms || !Array.isArray(forms) || forms.length === 0) {
         res.status(400).json({ error: 'Неверный формат запроса' });

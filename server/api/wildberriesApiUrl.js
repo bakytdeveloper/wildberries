@@ -16,7 +16,7 @@ const getProducts = async (query, dest, page = 1) => {
             'ab_testid': 'false',
             'appType': '1',
             'curr': 'rub',
-            'dest': dest, // Динамическое значение для dest
+            'dest': dest,
             'hide_dtype': '10',
             'lang': 'ru',
             'page': page.toString(),

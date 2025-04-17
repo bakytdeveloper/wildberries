@@ -56,7 +56,6 @@ class AutoQueryService {
         }
     }
 
-    // В классе AutoQueryService добавляем новый метод
     async processUserWithDataExport(userId) {
         try {
             // Сначала проверяем статус блокировки пользователя

@@ -111,7 +111,6 @@ const updateSubscription = async (req, res) => {
 };
 
 // Проверка подписок и отправка напоминаний
-// Изменённая функция checkSubscriptions
 const checkSubscriptions = async () => {
     try {
         const currentDate = new Date();

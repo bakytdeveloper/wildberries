@@ -361,6 +361,14 @@ header {
     padding: 0 10px;
 }
 
+.query-form-search-and-toggle {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
 
 .controls_success {
     background: #d98c07 !important;

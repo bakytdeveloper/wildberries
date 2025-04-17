@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import {Table, Button, Modal, Spinner, Form, InputGroup, ToggleButton} from 'react-bootstrap';
+import {Button, Modal, Spinner, Form, InputGroup, ToggleButton} from 'react-bootstrap';
 import Toastify from 'toastify-js';
 
 const AdminPanel = ({ API_HOST }) => {
@@ -15,7 +15,8 @@ const AdminPanel = ({ API_HOST }) => {
     const [isUpdatingSubscription, setIsUpdatingSubscription] = useState(false);
     const [sortBySubscription, setSortBySubscription] = useState(false);
     const [originalUsers, setOriginalUsers] = useState([]);
-
+    const [searchTerm, setSearchTerm] = useState(''); // Состояние для поискового запроса
+    const [filteredUsers, setFilteredUsers] = useState([]); // Добавлено состояние для отфильтрованных пользователей
 
     useEffect(() => {
         document.body.setAttribute('data-theme', theme);
@@ -25,6 +26,14 @@ const AdminPanel = ({ API_HOST }) => {
     useEffect(() => {
         fetchUsers().then(r => r);
     }, []);
+
+    // Эффект для фильтрации пользователей при изменении searchTerm или users
+    useEffect(() => {
+        const filtered = users.filter(user =>
+            user.username.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        setFilteredUsers(filtered);
+    }, [searchTerm, users]);
 
     const fetchUsers = async () => {
         try {
@@ -38,11 +47,17 @@ const AdminPanel = ({ API_HOST }) => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setUsers(response.data);
+            setFilteredUsers(response.data); // Инициализируем filteredUsers
             setOriginalUsers(response.data); // Сохраняем исходный порядок
         } catch (error) {
             console.error('Ошибка при получении списка пользователей:', error);
         }
     };
+
+    const handleSearchChange = (e) => {
+        setSearchTerm(e.target.value);
+    };
+
 
     const toggleSortBySubscription = () => {
         const newSortState = !sortBySubscription;
@@ -199,20 +214,30 @@ const AdminPanel = ({ API_HOST }) => {
                 </Button>
 
                 <h2 className="query-form-title">Админ панель</h2>
-                <ToggleButton
-                    type="checkbox"
-                    variant={sortBySubscription ? 'primary' : 'outline-primary'}
-                    checked={sortBySubscription}
-                    value="1"
-                    onClick={toggleSortBySubscription}
-                    style={{ marginLeft: '20px' }}
-                >
-                    {sortBySubscription ? 'Обычный порядок' : 'Сортировать по подписке'}
-                </ToggleButton>
+                <div className="query-form-search-and-toggle" >
+                    <Form.Control
+                        type="text"
+                        placeholder="Поиск по имени"
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                        style={{ maxWidth: '300px' }}
+                    />
+
+                    <ToggleButton
+                        type="checkbox"
+                        variant={sortBySubscription ? 'primary' : 'outline-primary'}
+                        checked={sortBySubscription}
+                        value="1"
+                        onClick={toggleSortBySubscription}
+                    >
+                        {sortBySubscription ? 'Обычный порядок' : 'Сортировать по подписке'}
+                    </ToggleButton>
+                </div>
             </div>
             <table id="productsTable">
                 <thead>
                 <tr>
+                    <th className="th_table">№</th>
                     <th className="th_table">Имя</th>
                     <th className="th_table">Email</th>
                     <th className="th_table">Дата регистрации</th>
@@ -225,8 +250,9 @@ const AdminPanel = ({ API_HOST }) => {
                 </tr>
                 </thead>
                 <tbody>
-                {users.map(user => (
+                {filteredUsers.map((user, i) => (
                     <tr key={user._id}>
+                        <td className="td_table">{i + 1}</td>
                         <td className="td_table">{user.username}</td>
                         <td className="td_table">{user.email}</td>
                         <td className="td_table">{new Date(user.createdAt).toLocaleString()}</td>
