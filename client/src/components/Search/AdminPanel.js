@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Table, Button, Modal, Spinner, Form, InputGroup } from 'react-bootstrap';
+import {Table, Button, Modal, Spinner, Form, InputGroup, ToggleButton} from 'react-bootstrap';
 import Toastify from 'toastify-js';
 
 const AdminPanel = ({ API_HOST }) => {
@@ -13,6 +13,9 @@ const AdminPanel = ({ API_HOST }) => {
     const [subscriptionAmount, setSubscriptionAmount] = useState('');
     const [calculatedDate, setCalculatedDate] = useState('');
     const [isUpdatingSubscription, setIsUpdatingSubscription] = useState(false);
+    const [sortBySubscription, setSortBySubscription] = useState(false);
+    const [originalUsers, setOriginalUsers] = useState([]);
+
 
     useEffect(() => {
         document.body.setAttribute('data-theme', theme);
@@ -35,8 +38,46 @@ const AdminPanel = ({ API_HOST }) => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setUsers(response.data);
+            setOriginalUsers(response.data); // Сохраняем исходный порядок
         } catch (error) {
             console.error('Ошибка при получении списка пользователей:', error);
+        }
+    };
+
+    const toggleSortBySubscription = () => {
+        const newSortState = !sortBySubscription;
+        setSortBySubscription(newSortState);
+
+        console.log("toggleSortBySubscription")
+
+        if (newSortState) {
+            // Сортируем по подписке
+            const sortedUsers = [...users].sort((a, b) => {
+                const now = new Date();
+
+                // Пользователи без подписки идут первыми
+                if (!a.subscription?.subscriptionEndDate && !b.subscription?.subscriptionEndDate) return 0;
+                if (!a.subscription?.subscriptionEndDate) return -1;
+                if (!b.subscription?.subscriptionEndDate) return 1;
+
+                // Проверяем, истекла ли подписка
+                const aExpired = new Date(a.subscription.subscriptionEndDate) < now;
+                const bExpired = new Date(b.subscription.subscriptionEndDate) < now;
+
+                // Истекшие подписки идут перед активными
+                if (aExpired && !bExpired) return -1;
+                if (!aExpired && bExpired) return 1;
+                if (aExpired && bExpired) {
+                    return new Date(a.subscription.subscriptionEndDate) - new Date(b.subscription.subscriptionEndDate);
+                }
+
+                // Для активных подписок сортируем по оставшемуся времени
+                return new Date(a.subscription.subscriptionEndDate) - new Date(b.subscription.subscriptionEndDate);
+            });
+            setUsers(sortedUsers);
+        } else {
+            // Возвращаем исходный порядок
+            setUsers([...originalUsers]);
         }
     };
 
@@ -158,6 +199,16 @@ const AdminPanel = ({ API_HOST }) => {
                 </Button>
 
                 <h2 className="query-form-title">Админ панель</h2>
+                <ToggleButton
+                    type="checkbox"
+                    variant={sortBySubscription ? 'primary' : 'outline-primary'}
+                    checked={sortBySubscription}
+                    value="1"
+                    onClick={toggleSortBySubscription}
+                    style={{ marginLeft: '20px' }}
+                >
+                    {sortBySubscription ? 'Обычный порядок' : 'Сортировать по подписке'}
+                </ToggleButton>
             </div>
             <table id="productsTable">
                 <thead>
