@@ -10,7 +10,12 @@ const userSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now },
     isBlocked: { type: Boolean, default: false },
     blockedAt: { type: Date },
-    unblockedAt: { type: Date }
+    unblockedAt: { type: Date },
+    subscription: {
+        amount: { type: Number, default: 0 },
+        subscriptionEndDate: { type: Date },
+        lastPaymentDate: { type: Date }
+    }
 });
 
 const UserModel = mongoose.model('User', userSchema);

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Table, Button, Modal, Spinner } from 'react-bootstrap';
+import { Table, Button, Modal, Spinner, Form, InputGroup } from 'react-bootstrap';
 import Toastify from 'toastify-js';
 
 const AdminPanel = ({ API_HOST }) => {
@@ -9,6 +9,10 @@ const AdminPanel = ({ API_HOST }) => {
     const [selectedUserId, setSelectedUserId] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+    const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+    const [subscriptionAmount, setSubscriptionAmount] = useState('');
+    const [calculatedDate, setCalculatedDate] = useState('');
+    const [isUpdatingSubscription, setIsUpdatingSubscription] = useState(false);
 
     useEffect(() => {
         document.body.setAttribute('data-theme', theme);
@@ -54,7 +58,7 @@ const AdminPanel = ({ API_HOST }) => {
     };
 
     const handleDeleteConfirm = async () => {
-        setIsDeleting(true); // Начинаем процесс удаления
+        setIsDeleting(true);
         try {
             const token = sessionStorage.getItem('token');
             await axios.delete(`${API_HOST}/api/admin/users/${selectedUserId}`, {
@@ -83,6 +87,60 @@ const AdminPanel = ({ API_HOST }) => {
         }
     };
 
+    const handleSubscriptionClick = (userId) => {
+        setSelectedUserId(userId);
+        setSubscriptionAmount('');
+        setCalculatedDate('');
+        setShowSubscriptionModal(true);
+    };
+
+    const calculateSubscriptionDate = () => {
+        const amount = parseInt(subscriptionAmount);
+        if (isNaN(amount) || amount < 1000) {
+            setCalculatedDate('Сумма должна быть не менее 1000');
+            return;
+        }
+
+        const months = Math.floor(amount / 1000);
+        const currentDate = new Date();
+        const endDate = new Date();
+        endDate.setMonth(currentDate.getMonth() + months);
+
+        setCalculatedDate(`Подписка будет действовать до: ${endDate.toLocaleDateString()}`);
+    };
+
+    const updateUserSubscription = async () => {
+        setIsUpdatingSubscription(true);
+        try {
+            const token = sessionStorage.getItem('token');
+            await axios.post(`${API_HOST}/api/admin/users/${selectedUserId}/subscription`,
+                { amount: subscriptionAmount },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            await fetchUsers();
+            setShowSubscriptionModal(false);
+            Toastify({
+                text: 'Подписка пользователя успешно обновлена',
+                duration: 3000,
+                gravity: 'top',
+                position: 'right',
+                style: { background: '#00c851' }
+            }).showToast();
+        } catch (error) {
+            console.error('Ошибка при обновлении подписки:', error);
+            Toastify({
+                text: 'Ошибка при обновлении подписки',
+                duration: 3000,
+                gravity: 'top',
+                position: 'right',
+                style: { background: '#ff0000' }
+            }).showToast();
+        } finally {
+            setIsUpdatingSubscription(false);
+        }
+    };
+
     const handleLogout = () => {
         sessionStorage.removeItem('token');
         window.location.href = '/';
@@ -90,7 +148,7 @@ const AdminPanel = ({ API_HOST }) => {
 
     return (
         <div className="container">
-            <div className="logout-container" >
+            <div className="logout-container">
                 <Button
                     className="admin-panel-logout-container"
                     variant="danger"
@@ -108,8 +166,10 @@ const AdminPanel = ({ API_HOST }) => {
                     <th className="th_table">Email</th>
                     <th className="th_table">Дата регистрации</th>
                     <th className="th_table">Статус</th>
-                    <th className="th_table">Дата блокировки/разблокировки</th>
+                    <th className="th_table">Блокировки/Разблокировки</th>
+                    <th className="th_table">Подписка до</th>
                     <th className="th_table">Разрешение</th>
+                    <th className="th_table">Подписка</th>
                     <th className="th_table">Удаление</th>
                 </tr>
                 </thead>
@@ -128,11 +188,21 @@ const AdminPanel = ({ API_HOST }) => {
                                     : 'Нет данных'}
                         </td>
                         <td className="td_table">
+                            {user.subscription?.subscriptionEndDate
+                                ? new Date(user.subscription.subscriptionEndDate).toLocaleDateString()
+                                : 'Нет подписки'}
+                        </td>
+                        <td className="td_table">
                             <Button
                                 variant={user.isBlocked ? 'success' : 'primary'}
                                 onClick={() => toggleBlockUser(user._id)}
                             >
                                 {user.isBlocked ? 'Разблокировать' : 'Заблокировать'}
+                            </Button>
+                        </td>
+                        <td className="td_table">
+                            <Button variant="info" onClick={() => handleSubscriptionClick(user._id)}>
+                                Подписка
                             </Button>
                         </td>
                         <td className="td_table">
@@ -144,6 +214,8 @@ const AdminPanel = ({ API_HOST }) => {
                 ))}
                 </tbody>
             </table>
+
+            {/* Модальное окно удаления */}
             <Modal show={showDeleteModal} onHide={() => !isDeleting && setShowDeleteModal(false)}>
                 <Modal.Header closeButton>
                     <Modal.Title>Подтверждение удаления</Modal.Title>
@@ -166,6 +238,53 @@ const AdminPanel = ({ API_HOST }) => {
                                 <span className="ms-2">Удаление...</span>
                             </>
                         ) : 'Удалить'}
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+
+            {/* Модальное окно подписки */}
+            <Modal show={showSubscriptionModal} onHide={() => !isUpdatingSubscription && setShowSubscriptionModal(false)}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Обновление подписки</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form.Group>
+                        <Form.Label>Сумма оплаты (1000 = 1 месяц)</Form.Label>
+                        <InputGroup>
+                            <Form.Control
+                                type="number"
+                                value={subscriptionAmount}
+                                onChange={(e) => setSubscriptionAmount(e.target.value)}
+                                placeholder="Введите сумму"
+                            />
+                            <Button variant="outline-secondary" onClick={calculateSubscriptionDate}>
+                                Рассчитать
+                            </Button>
+                        </InputGroup>
+                    </Form.Group>
+                    {calculatedDate && (
+                        <div className="mt-3" style={{ fontWeight: 'bold' }}>
+                            {calculatedDate}
+                        </div>
+                    )}
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowSubscriptionModal(false)} disabled={isUpdatingSubscription}>
+                        Отменить
+                    </Button>
+                    <Button variant="primary" onClick={updateUserSubscription} disabled={isUpdatingSubscription || !subscriptionAmount}>
+                        {isUpdatingSubscription ? (
+                            <>
+                                <Spinner
+                                    as="span"
+                                    animation="border"
+                                    size="sm"
+                                    role="status"
+                                    aria-hidden="true"
+                                />
+                                <span className="ms-2">Обновление...</span>
+                            </>
+                        ) : 'Обновить подписку'}
                     </Button>
                 </Modal.Footer>
             </Modal>
