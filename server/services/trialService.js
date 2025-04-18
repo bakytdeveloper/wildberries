@@ -6,6 +6,26 @@ const { QueryArticleModel } = require('../models/queryArticleModel');
 const checkTrialPeriods = async () => {
     try {
         const currentDate = new Date();
+        const twoDaysBefore = new Date();
+        twoDaysBefore.setDate(twoDaysBefore.getDate() + 2); // 2 дня до окончания пробного периода
+
+        // 1. Находим пользователей, у которых до окончания пробного периода осталось 2 дня
+        const usersToWarn = await UserModel.find({
+            'subscription.isTrial': true,
+            'subscription.trialEndDate': {
+                $lte: twoDaysBefore,
+                $gt: currentDate
+            },
+            'subscription.trialWarningSent': false,
+            isBlocked: false
+        });
+
+        // Отправляем предупреждения
+        for (const user of usersToWarn) {
+            user.subscription.trialWarningSent = true;
+            await user.save();
+            console.log(`Предупреждение отправлено пользователю ${user.email} о скором окончании пробного периода`);
+        }
 
         // 1. Находим пользователей с истекшим пробным периодом (2 дня)
         const trialEndedUsers = await UserModel.find({
