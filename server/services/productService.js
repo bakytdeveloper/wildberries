@@ -64,7 +64,7 @@ function generateImageUrl(id) {
 
 async function fetchAndParseProducts(query, dest, selectedBrand, queryTime) {
     try {
-        const products = [];
+        const productsMap = new Map();
         let page = 1;
         let hasMoreData = true;
         const baseQuery = selectedBrand === 'S.Point' ? 'Одежда S.Point' : '';
@@ -76,26 +76,53 @@ async function fetchAndParseProducts(query, dest, selectedBrand, queryTime) {
                 const productsRaw = data?.data?.products;
 
                 if (!productsRaw || productsRaw.length === 0) {
-                    return { products: [], hasMore: false };
+                    return { hasMore: false };
                 }
 
-                const filteredProducts = productsRaw
-                    .filter(product => product.brand.toLowerCase() === selectedBrand.toLowerCase())
-                    .map(product => ({
-                        position: productsRaw.findIndex(p => parseInt(p.id) === product.id) + 1,
-                        id: product.id,
-                        brand: product.brand,
-                        name: product.name,
-                        page: pageNum,
-                        dest: dest,
-                        city: cityDestinations[dest] || 'Неизвестный город',
-                        query: query,
-                        queryTime: queryTime,
-                        imageUrl: generateImageUrl(product.id),
-                        log: product.log
-                    }));
+                for (const product of productsRaw) {
+                    if (product.brand.toLowerCase() === selectedBrand.toLowerCase()) {
+                        const productId = product.id;
+                        const positionOnPage = productsRaw.findIndex(p => parseInt(p.id) === productId) + 1;
+                        const combinedPosition = pageNum > 1
+                            ? `${pageNum}${positionOnPage < 10 ? '0' + positionOnPage : positionOnPage}`
+                            : String(positionOnPage);
 
-                return { products: filteredProducts, hasMore: true };
+                        if (productsMap.has(productId)) {
+                            const existingProduct = productsMap.get(productId);
+                            if (parseInt(combinedPosition) < parseInt(existingProduct.combinedPosition)) {
+                                productsMap.set(productId, {
+                                    ...product,
+                                    position: positionOnPage,
+                                    combinedPosition: combinedPosition,
+                                    page: pageNum,
+                                    dest: dest,
+                                    city: cityDestinations[dest] || 'Неизвестный город',
+                                    query: query,
+                                    queryTime: queryTime,
+                                    imageUrl: generateImageUrl(product.id),
+                                    log: product.log
+                                });
+                            }
+                        } else {
+                            productsMap.set(productId, {
+                                position: positionOnPage,
+                                combinedPosition: combinedPosition,
+                                id: product.id,
+                                brand: product.brand,
+                                name: product.name,
+                                page: pageNum,
+                                dest: dest,
+                                city: cityDestinations[dest] || 'Неизвестный город',
+                                query: query,
+                                queryTime: queryTime,
+                                imageUrl: generateImageUrl(product.id),
+                                log: product.log
+                            });
+                        }
+                    }
+                }
+
+                return { hasMore: true };
             } catch (error) {
                 if (retryCount < CONFIG.MAX_RETRIES) {
                     const delay = CONFIG.RETRY_DELAY * (retryCount + 1);
@@ -115,17 +142,12 @@ async function fetchAndParseProducts(query, dest, selectedBrand, queryTime) {
                 CONFIG.MAX_PAGES - page + 1
             );
 
-            // Создаем пакет запросов
             for (let i = 0; i < pagesToProcess; i++) {
                 promises.push(processPage(page + i));
             }
 
-            // Обрабатываем пакет
             const results = await Promise.all(promises);
             for (const result of results) {
-                if (result.products.length > 0) {
-                    products.push(...result.products);
-                }
                 if (!result.hasMore) {
                     hasMoreData = false;
                 }
@@ -133,27 +155,29 @@ async function fetchAndParseProducts(query, dest, selectedBrand, queryTime) {
 
             page += pagesToProcess;
 
-            // Добавляем задержку между пакетами, если есть еще страницы
             if (hasMoreData && page <= CONFIG.MAX_PAGES) {
                 await setTimeout(CONFIG.BATCH_DELAY);
             }
         }
 
-        return products;
+        // Сортируем товары по combinedPosition (от меньшего к большему)
+        const sortedProducts = Array.from(productsMap.values()).sort((a, b) => {
+            return parseInt(a.combinedPosition) - parseInt(b.combinedPosition);
+        });
+
+        return sortedProducts;
     } catch (error) {
         console.error(`Error parsing products for query "${query}", brand "${selectedBrand}":`, error);
         throw error;
     }
 }
 
-
 async function fetchAndParseProductsByArticle(query, dest, article, queryTime) {
     try {
-        const products = [];
+        let foundProduct = null;
         let page = 1;
         let hasMoreData = true;
         const searchQuery = query.toLowerCase();
-        let foundProduct = null;
 
         const processPage = async (pageNum, retryCount = 0) => {
             try {
@@ -161,15 +185,19 @@ async function fetchAndParseProductsByArticle(query, dest, article, queryTime) {
                 const productsRaw = data?.data?.products;
 
                 if (!productsRaw || productsRaw.length === 0) {
-                    return { products: [], hasMore: false };
+                    return { hasMore: false };
                 }
 
-                // Ищем товар с точным совпадением артикула
                 const product = productsRaw.find(p => String(p.id) === String(article));
-
                 if (product) {
-                    const productWithDetails = {
-                        position: productsRaw.findIndex(p => String(p.id) === String(article)) + 1,
+                    const positionOnPage = productsRaw.findIndex(p => String(p.id) === String(article)) + 1;
+                    const combinedPosition = pageNum > 1
+                        ? `${pageNum}${positionOnPage < 10 ? '0' + positionOnPage : positionOnPage}`
+                        : String(positionOnPage);
+
+                    foundProduct = {
+                        position: positionOnPage,
+                        combinedPosition: combinedPosition,
                         id: product.id,
                         brand: product.brand,
                         name: product.name,
@@ -181,10 +209,10 @@ async function fetchAndParseProductsByArticle(query, dest, article, queryTime) {
                         imageUrl: generateImageUrl(product.id),
                         log: product.log
                     };
-                    return { products: [productWithDetails], hasMore: false };
+                    return { hasMore: false };
                 }
 
-                return { products: [], hasMore: true };
+                return { hasMore: true };
             } catch (error) {
                 if (retryCount < CONFIG.MAX_RETRIES) {
                     const delay = CONFIG.RETRY_DELAY * (retryCount + 1);
@@ -210,10 +238,6 @@ async function fetchAndParseProductsByArticle(query, dest, article, queryTime) {
 
             const results = await Promise.all(promises);
             for (const result of results) {
-                if (result.products.length > 0) {
-                    products.push(...result.products);
-                    foundProduct = true; // Товар найден, прекращаем поиск
-                }
                 if (!result.hasMore) {
                     hasMoreData = false;
                 }
@@ -226,8 +250,7 @@ async function fetchAndParseProductsByArticle(query, dest, article, queryTime) {
             }
         }
 
-        // Если товар не найден, возвращаю пустой массив
-        return products.length > 0 ? products : [];
+        return foundProduct ? [foundProduct] : [];
     } catch (error) {
         console.error(`Error parsing products for article "${article}":`, error);
         throw error;
