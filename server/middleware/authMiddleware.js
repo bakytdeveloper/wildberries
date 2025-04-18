@@ -79,6 +79,35 @@ const forGoogleSheets = async (req, res, next) => {
     }
 };
 
-module.exports = { protect, isAdmin, forGoogleSheets };
+const checkTrialAccess = async (req, res, next) => {
+    try {
+        const user = await UserModel.findById(req.user.userId);
+
+        if (!user) {
+            return res.status(404).json({ message: 'Пользователь не найден' });
+        }
+
+        // Если пользователь в пробном периоде и он не истек
+        if (user.subscription.isTrial && user.subscription.trialEndDate >= new Date()) {
+            return next();
+        }
+
+        // Если пользователь не в пробном периоде или имеет оплаченную подписку
+        if (!user.subscription.isTrial || (user.subscription.amount > 0 && user.subscription.subscriptionEndDate >= new Date())) {
+            return next();
+        }
+
+        // Если пробный период истек и подписка не оплачена
+        res.status(403).json({
+            message: 'Пробный период закончился. Пожалуйста, оплатите подписку для продолжения работы.'
+        });
+    } catch (error) {
+        console.error('Ошибка при проверке пробного периода:', error);
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+};
+
+
+module.exports = { protect, isAdmin, forGoogleSheets, checkTrialAccess };
 
 

@@ -14,7 +14,9 @@ const userSchema = new mongoose.Schema({
     subscription: {
         amount: { type: Number, default: 0 },
         subscriptionEndDate: { type: Date },
-        lastPaymentDate: { type: Date }
+        lastPaymentDate: { type: Date },
+        isTrial: { type: Boolean, default: true }, // Добавляем флаг пробного периода
+        trialEndDate: { type: Date } // Дата окончания пробного периода
     }
 });
 

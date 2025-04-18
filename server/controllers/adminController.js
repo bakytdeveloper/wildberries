@@ -94,6 +94,9 @@ const updateSubscription = async (req, res) => {
         user.subscription.subscriptionEndDate = subscriptionEndDate;
         user.subscription.lastPaymentDate = currentDate;
         user.subscription.paymentReminderSent = false;
+        user.subscription.isTrial = false; // Пробный период завершен
+        user.subscription.trialEndDate = null;
+
 
         // Разблокируем пользователя при оплате
         if (user.isBlocked) {

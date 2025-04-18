@@ -31,6 +31,15 @@ const registerUser = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = new UserModel({ username, email, password: hashedPassword });
 
+        // Устанавливаем пробный период (2 дня)
+        const trialEndDate = new Date();
+        trialEndDate.setDate(trialEndDate.getDate() + 2);
+
+        newUser.subscription = {
+            isTrial: true,
+            trialEndDate: trialEndDate
+        };
+
         // Создание Google Таблицы для пользователя
         const spreadsheetId = await createSpreadsheetForUser(email);
         newUser.spreadsheetId = spreadsheetId;
@@ -66,8 +75,15 @@ const loginUser = async (req, res) => {
         }
 
         if (user.isBlocked) {
+            // Проверяем, был ли пользователь заблокирован из-за окончания пробного периода
+            if (user.subscription.isTrial && user.subscription.trialEndDate < new Date()) {
+                return res.status(403).json({
+                    message: 'Пробный период закончился. Пожалуйста, оплатите подписку для продолжения работы.'
+                });
+            }
             return res.status(403).json({ message: 'Пользователь заблокирован. Обратитесь в службу поддержки.' });
         }
+
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
@@ -75,7 +91,14 @@ const loginUser = async (req, res) => {
         }
 
         const token = jwt.sign({ userId: user._id, isAdmin: false }, jwtSecret, { expiresIn: '24h' });
-        res.json({ token, isAdmin: false });
+        res.json({
+            token,
+            isAdmin: false,
+            trialInfo: user.subscription.isTrial ? {
+                isTrial: true,
+                trialEndDate: user.subscription.trialEndDate
+            } : null
+        });
     } catch (error) {
         console.error('Error during login:', error);
         res.status(500).json({ error: 'Ошибка входа' });

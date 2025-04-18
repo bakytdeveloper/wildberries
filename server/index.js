@@ -16,6 +16,7 @@ const {cleanupOldData} = require("./services/googleSheetService");
 const { UserModel } = require("./models/userModel");
 const { executeUserQueries } = require("./services/queryService");
 const { autoQueryService } = require('./services/autoQueryService');
+const { checkTrialPeriods } = require('./services/trialService');
 
 dotenv.config();
 
@@ -30,7 +31,8 @@ app.use(express.json());
 const taskState = {
     isMainQueryRunning: false,
     isCleanupRunning: false,
-    isDataRemovalRunning: false
+    isDataRemovalRunning: false,
+    isTrialCheckRunning: false
 };
 
 const connectWithRetry = () => {
@@ -46,7 +48,7 @@ const connectWithRetry = () => {
 };
 
 // Задача очистки Google Sheets (каждый день в 02:00)
-    cron.schedule('0 2 * * *', async () => {
+cron.schedule('0 2 * * *', async () => {
     if (taskState.isCleanupRunning) {
         return;
     }
@@ -79,7 +81,7 @@ const connectWithRetry = () => {
     }
 });
 
-// // Задача удаления старых данных (каждый день в 03:00)
+// Задача удаления старых данных (каждый день в 03:00)
 cron.schedule('0 3 * * *', async () => {
     if (taskState.isDataRemovalRunning) {
         console.log('Предыдущая задача удаления старых данных еще выполняется, пропускаем...');
@@ -121,7 +123,32 @@ cron.schedule('0 3 * * *', async () => {
     }
 });
 
+// Задача проверки пробных периодов (каждые 6 часов)
+cron.schedule('0 */6 * * *', async () => {
+    if (taskState.isTrialCheckRunning) {
+        console.log('Предыдущая проверка пробных периодов еще выполняется, пропускаем...');
+        return;
+    }
+
+    try {
+        taskState.isTrialCheckRunning = true;
+        console.log('Запуск проверки пробных периодов...');
+        await checkTrialPeriods();
+        console.log('Проверка пробных периодов завершена');
+    } catch (error) {
+        console.error('Ошибка при проверке пробных периодов:', error);
+    } finally {
+        taskState.isTrialCheckRunning = false;
+    }
+});
+
 const startServer = () => {
+    // Первоначальная проверка пробных периодов при запуске сервера
+    setTimeout(() => {
+        checkTrialPeriods().catch(error =>
+            console.error('Ошибка при первоначальной проверке пробных периодов:', error)
+        );
+    }, 10000);
 
     setTimeout(() => {
         autoQueryService.init().then(() => {
