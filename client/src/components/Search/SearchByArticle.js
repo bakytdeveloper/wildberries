@@ -866,7 +866,7 @@ function SearchByArticle() {
                                                                 <Dropdown.Item key={city} eventKey={city}>{city}</Dropdown.Item>
                                                             ))}
                                                         </DropdownButton>
-                                                        <Button variant="danger" onClick={() => removeRequestForm(form.id)}>Удалить</Button>
+                                                        <Button variant="danger" onClick={() => removeRequestForm(form.id)} disabled={isRequesting}>Удалить</Button>
                                                         <Button variant="secondary" onClick={() => clearInput(form.id)} id="clearButton" disabled={isRequesting}>X</Button>
                                                     </InputGroup>
                                                 </div>
