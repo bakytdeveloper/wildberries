@@ -659,15 +659,15 @@ function SearchByBrand() {
                     const daysLeft = Math.ceil((trialEndDate - now) / (1000 * 60 * 60 * 24));
 
                     if (daysLeft <= 2 && daysLeft > 0) {
-                        Toastify({
-                            text: `Ваш пробный период заканчивается через ${daysLeft} дня. 
-                            У вас есть 3 дня после окончания, чтобы оформить подписку,
-                             иначе ваш аккаунт и все данные будут удалены.`,
-                            duration: 10000,
-                            gravity: "top",
-                            position: "right",
-                            style: { background: "#ff9800" }
-                        }).showToast();
+                        setTimeout(() => {  // Задержка 3 секунды
+                            Toastify({
+                                text: `Пробный период закончится через ${daysLeft} ${daysLeft === 1 ? 'день' : 'дня'}. Оформите подписку, иначе аккаунт будет удалён.`,
+                                duration: 4000,
+                                gravity: "top",
+                                position: "right",
+                                style: { background: "#ff9800" }
+                            }).showToast();
+                        }, 4000);
                     }
                 }
 
@@ -678,17 +678,16 @@ function SearchByBrand() {
 
                     if (daysLeft <= 3 && daysLeft > 0) {
                         Toastify({
-                            text: `Ваша подписка заканчивается через ${daysLeft} дня.
-                             Пожалуйста, продлите подписку, чтобы продолжить пользоваться сервисом.`,
-                            duration: 10000,
+                            text: `Подписка закончится через ${daysLeft} ${daysLeft === 1 ? 'день' : 'дня'}. Продлите её.`,
+                            duration: 5000,
                             gravity: "top",
                             position: "right",
                             style: { background: "#ff9800" }
                         }).showToast();
                     } else if (daysLeft <= 0) {
                         Toastify({
-                            text: "Ваша подписка закончилась. Пожалуйста, продлите подписку.",
-                            duration: 10000,
+                            text: "Подписка закончилась. Продлите её.",
+                            duration: 5000,
                             gravity: "top",
                             position: "right",
                             style: { background: "#f44336" }
@@ -699,8 +698,8 @@ function SearchByBrand() {
                 // Проверка блокировки
                 if (user.isBlocked) {
                     Toastify({
-                        text: "Ваш аккаунт заблокирован. Пожалуйста, оформите подписку для разблокировки.",
-                        duration: 5000,
+                        text: "Аккаунт заблокирован. Оформите подписку.",
+                        duration: 3000,
                         gravity: "top",
                         position: "right",
                         style: { background: "#f44336" }
@@ -713,12 +712,10 @@ function SearchByBrand() {
 
         if (isAuthenticated) {
             checkSubscriptionStatus();
-            // Проверяем статус каждые 6 часов
             const interval = setInterval(checkSubscriptionStatus, 6 * 60 * 60 * 1000);
             return () => clearInterval(interval);
         }
     }, [isAuthenticated, API_HOST]);
-
 
     return (
         <div className="app-page">

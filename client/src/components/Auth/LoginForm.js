@@ -29,7 +29,7 @@ const LoginForm = ({ API_HOST, setIsAuthenticated, setShowProfile, setShowForgot
         } catch (error) {
             if (error.response && error.response.status === 403) {
                 Toastify({
-                    text: 'Ваш аккаунт заблокирован. Обратитесь в службу поддержки.',
+                    text: 'Ваш аккаунт заблокирован. Обратитесь к администратору.',
                     duration: 3000,
                     close: true,
                     gravity: 'top',
