@@ -2,7 +2,8 @@ const { getProducts } = require('../api/wildberriesApiUrl');
 const { setTimeout } = require('timers/promises');
 
 const cityDestinations = {
-    '-1275551': 'г.Москва',
+    '-2162195': 'г.Москва',
+    // '-1275551': 'г.Москва',
     '-1123300': 'г.Санкт-Петербург',
     '123589350': 'г.Дмитров',
     '12358062': 'г.Краснодар',

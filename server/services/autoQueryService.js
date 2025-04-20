@@ -12,7 +12,8 @@ class AutoQueryService {
         this.scheduledJobs = new Map();
         this.activeUsers = new Set();
         this.cityDestinations = {
-            '-1275551': 'г.Москва',
+            '-2162195': 'г.Москва',
+            // '-1275551': 'г.Москва',
             '-1123300': 'г.Санкт-Петербург',
             '123589350': 'г.Дмитров',
             '12358062': 'г.Краснодар',
