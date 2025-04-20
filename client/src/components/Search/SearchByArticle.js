@@ -891,7 +891,7 @@ function SearchByArticle() {
                                         onClick={handleOpenGoogleSheet}
                                         title="Открыть мою Google Таблицу"
                                     >
-                                        Открыть Google таблицу
+                                        Google таблица
                                     </Button>
 
                                     <Button
