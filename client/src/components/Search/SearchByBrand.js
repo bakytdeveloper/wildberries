@@ -650,19 +650,35 @@ function SearchByBrand() {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 const user = response.data;
-
                 const now = new Date();
 
                 // Проверка пробного периода
                 if (user.subscription?.isTrial && user.subscription.trialEndDate) {
                     const trialEndDate = new Date(user.subscription.trialEndDate);
-                    const daysLeft = Math.ceil((trialEndDate - now) / (1000 * 60 * 60 * 24));
+                    const timeDiff = trialEndDate - now;
 
-                    if (daysLeft <= 2 && daysLeft > 0) {
-                        setTimeout(() => {  // Задержка 3 секунды
+                    // Рассчитываем оставшееся время
+                    const daysLeft = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+                    const hoursLeft = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+                    // Формируем текст уведомления
+                    let message = '';
+                    if (daysLeft > 1) {
+                        message = `Пробный период закончится через ${daysLeft} дней`;
+                    } else if (daysLeft === 1) {
+                        message = `Пробный период закончится через 1 день и ${hoursLeft} ${hoursLeft === 1 ? 'час' : 'часа'}`;
+                    } else if (daysLeft === 0 && hoursLeft > 0) {
+                        message = `Пробный период закончится через ${hoursLeft} ${hoursLeft === 1 ? 'час' : 'часа'}`;
+                    } else if (timeDiff <= 0) {
+                        message = 'Пробный период закончился!';
+                    }
+
+                    // Показываем уведомление, если осталось меньше 2 дней
+                    if (daysLeft < 2 && timeDiff > 0) {
+                        setTimeout(() => {
                             Toastify({
-                                text: `Пробный период закончится через ${daysLeft} ${daysLeft === 1 ? 'день' : 'дня'}. Оформите подписку, иначе аккаунт будет удалён.`,
-                                duration: 4000,
+                                text: `${message}. Оформите подписку, иначе аккаунт будет удалён.`,
+                                duration: 5000,
                                 gravity: "top",
                                 position: "right",
                                 style: { background: "#ff9800" }
@@ -712,7 +728,7 @@ function SearchByBrand() {
 
         if (isAuthenticated) {
             checkSubscriptionStatus();
-            const interval = setInterval(checkSubscriptionStatus, 6 * 60 * 60 * 1000);
+            const interval = setInterval(checkSubscriptionStatus, 60 * 60 * 1000); // Проверка каждый час
             return () => clearInterval(interval);
         }
     }, [isAuthenticated, API_HOST]);
