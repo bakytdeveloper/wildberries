@@ -292,27 +292,30 @@ class AutoQueryService {
                         comb.brand,
                         new Date().toISOString()
                     );
-                    return {
-                        tableId: `auto-${timestamp}-${index}`,
-                        products: products.length > 0 ? products : [] // Сохраняем пустую ячейку, если нет товаров
-                    };
+                    return products.length > 0
+                        ? { tableId: `auto-${timestamp}-${index}`, products }
+                        : null; // Если товары не найдены, возвращаем null
                 })
             );
 
+            // Фильтруем пустые результаты, убирая `null`
+            const validTables = productTables.filter(table => table !== null);
+            if (validTables.length === 0) return; // Если ничего не найдено, запрос **не сохраняем**.
+
             const newQuery = new QueryModel({
                 userId,
-                query: combinations.map(c => c.query).join('; '),
-                dest: combinations.map(c => c.dest).join('; '),
-                productTables, // Записываем productTables, даже если он пуст
+                query: combinations.filter((c, i) => productTables[i] !== null).map(c => c.query).join('; '),
+                dest: combinations.filter((c, i) => productTables[i] !== null).map(c => c.dest).join('; '),
+                productTables: validTables,
                 createdAt: new Date(),
-                city: combinations.map(c => c.city).join('; '),
-                brand: combinations.map(c => c.brand).join('; '),
-                isAutoQuery: true,
-                isEmptyResult: productTables.every(table => table.products.length === 0) // Флаг для пустых данных
+                city: combinations.filter((c, i) => productTables[i] !== null).map(c => c.city).join('; '),
+                brand: combinations.filter((c, i) => productTables[i] !== null).map(c => c.brand).join('; '),
+                isAutoQuery: true
             });
 
             await newQuery.save();
-            await UserModel.findByIdAndUpdate(userId, { $push: { queries: newQuery._id } });
+            await UserModel.findByIdAndUpdate(userId, { $push: { requests: newQuery._id } });
+
         } catch (error) {
             console.error('Ошибка выполнения бренд-запросов:', error);
             throw error;
@@ -330,27 +333,30 @@ class AutoQueryService {
                         comb.article,
                         new Date().toISOString()
                     );
-                    return {
-                        tableId: `auto-${timestamp}-${index}`,
-                        products: products.length > 0 ? products : [] // Сохраняем пустую ячейку, если нет товаров
-                    };
+                    return products.length > 0
+                        ? { tableId: `auto-${timestamp}-${index}`, products }
+                        : null; // Если товары не найдены, возвращаем null
                 })
             );
 
+            // Фильтруем пустые результаты, убирая `null`
+            const validTables = productTables.filter(table => table !== null);
+            if (validTables.length === 0) return; // Если ничего не найдено, запрос **не сохраняем**.
+
             const newQuery = new QueryArticleModel({
                 userId,
-                query: combinations.map(c => c.query).join('; '),
-                article: combinations.map(c => c.article).join('; '),
-                dest: combinations.map(c => c.dest).join('; '),
-                productTables, // Записываем productTables, даже если он пуст
+                query: combinations.filter((c, i) => productTables[i] !== null).map(c => c.query).join('; '),
+                article: combinations.filter((c, i) => productTables[i] !== null).map(c => c.article).join('; '),
+                dest: combinations.filter((c, i) => productTables[i] !== null).map(c => c.dest).join('; '),
+                productTables: validTables,
                 createdAt: new Date(),
-                city: combinations.map(c => c.city).join('; '),
-                isAutoQuery: true,
-                isEmptyResult: productTables.every(table => table.products.length === 0) // Флаг для пустых данных
+                city: combinations.filter((c, i) => productTables[i] !== null).map(c => c.city).join('; '),
+                isAutoQuery: true
             });
 
             await newQuery.save();
-            await UserModel.findByIdAndUpdate(userId, { $push: { queries: newQuery._id } });
+            await UserModel.findByIdAndUpdate(userId, { $push: { requests: newQuery._id } });
+
         } catch (error) {
             console.error('Ошибка выполнения артикул-запросов:', error);
             throw error;
