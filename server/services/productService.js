@@ -189,7 +189,7 @@ async function fetchAndParseProductsByArticle(query, dest, article, queryTime) {
                     return { hasMore: false };
                 }
 
-                const product = productsRaw.find(p => String(p.id) === String(article));
+                const product = productsRaw.find(p => String(p.id) == String(article));
                 if (product) {
                     const positionOnPage = productsRaw.findIndex(p => String(p.id) === String(article)) + 1;
                     const combinedPosition = pageNum > 1

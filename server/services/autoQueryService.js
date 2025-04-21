@@ -25,6 +25,7 @@ class AutoQueryService {
     }
 
     async init() {
+        // cron.schedule('*/5 * * * *', async () => {
         cron.schedule('0 */4 * * *', () => {
             this.processAllUsers();
         });
@@ -293,30 +294,27 @@ class AutoQueryService {
                     );
                     return {
                         tableId: `auto-${timestamp}-${index}`,
-                        products
+                        products: products.length > 0 ? products : [] // Сохраняем пустую ячейку, если нет товаров
                     };
                 })
             );
-
-            // Фильтруем пустые результаты
-            const validTables = productTables.filter(table => table.products.length > 0);
-            if (validTables.length === 0) return;
 
             const newQuery = new QueryModel({
                 userId,
                 query: combinations.map(c => c.query).join('; '),
                 dest: combinations.map(c => c.dest).join('; '),
-                productTables: validTables,
+                productTables, // Записываем productTables, даже если он пуст
                 createdAt: new Date(),
                 city: combinations.map(c => c.city).join('; '),
                 brand: combinations.map(c => c.brand).join('; '),
-                isAutoQuery: true
+                isAutoQuery: true,
+                isEmptyResult: productTables.every(table => table.products.length === 0) // Флаг для пустых данных
             });
 
             await newQuery.save();
             await UserModel.findByIdAndUpdate(userId, { $push: { queries: newQuery._id } });
         } catch (error) {
-            console.error('Error executing brand queries:', error);
+            console.error('Ошибка выполнения бренд-запросов:', error);
             throw error;
         }
     }
@@ -334,33 +332,31 @@ class AutoQueryService {
                     );
                     return {
                         tableId: `auto-${timestamp}-${index}`,
-                        products
+                        products: products.length > 0 ? products : [] // Сохраняем пустую ячейку, если нет товаров
                     };
                 })
             );
-
-            // Фильтруем пустые результаты
-            const validTables = productTables.filter(table => table.products.length > 0);
-            if (validTables.length === 0) return;
 
             const newQuery = new QueryArticleModel({
                 userId,
                 query: combinations.map(c => c.query).join('; '),
                 article: combinations.map(c => c.article).join('; '),
                 dest: combinations.map(c => c.dest).join('; '),
-                productTables: validTables,
+                productTables, // Записываем productTables, даже если он пуст
                 createdAt: new Date(),
                 city: combinations.map(c => c.city).join('; '),
-                isAutoQuery: true
+                isAutoQuery: true,
+                isEmptyResult: productTables.every(table => table.products.length === 0) // Флаг для пустых данных
             });
 
             await newQuery.save();
             await UserModel.findByIdAndUpdate(userId, { $push: { queries: newQuery._id } });
         } catch (error) {
-            console.error('Error executing article queries:', error);
+            console.error('Ошибка выполнения артикул-запросов:', error);
             throw error;
         }
     }
+
 
     stopAutoQueriesForUser(userId) {
         const userIdStr = userId.toString();

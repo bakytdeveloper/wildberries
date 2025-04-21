@@ -1095,7 +1095,8 @@ function SearchByBrand() {
                                                                 </tbody>
                                                             </table>
                                                         ) : (
-                                                            <div className="no-products-message" >
+                                                            <div className="no-products-message" style={{ backgroundColor: '#ffcccb', color: '#000000', padding: '10px', borderRadius: '5px' }}>
+                                                            {/*<div className="no-products-message" >*/}
                                                                 <strong>По Запросу:</strong> {queryData.query.split('; ')[tableIndex]}
                                                                 <br />
                                                                 <strong>Бренд:</strong> {queryData.brand.split('; ')[tableIndex]}
