@@ -271,12 +271,12 @@ function SearchByArticle() {
 
     const handleImageClick = (imageUrl) => {
         setModalImage(imageUrl);
-        document.body.style.overflow = 'hidden';
+        // Убрали document.body.style.overflow = 'hidden'; так как это теперь делается в ImageModal
     };
 
     const closeModal = () => {
         setModalImage(null);
-        document.body.style.overflow = 'auto';
+        // Убрали document.body.style.overflow = 'auto'; так как это теперь делается в ImageModal
     };
 
 

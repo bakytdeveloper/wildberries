@@ -240,12 +240,10 @@ function SearchByBrand() {
 
     const handleImageClick = (imageUrl) => {
         setModalImage(imageUrl);
-        document.body.style.overflow = 'hidden';
     };
 
     const closeModal = () => {
         setModalImage(null);
-        document.body.style.overflow = 'auto';
     };
 
     const handleQueryInputChange = (event, formId) => {
@@ -1112,7 +1110,6 @@ function SearchByBrand() {
                                                             </table>
                                                         ) : (
                                                             <div className="no-products-message" style={{ backgroundColor: '#ffcccb', color: '#000000', padding: '10px', borderRadius: '5px' }}>
-                                                            {/*<div className="no-products-message" >*/}
                                                                 <strong>По Запросу:</strong> {queryData.query.split('; ')[tableIndex]}
                                                                 <br />
                                                                 <strong>Бренд:</strong> {queryData.brand.split('; ')[tableIndex]}
