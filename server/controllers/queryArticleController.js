@@ -1,3 +1,4 @@
+const {exportAllDataToSheet} = require("../services/googleSheetService");
 const {generateExcelForUser} = require("../services/excelService");
 const { QueryArticleModel } = require('../models/queryArticleModel');
 const { fetchAndParseProductsByArticle } = require('../services/productService');
@@ -121,6 +122,23 @@ const exportToGoogleSheet = async (req, res) => {
     }
 };
 
+const exportAllToGoogleSheet = async (req, res) => {
+    const userId = req.userId;
+    try {
+        const queries = await QueryArticleModel.find({ userId }).populate('productTables.products');
+        const user = await UserModel.findById(userId);
+
+        if (!user || !user.spreadsheetId) {
+            return res.status(404).json({ error: 'Пользователь или Google Таблица не найдены' });
+        }
+
+        const result = await exportAllDataToSheet(user.spreadsheetId, queries, false);
+        res.json(result);
+    } catch (error) {
+        console.error('Ошибка выгрузки всех данных:', error);
+        res.status(500).json({ error: 'Ошибка выгрузки всех данных' });
+    }
+};
 
 const exportToExcel = async (req, res) => {
     try {
@@ -149,5 +167,6 @@ module.exports = {
     getArticleQueries,
     deleteArticleQuery,
     exportToGoogleSheet,
+    exportAllToGoogleSheet,
     exportToExcel
 };

@@ -229,6 +229,176 @@ async function addDataToSheet(sheetId, sheetName, data, hasStar = false) {
     }
 }
 
+async function exportAllDataToSheet(sheetId, queries, isBrandQuery = true) {
+    const sheets = getSheetsInstance();
+    try {
+        const targetSheetName = isBrandQuery ? 'Бренд' : 'Артикул';
+
+        // Очищаем лист перед добавлением новых данных
+        await clearSheet(sheetId, targetSheetName);
+
+        // Получаем sheetId для форматирования
+        const spreadsheet = await sheets.spreadsheets.get({
+            spreadsheetId: sheetId,
+            fields: 'sheets(properties(sheetId,title))'
+        });
+        const sheet = spreadsheet.data.sheets.find(s => s.properties.title === targetSheetName);
+        if (!sheet) {
+            throw new Error(`Лист "${targetSheetName}" не найден`);
+        }
+        const sheetIdValue = sheet.properties.sheetId;
+
+        // Подготавливаем все данные с разделителями
+        let allData = [];
+        let formatRequests = [];
+        let currentRow = 1; // Начинаем с 1, так как 0 - заголовок
+
+        for (const query of queries) {
+            // Пропускаем запросы без продуктов
+            if (!query.productTables || query.productTables.length === 0) continue;
+
+            // Подготавливаем данные для текущего запроса
+            const queryData = query.productTables.flatMap((table) => {
+                return table.products.map((product) => {
+                    const position = product?.page && product.page > 1
+                        ? `${product.page}${product.position != null && product.position < 10 ? '0' + product.position : product.position}`
+                        : String(product?.position);
+
+                    const promoPosition = product?.log?.promoPosition
+                        ? `${position}*`
+                        : position;
+
+                    if (isBrandQuery) {
+                        return [
+                            String(product?.query || query.query),
+                            String(product?.brand || query.brand),
+                            String(product?.city || query.city),
+                            product?.imageUrl ? `=IMAGE("${product.imageUrl}")` : '',
+                            String(product?.id),
+                            String(product?.name),
+                            promoPosition,
+                            new Date(product?.queryTime || query.createdAt).toLocaleTimeString(),
+                            new Date(product?.queryTime || query.createdAt).toLocaleDateString(),
+                        ];
+                    } else {
+                        return [
+                            String(product?.query || query.query),
+                            String(product?.id),
+                            String(product?.city || query.city),
+                            product?.imageUrl ? `=IMAGE("${product.imageUrl}")` : '',
+                            String(product?.brand),
+                            String(product?.name),
+                            promoPosition,
+                            new Date(product?.queryTime || query.createdAt).toLocaleTimeString(),
+                            new Date(product?.queryTime || query.createdAt).toLocaleDateString(),
+                        ];
+                    }
+                });
+            });
+
+            // Добавляем данные текущего запроса
+            if (queryData.length > 0) {
+                allData = [...allData, ...queryData];
+
+                // Добавляем форматирование для позиций
+                queryData.forEach((row, index) => {
+                    const cellValue = row[6]; // Позиция (столбец G)
+                    const hasStarInValue = cellValue && typeof cellValue === 'string' && cellValue.includes('*');
+
+                    formatRequests.push({
+                        repeatCell: {
+                            range: {
+                                sheetId: sheetIdValue,
+                                startRowIndex: currentRow + index,
+                                endRowIndex: currentRow + index + 1,
+                                startColumnIndex: 6, // Столбец G
+                                endColumnIndex: 7
+                            },
+                            cell: {
+                                userEnteredFormat: {
+                                    textFormat: {
+                                        bold: hasStarInValue,
+                                        foregroundColor: hasStarInValue
+                                            ? { red: 1, green: 0, blue: 0 } // Красный если есть *
+                                            : { red: 0, green: 0, blue: 0 } // Чёрный если нет *
+                                    }
+                                }
+                            },
+                            fields: "userEnteredFormat.textFormat"
+                        }
+                    });
+                });
+
+                currentRow += queryData.length;
+
+                // Добавляем пустую строку после данных запроса, если это не последний запрос
+                if (query !== queries[queries.length - 1]) {
+                    allData.push(Array(9).fill(''));
+                    currentRow += 1;
+                }
+            }
+        }
+
+        // Добавляем данные в таблицу
+        if (allData.length > 0) {
+            // Сначала добавляем данные
+            await sheets.spreadsheets.values.update({
+                spreadsheetId: sheetId,
+                range: `${targetSheetName}!A2:I${2 + allData.length}`,
+                valueInputOption: 'USER_ENTERED',
+                requestBody: {
+                    values: allData
+                }
+            });
+
+            // Затем применяем форматирование
+            if (formatRequests.length > 0) {
+                await sheets.spreadsheets.batchUpdate({
+                    spreadsheetId: sheetId,
+                    requestBody: {
+                        requests: formatRequests
+                    }
+                });
+            }
+        }
+
+        return { message: 'Все данные успешно выгружены' };
+    } catch (error) {
+        console.error('Ошибка выгрузки всех данных:', error);
+        throw error;
+    }
+}
+
+
+async function clearSheet(sheetId, sheetName) {
+    const sheets = getSheetsInstance();
+    try {
+        // Получаем метаданные таблицы
+        const spreadsheet = await sheets.spreadsheets.get({
+            spreadsheetId: sheetId,
+            fields: 'sheets(properties(sheetId,title))'
+        });
+
+        // Находим sheetId по имени листа
+        const sheet = spreadsheet.data.sheets.find(s => s.properties.title === sheetName);
+        if (!sheet) {
+            console.log(`Лист "${sheetName}" не найден, пропускаем очистку`);
+            return;
+        }
+
+        // Очищаем все данные, кроме заголовков
+        await sheets.spreadsheets.values.clear({
+            spreadsheetId: sheetId,
+            range: `${sheetName}!A2:I`
+        });
+    } catch (error) {
+        console.error(`Ошибка очистки листа ${sheetName}:`, error);
+        throw error;
+    }
+}
+
+
+
 async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
     const sheets = getSheetsInstance();
 
@@ -334,5 +504,6 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
 module.exports = {
     createSpreadsheetForUser,
     addDataToSheet,
-    cleanupOldData
+    cleanupOldData,
+    exportAllDataToSheet
 };

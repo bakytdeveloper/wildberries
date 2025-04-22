@@ -48,6 +48,7 @@ function SearchByBrand() {
     const [showInitialForm, setShowInitialForm] = useState(true); // Состояние для управления видимостью начальной формы
     const [showResetButton, setShowResetButton] = useState(false);
     const [formsDisabled, setFormsDisabled] = useState(false);
+    const [isExportingAll, setIsExportingAll] = useState(false);
 
     useEffect(() => {
         if (formsDisabled) {
@@ -731,6 +732,44 @@ function SearchByBrand() {
         }
     }, [isAuthenticated, API_HOST]);
 
+    const handleExportAllToGoogleSheet = async () => {
+
+        if (isExportingAll) return;
+        setIsExportingAll(true);
+
+        try {
+            const token = sessionStorage.getItem('token');
+            const response = await axios.post(`${API_HOST}/api/queries/export-all`, {}, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            Toastify({
+                text: 'Все данные успешно выгружены в Google Таблицу',
+                duration: 3000,
+                gravity: 'top',
+                position: 'right',
+                style: { background: '#00cc00' }
+            }).showToast();
+
+            // Открываем таблицу после выгрузки
+            // handleOpenGoogleSheet();
+        } catch (error) {
+            console.error('Ошибка выгрузки всех данных:', error);
+            Toastify({
+                text: 'Ошибка выгрузки всех данных',
+                duration: 3000,
+                gravity: 'top',
+                position: 'right',
+                style: { background: '#ff0000' }
+            }).showToast();
+        } finally {
+            setIsExportingAll(false);
+        }
+    };
+
     return (
         <div className="app-page">
             <header>
@@ -887,13 +926,25 @@ function SearchByBrand() {
                                     <Button className="controls_primary" onClick={fetchProducts} disabled={isRequesting}>Поиск</Button>
                                     <Button className="controls_primary controls_primary_warning"  variant="warning" onClick={handleSearchAllQueries}>Все запросы</Button>
                                     <Button
-                                        className="controls_primary controls_primary_info"
-                                        variant="info"
-                                        onClick={handleOpenGoogleSheet}
-                                        title="Открыть мою Google Таблицу"
+                                        className="controls_primary controls_primary_info upload_to_google"
+                                        variant="success"
+                                        onClick={handleExportAllToGoogleSheet}
+                                        title="Выгрузить все данные в Google Таблицу"
                                     >
-                                       Google таблица
+                                        {isExportingAll ? (
+                                            <Spinner
+                                                as="span"
+                                                animation="border"
+                                                size="sm"
+                                                role="status"
+                                                aria-hidden="true"
+                                                style={{ width: '1rem', height: '1rem' }}
+                                            />
+                                        ) : (
+                                            'Выгрузить в Google'
+                                        )}
                                     </Button>
+
 
                                     <Button
                                         className="controls_primary controls_primary_success"
@@ -915,7 +966,14 @@ function SearchByBrand() {
                                             'Выгрузить в Excel'
                                         )}
                                     </Button>
-
+                                    <Button
+                                        className="controls_primary controls_primary_info"
+                                        variant="info"
+                                        onClick={handleOpenGoogleSheet}
+                                        title="Открыть мою Google Таблицу"
+                                    >
+                                       Открыть Google таблицу
+                                    </Button>
                                 </div>
                                 <div className="search-bar">
                                     <Form className="search" onSubmit={(e) => e.preventDefault()}>
