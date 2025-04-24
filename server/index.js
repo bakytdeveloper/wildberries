@@ -83,21 +83,6 @@ cron.schedule('0 2 * * *', async () => {
     }
 });
 
-cron.schedule('*/5 * * * *', async () => {
-// cron.schedule('0 4 * * *', async () => {
-    if (taskState.isSubscriptionCheckRunning) return;
-
-    try {
-        taskState.isSubscriptionCheckRunning = true;
-        console.log('Запуск проверки фактических подписок...');
-        await checkSubscriptions();
-    } catch (error) {
-        console.error('Ошибка при проверке подписок:', error);
-    } finally {
-        taskState.isSubscriptionCheckRunning = false;
-    }
-});
-
 // Задача удаления старых данных (каждый день в 03:00)
 cron.schedule('0 3 * * *', async () => {
     if (taskState.isDataRemovalRunning) {
@@ -159,6 +144,23 @@ cron.schedule('0 5 * * *', async () => {
         taskState.isTrialCheckRunning = false;
     }
 });
+
+
+// cron.schedule('*/5 * * * *', async () => {
+cron.schedule('0 6 * * *', async () => {
+    if (taskState.isSubscriptionCheckRunning) return;
+
+    try {
+        taskState.isSubscriptionCheckRunning = true;
+        console.log('Запуск проверки фактических подписок...');
+        await checkSubscriptions();
+    } catch (error) {
+        console.error('Ошибка при проверке подписок:', error);
+    } finally {
+        taskState.isSubscriptionCheckRunning = false;
+    }
+});
+
 
 const startServer = () => {
     // Первоначальная проверка пробных периодов при запуске сервера
