@@ -44,7 +44,7 @@ const checkTrialPeriods = async () => {
 
         // 2. Находим пользователей, которые не оплатили подписку в течение 5 дней после окончания пробного периода
         const fiveDaysAgo = new Date();
-        fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+        fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 3);
 
         const usersToDelete = await UserModel.find({
             'subscription.isTrial': true,
@@ -68,14 +68,14 @@ const checkTrialPeriods = async () => {
 // Удаление пользователя и всех связанных данных (аналогично deleteUser из adminController)
 const deleteUserData = async (userId) => {
     try {
-        // Удаляем пользователя
-        await UserModel.findByIdAndDelete(userId);
 
         // Удаляем все запросы пользователя
         await QueryModel.deleteMany({ userId });
 
         // Удаляем все статьи пользователя
         await QueryArticleModel.deleteMany({ userId });
+        // Удаляем пользователя
+        await UserModel.findByIdAndDelete(userId);
 
         // Здесь можно добавить удаление других связанных данных, если необходимо
     } catch (error) {
@@ -83,9 +83,9 @@ const deleteUserData = async (userId) => {
     }
 };
 
-// Запускаем проверку каждые 6 часов
-setInterval(checkTrialPeriods, 6 * 60 * 60 * 1000);
+// // Запускаем проверку каждые 6 часов
+// setInterval(checkTrialPeriods, 6 * 60 * 60 * 1000);
 // Первая проверка при запуске сервера
-setTimeout(checkTrialPeriods, 10000);
+// setTimeout(checkTrialPeriods, 10000);
 
 module.exports = { checkTrialPeriods, deleteUserData };

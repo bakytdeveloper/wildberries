@@ -251,36 +251,6 @@ class AutoQueryService {
         }
     }
 
-    async sendLatestDataToGoogleSheets() {
-        try {
-            // Добавляем проверку isBlocked: false
-            const users = await UserModel.find({
-                spreadsheetId: { $exists: true },
-                isBlocked: false
-            });
-
-            for (const user of users) {
-                try {
-                    // Получаем последние автоматические запросы
-                    const [latestBrandQuery, latestArticleQuery] = await Promise.all([
-                        QueryModel.findOne({ userId: user._id, isAutoQuery: true })
-                            .sort({ createdAt: -1 }),
-                        QueryArticleModel.findOne({ userId: user._id, isAutoQuery: true })
-                            .sort({ createdAt: -1 })
-                    ]);
-
-                    if (latestBrandQuery || latestArticleQuery) {
-                        await executeUserQueries(user);
-                    }
-                } catch (error) {
-                    console.error(`Ошибка отправки данных для пользователя ${user.email}:`, error);
-                }
-            }
-        } catch (error) {
-            console.error('Ошибка в sendLatestDataToGoogleSheets:', error);
-        }
-    }
-
     async executeBrandQueries(userId, combinations) {
         try {
             const timestamp = Date.now();

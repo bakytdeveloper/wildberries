@@ -123,8 +123,9 @@ cron.schedule('0 3 * * *', async () => {
     }
 });
 
-// Задача проверки пробных периодов (каждые 6 часов)
-cron.schedule('0 */6 * * *', async () => {
+// Задача проверки пробных периодов (каждые день в 5 часов утра)
+// cron.schedule('*/5 * * * *', async () => {
+cron.schedule('0 5 * * *', async () => {
     if (taskState.isTrialCheckRunning) {
         console.log('Предыдущая проверка пробных периодов еще выполняется, пропускаем...');
         return;
