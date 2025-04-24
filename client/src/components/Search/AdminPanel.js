@@ -17,6 +17,7 @@ const AdminPanel = ({ API_HOST }) => {
     const [originalUsers, setOriginalUsers] = useState([]);
     const [searchTerm, setSearchTerm] = useState(''); // Состояние для поискового запроса
     const [filteredUsers, setFilteredUsers] = useState([]); // Добавлено состояние для отфильтрованных пользователей
+    const [amountError, setAmountError] = useState('');
 
     useEffect(() => {
         document.body.setAttribute('data-theme', theme);
@@ -202,6 +203,23 @@ const AdminPanel = ({ API_HOST }) => {
         window.location.href = '/';
     };
 
+    const handleSubscriptionAmountChange = (e) => {
+        const value = e.target.value;
+        setSubscriptionAmount(value);
+
+        if (value === '') {
+            setAmountError('');
+            return;
+        }
+
+        const numValue = parseInt(value);
+        if (isNaN(numValue) || numValue < 1000 || numValue % 1000 !== 0) {
+            setAmountError('Введите сумму, кратную 1000 (1000, 2000, ...)');
+        } else {
+            setAmountError('');
+        }
+    };
+
     return (
         <div className="container">
             <div className="logout-container">
@@ -331,12 +349,18 @@ const AdminPanel = ({ API_HOST }) => {
                             <Form.Control
                                 type="number"
                                 value={subscriptionAmount}
-                                onChange={(e) => setSubscriptionAmount(e.target.value)}
-                                placeholder="Введите сумму"
+                                onChange={handleSubscriptionAmountChange}
+                                placeholder="Введите сумму от 1000"
+                                min="1000"
+                                step="1000"
+                                isInvalid={!!amountError}
                             />
                             <Button variant="outline-secondary" onClick={calculateSubscriptionDate}>
                                 Рассчитать
                             </Button>
+                            <Form.Control.Feedback type="invalid">
+                                {amountError}
+                            </Form.Control.Feedback>
                         </InputGroup>
                     </Form.Group>
                     {calculatedDate && (
