@@ -163,7 +163,7 @@ const sendPaymentReminder = async (user) => {
         const message = {
             from: process.env.SMTP_FROM,
             to: user.email,
-            subject: 'Напоминание об оплате подписки',
+            subject: 'Напоминание об подписки',
             html: `
                 <div style="font-family: Arial, sans-serif; line-height: 1.6;">
                     <p>Ваша подписка истекает ${endDate}.</p>
@@ -180,14 +180,10 @@ const sendPaymentReminder = async (user) => {
     }
 };
 
-// Запускаем проверку подписок каждые 24 часа
-setInterval(checkSubscriptions, 24 * 60 * 60 * 1000);
-// Первая проверка при запуске сервера
-setTimeout(checkSubscriptions, 5000);
-
 module.exports = {
     getUsers,
     toggleBlockUser,
     deleteUser,
-    updateSubscription
+    updateSubscription,
+    checkSubscriptions
 };

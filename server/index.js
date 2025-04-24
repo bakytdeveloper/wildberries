@@ -10,6 +10,7 @@ const userRoutes = require('./routes/userRoutes');
 const queryArticleRoutes = require('./routes/queryArticleRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const cron = require("node-cron");
+const {checkSubscriptions} = require("./controllers/adminController");
 const {QueryArticleModel} = require("./models/queryArticleModel");
 const {QueryModel} = require("./models/queryModel");
 const {cleanupOldData} = require("./services/googleSheetService");
@@ -32,7 +33,8 @@ const taskState = {
     isMainQueryRunning: false,
     isCleanupRunning: false,
     isDataRemovalRunning: false,
-    isTrialCheckRunning: false
+    isTrialCheckRunning: false,
+    isSubscriptionCheckRunning: false
 };
 
 const connectWithRetry = () => {
@@ -78,6 +80,21 @@ cron.schedule('0 2 * * *', async () => {
         console.error('Ошибка в задаче очистки Google Sheets:', error);
     } finally {
         taskState.isCleanupRunning = false;
+    }
+});
+
+cron.schedule('*/5 * * * *', async () => {
+// cron.schedule('0 4 * * *', async () => {
+    if (taskState.isSubscriptionCheckRunning) return;
+
+    try {
+        taskState.isSubscriptionCheckRunning = true;
+        console.log('Запуск проверки фактических подписок...');
+        await checkSubscriptions();
+    } catch (error) {
+        console.error('Ошибка при проверке подписок:', error);
+    } finally {
+        taskState.isSubscriptionCheckRunning = false;
     }
 });
 
