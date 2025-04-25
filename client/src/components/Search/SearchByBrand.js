@@ -478,7 +478,7 @@ function SearchByBrand() {
             const minutes = String(now.getMinutes()).padStart(2, '0');
             const seconds = String(now.getSeconds()).padStart(2, '0');
 
-            const dateStr = `export_all_${day}-${month}-${year}_${hours}-${minutes}-${seconds}.xlsx`;
+            const dateStr = `export_${day}-${month}-${year}_${hours}-${minutes}-${seconds}.xlsx`;
 
             // Получаем имя файла из заголовка или используем сформированное
             const contentDisposition = response.headers.get('Content-Disposition');
