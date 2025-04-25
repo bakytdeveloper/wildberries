@@ -23,18 +23,39 @@ dotenv.config();
 
 const app = express();
 const urlMongo = process.env.MONGODB_URI;
-const port = process.env.PORT || 5505;
+const port = process.env.PORT || 5507;
 
 app.use(cors());
 app.use(express.json());
 
-// Флаг для отслеживания выполнения задач
-const taskState = {
-    isMainQueryRunning: false,
-    isCleanupRunning: false,
-    isDataRemovalRunning: false,
-    isTrialCheckRunning: false,
-    isSubscriptionCheckRunning: false
+// Хранилище для таймеров и состояния задач
+const appState = {
+    timeouts: [],
+    intervals: [],
+    tasks: {
+        isMainQueryRunning: false,
+        isCleanupRunning: false,
+        isDataRemovalRunning: false,
+        isTrialCheckRunning: false,
+        isSubscriptionCheckRunning: false
+    }
+};
+
+// Функция для безопасного установки таймаута
+const safeSetTimeout = (fn, delay) => {
+    const id = setTimeout(() => {
+        fn();
+        // Удаляем таймер из хранилища после выполнения
+        appState.timeouts = appState.timeouts.filter(timerId => timerId !== id);
+    }, delay);
+    appState.timeouts.push(id);
+    return id;
+};
+
+// Функция для очистки всех таймеров
+const clearAllTimeouts = () => {
+    appState.timeouts.forEach(clearTimeout);
+    appState.timeouts = [];
 };
 
 const connectWithRetry = () => {
@@ -45,21 +66,33 @@ const connectWithRetry = () => {
         })
         .catch((error) => {
             console.error('Ошибка подключения к MongoDB:', error.message);
-            setTimeout(connectWithRetry, 5000);
+            // Используем безопасный таймаут
+            safeSetTimeout(connectWithRetry, 5000);
         });
 };
 
+// Добавляем новую задачу для AutoQueryService (каждые 4 часа)
+// cron.schedule('*/5 * * * *', async () => {
+    cron.schedule('0 */4 * * *', async () => {
+    try {
+        console.log('Запуск автоматических запросов для всех пользователей...');
+        await autoQueryService.processAllUsers();
+        console.log('Автоматические запросы завершены');
+    } catch (error) {
+        console.error('Ошибка в автоматических запросах:', error);
+    }
+});
+
 // Задача очистки Google Sheets (каждый день в 02:00)
 cron.schedule('0 2 * * *', async () => {
-    if (taskState.isCleanupRunning) {
+    if (appState.tasks.isCleanupRunning) {
         return;
     }
 
     try {
-        taskState.isCleanupRunning = true;
+        appState.tasks.isCleanupRunning = true;
         console.log('Запуск задачи очистки Google Sheets...');
 
-        // Получаем пользователей с существующими spreadsheetId
         const users = await UserModel.find({ spreadsheetId: { $exists: true } }).lean();
 
         if (Array.isArray(users)) {
@@ -79,40 +112,36 @@ cron.schedule('0 2 * * *', async () => {
     } catch (error) {
         console.error('Ошибка в задаче очистки Google Sheets:', error);
     } finally {
-        taskState.isCleanupRunning = false;
+        appState.tasks.isCleanupRunning = false;
     }
 });
 
 // Задача удаления старых данных (каждый день в 03:00)
 cron.schedule('0 3 * * *', async () => {
-    if (taskState.isDataRemovalRunning) {
+    if (appState.tasks.isDataRemovalRunning) {
         console.log('Предыдущая задача удаления старых данных еще выполняется, пропускаем...');
         return;
     }
 
     try {
-        taskState.isDataRemovalRunning = true;
+        appState.tasks.isDataRemovalRunning = true;
         console.log('Запуск задачи удаления старых данных...');
 
         const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-        // 1. Находим старые запросы
         const [oldQueries, oldArticleQueries] = await Promise.all([
             QueryModel.find({ createdAt: { $lt: weekAgo } }).lean().exec(),
             QueryArticleModel.find({ createdAt: { $lt: weekAgo } }).lean().exec()
         ]);
 
-        // 2. Получаем ID всех запросов для удаления
         const queryIdsToDelete = oldQueries.map(q => q._id);
         const articleQueryIdsToDelete = oldArticleQueries.map(q => q._id);
 
-        // 3. Удаляем ссылки у пользователей перед удалением запросов
         await UserModel.updateMany(
             { queries: { $in: [...queryIdsToDelete, ...articleQueryIdsToDelete] } },
             { $pull: { queries: { $in: [...queryIdsToDelete, ...articleQueryIdsToDelete] } } }
         );
 
-        // 4. Удаляем сами запросы
         await Promise.all([
             QueryModel.deleteMany({ _id: { $in: queryIdsToDelete } }),
             QueryArticleModel.deleteMany({ _id: { $in: articleQueryIdsToDelete } })
@@ -121,62 +150,51 @@ cron.schedule('0 3 * * *', async () => {
     } catch (error) {
         console.error('Ошибка в задаче удаления старых данных:', error);
     } finally {
-        taskState.isDataRemovalRunning = false;
+        appState.tasks.isDataRemovalRunning = false;
     }
 });
 
 // Задача проверки пробных периодов (каждые день в 5 часов утра)
-// cron.schedule('*/5 * * * *', async () => {
 cron.schedule('0 5 * * *', async () => {
-    if (taskState.isTrialCheckRunning) {
+    if (appState.tasks.isTrialCheckRunning) {
         console.log('Предыдущая проверка пробных периодов еще выполняется, пропускаем...');
         return;
     }
 
     try {
-        taskState.isTrialCheckRunning = true;
+        appState.tasks.isTrialCheckRunning = true;
         console.log('Запуск проверки пробных периодов...');
         await checkTrialPeriods();
         console.log('Проверка пробных периодов завершена');
     } catch (error) {
         console.error('Ошибка при проверке пробных периодов:', error);
     } finally {
-        taskState.isTrialCheckRunning = false;
+        appState.tasks.isTrialCheckRunning = false;
     }
 });
 
-
-// cron.schedule('*/5 * * * *', async () => {
+// Проверка подписок (каждый день в 6 часов утра)
 cron.schedule('0 6 * * *', async () => {
-    if (taskState.isSubscriptionCheckRunning) return;
+    if (appState.tasks.isSubscriptionCheckRunning) return;
 
     try {
-        taskState.isSubscriptionCheckRunning = true;
+        appState.tasks.isSubscriptionCheckRunning = true;
         console.log('Запуск проверки фактических подписок...');
         await checkSubscriptions();
     } catch (error) {
         console.error('Ошибка при проверке подписок:', error);
     } finally {
-        taskState.isSubscriptionCheckRunning = false;
+        appState.tasks.isSubscriptionCheckRunning = false;
     }
 });
 
-
 const startServer = () => {
     // Первоначальная проверка пробных периодов при запуске сервера
-    setTimeout(() => {
-        checkTrialPeriods().catch(error =>
-            console.error('Ошибка при первоначальной проверке пробных периодов:', error)
-        );
+    safeSetTimeout(() => {
+        checkTrialPeriods()
+            .then(() => console.log('Первоначальная проверка пробных периодов завершена'))
+            .catch(error => console.error('Ошибка при первоначальной проверке пробных периодов:', error));
     }, 10000);
-
-    setTimeout(() => {
-        autoQueryService.init().then(() => {
-            console.log('AutoQueryService инициализирован');
-        }).catch(error =>
-            console.error('Ошибка инициализации AutoQueryService:', error)
-        );
-    }, 5000);
 
     app.use('/api/admin', adminRoutes);
     app.use('/api/auth', authRoutes);
@@ -185,8 +203,30 @@ const startServer = () => {
     app.use('/api/queries', protect, queryRoutes);
     app.use('/api/user', protect, userRoutes);
 
-    app.listen(port, () => {
+    const server = app.listen(port, () => {
         console.log(`Сервер работает на http://localhost:${port}`);
+    });
+
+
+// В обработчиках сигналов добавляем очистку AutoQueryService
+    process.on('SIGINT', () => {
+        console.log('Получен SIGINT. Очистка перед завершением...');
+        autoQueryService.cleanup();
+        clearAllTimeouts();
+        server.close(() => {
+            console.log('Сервер остановлен');
+            process.exit(0);
+        });
+    });
+
+    process.on('SIGTERM', () => {
+        console.log('Получен SIGTERM. Очистка перед завершением...');
+        autoQueryService.cleanup();
+        clearAllTimeouts();
+        server.close(() => {
+            console.log('Сервер остановлен');
+            process.exit(0);
+        });
     });
 };
 

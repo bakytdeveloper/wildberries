@@ -1,5 +1,5 @@
 const cron = require('node-cron');
-const {executeUserQueries} = require("./queryService");
+const { executeUserQueries } = require("./queryService");
 const { QueryModel } = require('../models/queryModel');
 const { QueryArticleModel } = require('../models/queryArticleModel');
 const { UserModel } = require('../models/userModel');
@@ -9,11 +9,11 @@ const { setTimeout } = require('timers/promises');
 
 class AutoQueryService {
     constructor() {
-        this.scheduledJobs = new Map();
+        // Используем WeakMap для хранения задач, чтобы избежать утечек памяти
+        this.scheduledJobs = new WeakMap();
         this.activeUsers = new Set();
         this.cityDestinations = {
             '-2162195': 'г.Москва',
-            // '-1275551': 'г.Москва',
             '-1123300': 'г.Санкт-Петербург',
             '123589350': 'г.Дмитров',
             '12358062': 'г.Краснодар',
@@ -24,17 +24,23 @@ class AutoQueryService {
         this.BATCH_DELAY = 10000;
     }
 
-    async init() {
-        // cron.schedule('*/5 * * * *', async () => {
-        cron.schedule('0 */4 * * *', () => {
-            this.processAllUsers();
-        });
-        console.log('AutoQueryService инициализирован с пакетной обработкой');
-    }
+    // async init() {
+    //     // Очищаем предыдущее задание, если было
+    //     if (this.currentCronJob) {
+    //         this.currentCronJob.stop();
+    //     }
+    //
+    //     this.currentCronJob = cron.schedule('0 */4 * * *', () => {
+    //         this.processAllUsers().catch(error => {
+    //             console.error('Error in scheduled processAllUsers:', error);
+    //         });
+    //     });
+    //     console.log('AutoQueryService инициализирован с пакетной обработкой');
+    // }
 
     async processAllUsers() {
         try {
-            const users = await UserModel.find({ isBlocked: false });
+            const users = await UserModel.find({ isBlocked: false }).lean();
 
             if (!Array.isArray(users)) {
                 throw new Error('Expected users to be an array');
@@ -55,35 +61,34 @@ class AutoQueryService {
             }
         } catch (error) {
             console.error('Error in processAllUsers:', error);
+            throw error;
         }
     }
 
+
     async processUserWithDataExport(userId) {
         try {
-            // Сначала проверяем статус блокировки пользователя
-            const user = await UserModel.findById(userId);
+            const user = await UserModel.findById(userId).lean();
             if (!user || user.isBlocked) {
                 console.log(`Пользователь ${userId} заблокирован, пропускаем обработку`);
                 return;
             }
 
-            // 1. Выполняем автоматические запросы как обычно
             await this.scheduleAutoQueriesForUser(userId);
 
-            // 2. Получаем пользователя с его spreadsheetId
-            if (!user || !user.spreadsheetId) return;
+            if (!user.spreadsheetId) return;
 
-            // 3. Получаем последние сохраненные данные
             const [latestBrandQuery, latestArticleQuery] = await Promise.all([
                 QueryModel.findOne({ userId, isAutoQuery: true })
                     .sort({ createdAt: -1 })
-                    .populate('productTables.products'),
+                    .populate('productTables.products')
+                    .lean(),
                 QueryArticleModel.findOne({ userId, isAutoQuery: true })
                     .sort({ createdAt: -1 })
                     .populate('productTables.products')
+                    .lean()
             ]);
 
-            // 4. Если есть новые данные - отправляем в Google Sheets
             if (latestBrandQuery || latestArticleQuery) {
                 await executeUserQueries(user);
                 console.log(`Данные для пользователя ${user.email} успешно экспортированы`);
@@ -93,28 +98,29 @@ class AutoQueryService {
         }
     }
 
-// Модифицируем метод processUserBatch
     async processUserBatch(users) {
-        await Promise.all(users.map(user =>
-            this.processUserWithDataExport(user._id).catch(error =>
-                console.error(`Error processing user ${user._id}:`, error)
-            )
-        ));
+        try {
+            await Promise.all(users.map(user =>
+                this.processUserWithDataExport(user._id)
+            ));
+        } catch (error) {
+            console.error('Error in processUserBatch:', error);
+        }
     }
 
     async scheduleAutoQueriesForUser(userId) {
-        // Проверяем блокировку перед началом обработки
-        const user = await UserModel.findById(userId);
+        const user = await UserModel.findById(userId).lean();
         if (!user || user.isBlocked) {
             console.log(`Пользователь ${userId} заблокирован, запросы отменены`);
             return;
         }
 
-        if (this.activeUsers.has(userId.toString())) {
+        const userIdStr = userId.toString();
+        if (this.activeUsers.has(userIdStr)) {
             return;
         }
 
-        this.activeUsers.add(userId.toString());
+        this.activeUsers.add(userIdStr);
         try {
             const [brandCombinations, articleCombinations] = await Promise.all([
                 this.getUniqueBrandCombinations(userId),
@@ -127,17 +133,15 @@ class AutoQueryService {
         } catch (error) {
             console.error(`Error in auto queries for user ${userId}:`, error);
         } finally {
-            this.activeUsers.delete(userId.toString());
+            this.activeUsers.delete(userIdStr);
         }
     }
 
     async getUniqueBrandCombinations(userId) {
-        // Проверяем блокировку
-        const user = await UserModel.findById(userId);
+        const user = await UserModel.findById(userId).lean();
         if (!user || user.isBlocked) return [];
 
-        const queries = await QueryModel.find({ userId });
-
+        const queries = await QueryModel.find({ userId }).lean();
         const combinations = new Map();
 
         for (const query of queries) {
@@ -184,11 +188,10 @@ class AutoQueryService {
     }
 
     async getUniqueArticleCombinations(userId) {
-        // Проверяем блокировку
-        const user = await UserModel.findById(userId);
+        const user = await UserModel.findById(userId).lean();
         if (!user || user.isBlocked) return [];
 
-        const queries = await QueryArticleModel.find({ userId });
+        const queries = await QueryArticleModel.find({ userId }).lean();
         const combinations = new Map();
 
         for (const query of queries) {
@@ -204,7 +207,7 @@ class AutoQueryService {
                 destsArr.length
             );
 
-            for (let i =  0; i < maxLength; i++) {
+            for (let i = 0; i < maxLength; i++) {
                 const q = queriesArr[i]?.trim() || '';
                 const article = articlesArr[i]?.trim() || '';
                 const city = citiesArr[i]?.trim() || '';
@@ -256,30 +259,34 @@ class AutoQueryService {
             const timestamp = Date.now();
             const productTables = await Promise.all(
                 combinations.map(async (comb, index) => {
-                    const products = await fetchAndParseProducts(
-                        comb.query,
-                        comb.dest,
-                        comb.brand,
-                        new Date().toISOString()
-                    );
-                    return products.length > 0
-                        ? { tableId: `auto-${timestamp}-${index}`, products }
-                        : null; // Если товары не найдены, возвращаем null
+                    try {
+                        const products = await fetchAndParseProducts(
+                            comb.query,
+                            comb.dest,
+                            comb.brand,
+                            new Date().toISOString()
+                        );
+                        return products.length > 0
+                            ? { tableId: `auto-${timestamp}-${index}`, products }
+                            : null;
+                    } catch (error) {
+                        console.error(`Error fetching products for brand query ${comb.query}:`, error);
+                        return null;
+                    }
                 })
             );
 
-            // Фильтруем пустые результаты, убирая `null`
-            const validTables = productTables.filter(table => table !== null);
-            if (validTables.length === 0) return; // Если ничего не найдено, запрос **не сохраняем**.
+            const validTables = productTables.filter(Boolean);
+            if (validTables.length === 0) return;
 
             const newQuery = new QueryModel({
                 userId,
-                query: combinations.filter((c, i) => productTables[i] !== null).map(c => c.query).join('; '),
-                dest: combinations.filter((c, i) => productTables[i] !== null).map(c => c.dest).join('; '),
+                query: combinations.filter((_, i) => productTables[i] !== null).map(c => c.query).join('; '),
+                dest: combinations.filter((_, i) => productTables[i] !== null).map(c => c.dest).join('; '),
                 productTables: validTables,
                 createdAt: new Date(),
-                city: combinations.filter((c, i) => productTables[i] !== null).map(c => c.city).join('; '),
-                brand: combinations.filter((c, i) => productTables[i] !== null).map(c => c.brand).join('; '),
+                city: combinations.filter((_, i) => productTables[i] !== null).map(c => c.city).join('; '),
+                brand: combinations.filter((_, i) => productTables[i] !== null).map(c => c.brand).join('; '),
                 isAutoQuery: true
             });
 
@@ -297,30 +304,34 @@ class AutoQueryService {
             const timestamp = Date.now();
             const productTables = await Promise.all(
                 combinations.map(async (comb, index) => {
-                    const products = await fetchAndParseProductsByArticle(
-                        comb.query,
-                        comb.dest,
-                        comb.article,
-                        new Date().toISOString()
-                    );
-                    return products.length > 0
-                        ? { tableId: `auto-${timestamp}-${index}`, products }
-                        : null; // Если товары не найдены, возвращаем null
+                    try {
+                        const products = await fetchAndParseProductsByArticle(
+                            comb.query,
+                            comb.dest,
+                            comb.article,
+                            new Date().toISOString()
+                        );
+                        return products.length > 0
+                            ? { tableId: `auto-${timestamp}-${index}`, products }
+                            : null;
+                    } catch (error) {
+                        console.error(`Error fetching products for article query ${comb.query}:`, error);
+                        return null;
+                    }
                 })
             );
 
-            // Фильтруем пустые результаты, убирая `null`
-            const validTables = productTables.filter(table => table !== null);
-            if (validTables.length === 0) return; // Если ничего не найдено, запрос **не сохраняем**.
+            const validTables = productTables.filter(Boolean);
+            if (validTables.length === 0) return;
 
             const newQuery = new QueryArticleModel({
                 userId,
-                query: combinations.filter((c, i) => productTables[i] !== null).map(c => c.query).join('; '),
-                article: combinations.filter((c, i) => productTables[i] !== null).map(c => c.article).join('; '),
-                dest: combinations.filter((c, i) => productTables[i] !== null).map(c => c.dest).join('; '),
+                query: combinations.filter((_, i) => productTables[i] !== null).map(c => c.query).join('; '),
+                article: combinations.filter((_, i) => productTables[i] !== null).map(c => c.article).join('; '),
+                dest: combinations.filter((_, i) => productTables[i] !== null).map(c => c.dest).join('; '),
                 productTables: validTables,
                 createdAt: new Date(),
-                city: combinations.filter((c, i) => productTables[i] !== null).map(c => c.city).join('; '),
+                city: combinations.filter((_, i) => productTables[i] !== null).map(c => c.city).join('; '),
                 isAutoQuery: true
             });
 
@@ -333,15 +344,29 @@ class AutoQueryService {
         }
     }
 
-
     stopAutoQueriesForUser(userId) {
         const userIdStr = userId.toString();
-        if (this.scheduledJobs.has(userIdStr)) {
-            this.scheduledJobs.get(userIdStr).stop();
-            this.scheduledJobs.delete(userIdStr);
+        if (this.activeUsers.has(userIdStr)) {
+            this.activeUsers.delete(userIdStr);
         }
+    }
+
+    cleanup() {
+        this.activeUsers.clear();
     }
 }
 
 const autoQueryService = new AutoQueryService();
+
+// // Обработка завершения процесса для очистки ресурсов
+// process.on('SIGINT', () => {
+//     autoQueryService.cleanup();
+//     process.exit(0);
+// });
+//
+// process.on('SIGTERM', () => {
+//     autoQueryService.cleanup();
+//     process.exit(0);
+// });
+
 module.exports = { autoQueryService };
