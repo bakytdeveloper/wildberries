@@ -23,7 +23,7 @@ dotenv.config();
 
 const app = express();
 const urlMongo = process.env.MONGODB_URI;
-const port = process.env.PORT || 5507;
+const port = process.env.PORT || 5505;
 
 app.use(cors());
 app.use(express.json());
