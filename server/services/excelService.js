@@ -2,6 +2,7 @@ const ExcelJS = require('exceljs');
 const axios = require('axios');
 const { QueryArticleModel } = require("../models/queryArticleModel");
 const { QueryModel } = require("../models/queryModel");
+const imageCache = new Map();
 
 // Конфигурация
 const CONFIG = {
@@ -21,8 +22,14 @@ const CONFIG = {
 };
 
 // Улучшенная загрузка изображений
+// Обновить функцию downloadImage
 const downloadImage = async (url) => {
     if (!url) return null;
+
+    // Проверка кэша
+    if (imageCache.has(url)) {
+        return imageCache.get(url);
+    }
 
     for (let attempt = 1; attempt <= CONFIG.IMAGE.RETRIES; attempt++) {
         try {
@@ -31,7 +38,9 @@ const downloadImage = async (url) => {
                 timeout: CONFIG.IMAGE.TIMEOUT,
                 validateStatus: (status) => status === 200
             });
-            return Buffer.from(response.data, 'binary');
+            const buffer = Buffer.from(response.data, 'binary');
+            imageCache.set(url, buffer); // Кэширование
+            return buffer;
         } catch (error) {
             if (attempt === CONFIG.IMAGE.RETRIES) {
                 console.error(`Не удалось загрузить изображение: ${url}`);
@@ -89,53 +98,72 @@ const generateExcelForUser = async (userId) => {
         ];
 
         // Заголовки
-        sheetBrand.addRow(['Запрос', 'Бренд', 'Город', 'Картинка', 'Артикул', 'Описание товара', 'Позиция', 'Время запроса', 'Дата запроса']);
-        sheetArticle.addRow(['Запрос', 'Артикул', 'Город', 'Картинка', 'Бренд', 'Описание товара', 'Позиция', 'Время запроса', 'Дата запроса']);
+        const headers = ['Запрос', 'Бренд/Артикул', 'Город', 'Картинка', 'Артикул/Бренд', 'Описание товара', 'Позиция', 'Время запроса', 'Дата запроса'];
+        sheetBrand.addRow(headers);
+        sheetArticle.addRow(headers);
 
-        // Получение данных
+        // Получение данных с пагинацией
         const [brandQueries, articleQueries] = await Promise.all([
-            QueryModel.find({ userId }).populate('productTables.products').maxTimeMS(CONFIG.DATABASE.TIMEOUT),
-            QueryArticleModel.find({ userId }).populate('productTables.products').maxTimeMS(CONFIG.DATABASE.TIMEOUT)
+            QueryModel.find({ userId }).select('query productTables city brand createdAt').lean().populate({
+                path: 'productTables.products',
+                options: { batchSize: 1000 }
+            }).maxTimeMS(CONFIG.DATABASE.TIMEOUT),
+            QueryArticleModel.find({ userId }).select('query productTables city article createdAt').lean().populate({
+                path: 'productTables.products',
+                options: { batchSize: 1000 }
+            }).maxTimeMS(CONFIG.DATABASE.TIMEOUT)
         ]);
 
-        // Обработка данных
+        // Оптимизированная обработка данных
         const processData = async (queries, sheet, isBrandSheet) => {
             const imageTasks = [];
+            const rowsData = [];
 
+            // Сначала собираем все данные
             for (const query of queries) {
                 for (const table of query.productTables) {
                     for (const product of table.products) {
                         const { data, isPromo, imageUrl } = createRowData(product, query, isBrandSheet);
-                        const row = sheet.addRow(data);
-
-                        if (isPromo) {
-                            row.getCell(7).font = { bold: true, color: { argb: 'FFFF0000' } };
-                        }
-
-                        if (imageUrl) {
-                            imageTasks.push(async () => {
-                                const imageBuffer = await downloadImage(imageUrl);
-                                if (imageBuffer) {
-                                    const extension = imageUrl.split('.').pop() === 'png' ? 'png' : 'jpeg';
-                                    const imageId = workbook.addImage({ buffer: imageBuffer, extension });
-
-                                    sheet.addImage(imageId, {
-                                        tl: { col: 3, row: row.number - 1, offset: 5 },
-                                        ext: CONFIG.IMAGE.SIZE
-                                    });
-
-                                    sheet.getRow(row.number).height = CONFIG.IMAGE.SIZE.height;
-                                }
-                            });
-                        }
+                        rowsData.push({ data, isPromo, imageUrl });
                     }
                 }
             }
 
-            // Обработка изображений батчами
-            for (let i = 0; i < imageTasks.length; i += CONFIG.IMAGE.BATCH_SIZE) {
-                const batch = imageTasks.slice(i, i + CONFIG.IMAGE.BATCH_SIZE);
-                await processImagesBatch(batch);
+            // Затем добавляем строки пачками
+            for (let i = 0; i < rowsData.length; i++) {
+                const { data, isPromo, imageUrl } = rowsData[i];
+                const row = sheet.addRow(data);
+
+                if (isPromo) {
+                    row.getCell(7).font = { bold: true, color: { argb: 'FFFF0000' } };
+                }
+
+                if (imageUrl) {
+                    imageTasks.push(async () => {
+                        const imageBuffer = await downloadImage(imageUrl);
+                        if (imageBuffer) {
+                            const extension = imageUrl.split('.').pop() === 'png' ? 'png' : 'jpeg';
+                            const imageId = workbook.addImage({ buffer: imageBuffer, extension });
+
+                            sheet.addImage(imageId, {
+                                tl: { col: 3, row: row.number - 1, offset: 5 },
+                                ext: CONFIG.IMAGE.SIZE
+                            });
+
+                            sheet.getRow(row.number).height = CONFIG.IMAGE.SIZE.height;
+                        }
+                    });
+
+                    // Обрабатываем изображения пачками
+                    if (imageTasks.length >= CONFIG.IMAGE.BATCH_SIZE) {
+                        await processImagesBatch(imageTasks.splice(0, CONFIG.IMAGE.BATCH_SIZE));
+                    }
+                }
+            }
+
+            // Обработка оставшихся изображений
+            if (imageTasks.length > 0) {
+                await processImagesBatch(imageTasks);
             }
         };
 
@@ -144,18 +172,23 @@ const generateExcelForUser = async (userId) => {
             processData(articleQueries, sheetArticle, false)
         ]);
 
-        // Настройка колонок
-        sheetBrand.columns = [
-            { width: 30 }, { width: 20 }, { width: 15 },
-            { width: 15 }, { width: 15 }, { width: 50 },
-            { width: 15 }, { width: 15 }, { width: 15 }
-        ];
+        // Установка ширины колонок (исправленная версия)
+        const setColumnWidths = (sheet) => {
+            sheet.columns = [
+                { width: 30 }, // Запрос
+                { width: 20 }, // Бренд/Артикул
+                { width: 15 }, // Город
+                { width: 15 }, // Картинка
+                { width: 15 }, // Артикул/Бренд
+                { width: 50 }, // Описание товара
+                { width: 15 }, // Позиция
+                { width: 15 }, // Время запроса
+                { width: 15 }  // Дата запроса
+            ];
+        };
 
-        sheetArticle.columns = [
-            { width: 30 }, { width: 15 }, { width: 15 },
-            { width: 15 }, { width: 20 }, { width: 50 },
-            { width: 15 }, { width: 15 }, { width: 15 }
-        ];
+        setColumnWidths(sheetBrand);
+        setColumnWidths(sheetArticle);
 
         return workbook.xlsx.writeBuffer();
     } catch (error) {

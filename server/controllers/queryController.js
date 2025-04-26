@@ -1,3 +1,5 @@
+const {QueryArticleModel} = require("../models/queryArticleModel");
+const {streamExcelForUser} = require("../services/excelService");
 const {exportAllDataToSheet} = require("../services/googleSheetService");
 const {generateExcelForUser} = require("../services/excelService");
 const {createExcelFileOnDemand} = require("../services/excelService");
@@ -164,15 +166,29 @@ const exportAllToGoogleSheet = async (req, res) => {
 
 // Обновленный экспорт в Excel с поддержкой больших данных
 const exportToExcel = async (req, res) => {
+    req.setTimeout(1200000, () => {
+        if (!res.headersSent) {
+            console.error('Таймаут при генерации Excel');
+            res.status(504).json({ error: 'Время обработки превышено' });
+        }
+    });
+
     try {
         const userId = req.userId;
 
-        // Для больших данных используем потоковую передачу
-        if (req.query.stream === 'true') {
+        // Проверяем количество данных перед выбором метода
+        const [brandCount, articleCount] = await Promise.all([
+            QueryModel.countDocuments({ userId }),
+            QueryArticleModel.countDocuments({ userId })
+        ]);
+
+        const totalCount = brandCount + articleCount;
+
+        // Для больших данных (> 1000 записей) используем потоковую передачу
+        if (totalCount > 1000 || req.query.stream === 'true') {
             return await streamExcelForUser(userId, res);
         }
 
-        // Для небольших данных используем обычный метод
         const excelBuffer = await generateExcelForUser(userId);
 
         const fileName = `export_${new Date().toISOString()
@@ -190,7 +206,6 @@ const exportToExcel = async (req, res) => {
         }
     }
 };
-
 
 
 

@@ -24,20 +24,6 @@ class AutoQueryService {
         this.BATCH_DELAY = 10000;
     }
 
-    // async init() {
-    //     // Очищаем предыдущее задание, если было
-    //     if (this.currentCronJob) {
-    //         this.currentCronJob.stop();
-    //     }
-    //
-    //     this.currentCronJob = cron.schedule('0 */4 * * *', () => {
-    //         this.processAllUsers().catch(error => {
-    //             console.error('Error in scheduled processAllUsers:', error);
-    //         });
-    //     });
-    //     console.log('AutoQueryService инициализирован с пакетной обработкой');
-    // }
-
     async processAllUsers() {
         try {
             const users = await UserModel.find({ isBlocked: false }).lean();
@@ -357,16 +343,5 @@ class AutoQueryService {
 }
 
 const autoQueryService = new AutoQueryService();
-
-// // Обработка завершения процесса для очистки ресурсов
-// process.on('SIGINT', () => {
-//     autoQueryService.cleanup();
-//     process.exit(0);
-// });
-//
-// process.on('SIGTERM', () => {
-//     autoQueryService.cleanup();
-//     process.exit(0);
-// });
 
 module.exports = { autoQueryService };
