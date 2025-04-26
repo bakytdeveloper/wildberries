@@ -92,71 +92,94 @@ const generateExcelForUser = async (userId) => {
     workbook.calcProperties.fullCalcOnLoad = false;
 
     try {
-        const [sheetBrand, sheetArticle] = [
-            workbook.addWorksheet('Бренд'),
-            workbook.addWorksheet('Артикул')
-        ];
+        // Создаем листы с разными заголовками
+        const sheetBrand = workbook.addWorksheet('Бренд');
+        const sheetArticle = workbook.addWorksheet('Артикул');
 
-        // Заголовки
-        const headers = ['Запрос', 'Бренд/Артикул', 'Город', 'Картинка', 'Артикул/Бренд', 'Описание товара', 'Позиция', 'Время запроса', 'Дата запроса'];
-        sheetBrand.addRow(headers);
-        sheetArticle.addRow(headers);
+        // Заголовки для страницы Бренд
+        const brandHeaders = ['Запрос', 'Бренд', 'Город', 'Картинка', 'Артикул', 'Описание товара', 'Позиция', 'Время запроса', 'Дата запроса'];
+        sheetBrand.addRow(brandHeaders);
 
-        // Получение данных с пагинацией
+        // Заголовки для страницы Артикул
+        const articleHeaders = ['Запрос', 'Артикул', 'Город', 'Картинка', 'Бренд', 'Описание товара', 'Позиция', 'Время запроса', 'Дата запроса'];
+        sheetArticle.addRow(articleHeaders);
+
+        // Получение данных с пагинацией и оптимизацией памяти
         const [brandQueries, articleQueries] = await Promise.all([
-            QueryModel.find({ userId }).select('query productTables city brand createdAt').lean().populate({
-                path: 'productTables.products',
-                options: { batchSize: 1000 }
-            }).maxTimeMS(CONFIG.DATABASE.TIMEOUT),
-            QueryArticleModel.find({ userId }).select('query productTables city article createdAt').lean().populate({
-                path: 'productTables.products',
-                options: { batchSize: 1000 }
-            }).maxTimeMS(CONFIG.DATABASE.TIMEOUT)
+            QueryModel.find({ userId })
+                .select('query productTables city brand createdAt')
+                .lean()
+                .populate({
+                    path: 'productTables.products',
+                    options: { batchSize: 1000 }
+                })
+                .maxTimeMS(CONFIG.DATABASE.TIMEOUT),
+            QueryArticleModel.find({ userId })
+                .select('query productTables city article createdAt')
+                .lean()
+                .populate({
+                    path: 'productTables.products',
+                    options: { batchSize: 1000 }
+                })
+                .maxTimeMS(CONFIG.DATABASE.TIMEOUT)
         ]);
 
-        // Оптимизированная обработка данных
+        // Очистка кэша изображений перед обработкой
+        imageCache.clear();
+
+        // Обработка данных с защитой от утечек памяти
         const processData = async (queries, sheet, isBrandSheet) => {
             const imageTasks = [];
-            const rowsData = [];
+            let processedRows = 0;
 
-            // Сначала собираем все данные
             for (const query of queries) {
                 for (const table of query.productTables) {
-                    for (const product of table.products) {
+                    // Обрабатываем продукты порциями для экономии памяти
+                    for (let i = 0; i < table.products.length; i++) {
+                        const product = table.products[i];
                         const { data, isPromo, imageUrl } = createRowData(product, query, isBrandSheet);
-                        rowsData.push({ data, isPromo, imageUrl });
-                    }
-                }
-            }
+                        const row = sheet.addRow(data);
 
-            // Затем добавляем строки пачками
-            for (let i = 0; i < rowsData.length; i++) {
-                const { data, isPromo, imageUrl } = rowsData[i];
-                const row = sheet.addRow(data);
+                        if (isPromo) {
+                            row.getCell(7).font = { bold: true, color: { argb: 'FFFF0000' } };
+                        }
 
-                if (isPromo) {
-                    row.getCell(7).font = { bold: true, color: { argb: 'FFFF0000' } };
-                }
+                        if (imageUrl) {
+                            imageTasks.push(async () => {
+                                try {
+                                    const imageBuffer = await downloadImage(imageUrl);
+                                    if (imageBuffer) {
+                                        const extension = imageUrl.split('.').pop() === 'png' ? 'png' : 'jpeg';
+                                        const imageId = workbook.addImage({
+                                            buffer: imageBuffer,
+                                            extension
+                                        });
 
-                if (imageUrl) {
-                    imageTasks.push(async () => {
-                        const imageBuffer = await downloadImage(imageUrl);
-                        if (imageBuffer) {
-                            const extension = imageUrl.split('.').pop() === 'png' ? 'png' : 'jpeg';
-                            const imageId = workbook.addImage({ buffer: imageBuffer, extension });
+                                        sheet.addImage(imageId, {
+                                            tl: { col: 3, row: row.number - 1, offset: 5 },
+                                            ext: CONFIG.IMAGE.SIZE
+                                        });
 
-                            sheet.addImage(imageId, {
-                                tl: { col: 3, row: row.number - 1, offset: 5 },
-                                ext: CONFIG.IMAGE.SIZE
+                                        sheet.getRow(row.number).height = CONFIG.IMAGE.SIZE.height;
+                                    }
+                                } catch (err) {
+                                    console.error('Ошибка обработки изображения:', err);
+                                }
                             });
 
-                            sheet.getRow(row.number).height = CONFIG.IMAGE.SIZE.height;
+                            // Обрабатываем изображения пачками
+                            if (imageTasks.length >= CONFIG.IMAGE.BATCH_SIZE) {
+                                await processImagesBatch(imageTasks.splice(0, CONFIG.IMAGE.BATCH_SIZE));
+                                // Даем event loop возможность обработать другие события
+                                await new Promise(resolve => setImmediate(resolve));
+                            }
                         }
-                    });
 
-                    // Обрабатываем изображения пачками
-                    if (imageTasks.length >= CONFIG.IMAGE.BATCH_SIZE) {
-                        await processImagesBatch(imageTasks.splice(0, CONFIG.IMAGE.BATCH_SIZE));
+                        processedRows++;
+                        // Периодически освобождаем память
+                        if (processedRows % 500 === 0) {
+                            await new Promise(resolve => setImmediate(resolve));
+                        }
                     }
                 }
             }
@@ -167,19 +190,20 @@ const generateExcelForUser = async (userId) => {
             }
         };
 
+        // Обрабатываем данные параллельно
         await Promise.all([
             processData(brandQueries, sheetBrand, true),
             processData(articleQueries, sheetArticle, false)
         ]);
 
-        // Установка ширины колонок (исправленная версия)
-        const setColumnWidths = (sheet) => {
+        // Установка ширины колонок с учетом разных заголовков
+        const setColumnWidths = (sheet, isBrandSheet) => {
             sheet.columns = [
                 { width: 30 }, // Запрос
-                { width: 20 }, // Бренд/Артикул
+                { width: isBrandSheet ? 20 : 15 }, // Бренд или Артикул
                 { width: 15 }, // Город
                 { width: 15 }, // Картинка
-                { width: 15 }, // Артикул/Бренд
+                { width: isBrandSheet ? 15 : 20 }, // Артикул или Бренд
                 { width: 50 }, // Описание товара
                 { width: 15 }, // Позиция
                 { width: 15 }, // Время запроса
@@ -187,15 +211,22 @@ const generateExcelForUser = async (userId) => {
             ];
         };
 
-        setColumnWidths(sheetBrand);
-        setColumnWidths(sheetArticle);
+        setColumnWidths(sheetBrand, true);
+        setColumnWidths(sheetArticle, false);
 
-        return workbook.xlsx.writeBuffer();
+        // Финализация и очистка
+        const buffer = await workbook.xlsx.writeBuffer();
+        imageCache.clear(); // Очищаем кэш после использования
+
+        return buffer;
     } catch (error) {
+        // Гарантированная очистка ресурсов при ошибке
+        imageCache.clear();
         console.error('Ошибка создания Excel:', error);
         throw error;
     }
 };
+
 
 // Потоковая генерация Excel
 const streamExcelForUser = async (userId, res) => {

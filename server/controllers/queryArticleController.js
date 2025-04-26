@@ -142,28 +142,6 @@ const exportAllToGoogleSheet = async (req, res) => {
     }
 };
 
-// const exportToExcel = async (req, res) => {
-//     try {
-//         const userId = req.userId;
-//         const excelBuffer = await generateExcelForUser(userId);
-//
-//         // Создаем имя файла с текущей датой и временем
-//         const now = new Date();
-//         const dateStr = now.toISOString()
-//             .replace(/T/, '_')
-//             .replace(/\..+/, '')
-//             .replace(/:/g, '-');
-//         const fileName = `export_${dateStr}.xlsx`;
-//
-//         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-//         res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
-//         res.send(excelBuffer);
-//     } catch (error) {
-//         console.error('Ошибка выгрузки данных:', error);
-//         res.status(500).json({ error: 'Ошибка выгрузки данных' });
-//     }
-// };
-
 // Обновленный экспорт в Excel с поддержкой больших данных
 const exportToExcel = async (req, res) => {
     req.setTimeout(1200000, () => {
