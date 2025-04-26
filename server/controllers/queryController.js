@@ -140,27 +140,57 @@ const exportAllToGoogleSheet = async (req, res) => {
     }
 };
 
+// const exportToExcel = async (req, res) => {
+//     try {
+//         const userId = req.userId;
+//         const excelBuffer = await generateExcelForUser(userId);
+//
+//         // Создаем имя файла с текущей датой и временем
+//         const now = new Date();
+//         const dateStr = now.toISOString()
+//             .replace(/T/, '_')  // Заменяем T на подчеркивание
+//             .replace(/\..+/, '') // Удаляем миллисекунды
+//             .replace(/:/g, '-'); // Заменяем двоеточия на тире
+//         const fileName = `export_${dateStr}.xlsx`;
+//
+//         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+//         res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+//         res.send(excelBuffer);
+//     } catch (error) {
+//         console.error('Ошибка выгрузки данных:', error);
+//         res.status(500).json({ error: 'Ошибка выгрузки данных' });
+//     }
+// };
+
+// Обновленный экспорт в Excel с поддержкой больших данных
 const exportToExcel = async (req, res) => {
     try {
         const userId = req.userId;
+
+        // Для больших данных используем потоковую передачу
+        if (req.query.stream === 'true') {
+            return await streamExcelForUser(userId, res);
+        }
+
+        // Для небольших данных используем обычный метод
         const excelBuffer = await generateExcelForUser(userId);
 
-        // Создаем имя файла с текущей датой и временем
-        const now = new Date();
-        const dateStr = now.toISOString()
-            .replace(/T/, '_')  // Заменяем T на подчеркивание
-            .replace(/\..+/, '') // Удаляем миллисекунды
-            .replace(/:/g, '-'); // Заменяем двоеточия на тире
-        const fileName = `export_${dateStr}.xlsx`;
+        const fileName = `export_${new Date().toISOString()
+            .replace(/T/, '_')
+            .replace(/\..+/, '')
+            .replace(/:/g, '-')}.xlsx`;
 
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
         res.send(excelBuffer);
     } catch (error) {
         console.error('Ошибка выгрузки данных:', error);
-        res.status(500).json({ error: 'Ошибка выгрузки данных' });
+        if (!res.headersSent) {
+            res.status(500).json({ error: 'Ошибка выгрузки данных' });
+        }
     }
 };
+
 
 
 
