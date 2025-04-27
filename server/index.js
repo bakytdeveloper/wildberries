@@ -10,6 +10,7 @@ const userRoutes = require('./routes/userRoutes');
 const queryArticleRoutes = require('./routes/queryArticleRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const cron = require("node-cron");
+const {cleanupBrokenLinks} = require("./services/linkCleanupService");
 const {checkSubscriptions} = require("./controllers/adminController");
 const {QueryArticleModel} = require("./models/queryArticleModel");
 const {QueryModel} = require("./models/queryModel");
@@ -185,6 +186,18 @@ cron.schedule('0 6 * * *', async () => {
         console.error('Ошибка при проверке подписок:', error);
     } finally {
         appState.tasks.isSubscriptionCheckRunning = false;
+    }
+});
+
+
+// Задача проверки и очистки битых ссылок (каждый день в 7:00 утра)
+cron.schedule('0 7 * * *', async () => {
+    try {
+        console.log('Запуск задачи проверки и очистки битых ссылок...');
+        await cleanupBrokenLinks();
+        console.log('Задача проверки и очистки битых ссылок завершена');
+    } catch (error) {
+        console.error('Ошибка в задаче очистки битых ссылок:', error);
     }
 });
 
