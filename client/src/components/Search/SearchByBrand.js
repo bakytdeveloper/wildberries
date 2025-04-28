@@ -977,7 +977,7 @@ function SearchByBrand() {
                                 </div>
                                 <div className="search-bar">
                                     <Form className="search" onSubmit={(e) => e.preventDefault()}>
-                                        <Form.Control type="text" value={searchTerm} onChange={handleSortInputChange} placeholder="Поиск по заголовкам" />
+                                        <Form.Control className="search-header" type="text" value={searchTerm} onChange={handleSortInputChange} placeholder="Поиск по заголовкам" />
                                     </Form>
                                 </div>
                                 <div className="star-mark">
