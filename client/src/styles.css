@@ -220,6 +220,12 @@ header {
     color: var(--placeholder-color);
 }
 
+
+.form-control {
+    width: 82% !important;
+}
+
+
 .FaEye-button {
     height: 38px;
     cursor: pointer;
