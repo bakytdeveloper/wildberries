@@ -49,6 +49,8 @@ function SearchByBrand() {
     const [showResetButton, setShowResetButton] = useState(false);
     const [formsDisabled, setFormsDisabled] = useState(false);
     const [isExportingAll, setIsExportingAll] = useState(false);
+    const [showExportModal, setShowExportModal] = useState(false);
+    const [exportProgress, setExportProgress] = useState('');
 
     useEffect(() => {
         if (formsDisabled) {
@@ -421,15 +423,19 @@ function SearchByBrand() {
     const handleExportClick = async (queryId, sheetName) => {
         if (exportingStates[queryId]) return; // Блокируем повторные клики
         setExportingStates((prev) => ({ ...prev, [queryId]: true })); // Устанавливаем состояние "выгрузка в процессе" для конкретной кнопки
+        setShowExportModal(true);
+        setExportProgress('Подготовка данных для выгрузки...');
 
         try {
             const token = sessionStorage.getItem('token');
+            setExportProgress('Соединение с Google Таблицей...');
             const response = await axios.post(`${API_HOST}/api/queries/export`, { queryId, sheetName }, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             });
+            setExportProgress('Завершение выгрузки...');
             console.log('Выгрузка данных:', response.data);
             Toastify({
                 text: 'Данные успешно выгружены в Google Таблицу.',
@@ -449,15 +455,19 @@ function SearchByBrand() {
             }).showToast();
         } finally {
             setExportingStates((prev) => ({ ...prev, [queryId]: false })); // Сбрасываем состояние после завершения
+            setShowExportModal(false);
         }
     };
 
     const handleExportToExcelClick = async (queryId) => {
         if (isExporting) return;
         setIsExporting(true);
+        setShowExportModal(true);
+        setExportProgress('Подготовка данных для Excel...');
 
         try {
             const token = sessionStorage.getItem('token');
+            setExportProgress('Формирование Excel файла...');
             const response = await fetch(`${API_HOST}/api/queries/export-excel`, {
                 method: 'GET',
                 headers: {
@@ -468,6 +478,7 @@ function SearchByBrand() {
             if (!response.ok) {
                 throw new Error('Ошибка выгрузки данных');
             }
+            setExportProgress('Сохранение файла...');
 
             // Формируем имя файла с текущей датой и временем
             const now = new Date();
@@ -514,6 +525,7 @@ function SearchByBrand() {
             }).showToast();
         } finally {
             setIsExporting(false);
+            setShowExportModal(false);
         }
     };
 
@@ -736,15 +748,21 @@ function SearchByBrand() {
 
         if (isExportingAll) return;
         setIsExportingAll(true);
+        setShowExportModal(true);
+        setExportProgress('Подготовка всех данных для выгрузки...');
 
         try {
             const token = sessionStorage.getItem('token');
+            setExportProgress('Соединение с Google Таблицей...');
+
             const response = await axios.post(`${API_HOST}/api/queries/export-all`, {}, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             });
+
+            setExportProgress('Завершение выгрузки...');
 
             Toastify({
                 text: 'Все данные успешно выгружены в Google Таблицу',
@@ -767,8 +785,23 @@ function SearchByBrand() {
             }).showToast();
         } finally {
             setIsExportingAll(false);
+            setShowExportModal(false);
         }
     };
+
+    const ExportModal = () => (
+        <Modal show={showExportModal} onHide={() => setShowExportModal(false)} centered>
+            <Modal.Header closeButton>
+                <Modal.Title>Выгрузка данных</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <div style={{ textAlign: 'center' }}>
+                    <Spinner animation="border" role="status" />
+                    <p style={{ marginTop: '15px' }}>{exportProgress || 'Выполняется форматирование таблицы и загрузка данных...'}</p>
+                </div>
+            </Modal.Body>
+        </Modal>
+    );
 
     return (
         <div className="app-page">
@@ -1209,6 +1242,7 @@ function SearchByBrand() {
                     </Modal.Footer>
                 </Modal>
             </div>
+            <ExportModal />
         </div>
     );
 }

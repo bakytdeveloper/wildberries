@@ -49,6 +49,8 @@ function SearchByArticle() {
     const [formsDisabled, setFormsDisabled] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     const [isExportingAll, setIsExportingAll] = useState(false);
+    const [showExportModal, setShowExportModal] = useState(false);
+    const [exportProgress, setExportProgress] = useState('');
 
     // Добавить эффект для скрытия меню:
     useEffect(() => {
@@ -438,15 +440,21 @@ function SearchByArticle() {
     const handleExportClick = async (queryId, sheetName) => {
         if (exportingStates[queryId]) return;
         setExportingStates((prev) => ({ ...prev, [queryId]: true }));
+        setShowExportModal(true);
+        setExportProgress('Подготовка данных для выгрузки...');
+
 
         try {
             const token = sessionStorage.getItem('token');
+            setExportProgress('Соединение с Google Таблицей...');
+
             const response = await axios.post(`${API_HOST}/api/article/export`, { queryId, sheetName }, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             });
+            setExportProgress('Завершение выгрузки...');
             console.log('Выгрузка данных:', response.data);
             Toastify({
                 text: 'Данные успешно выгружены в Google Таблицу.',
@@ -466,15 +474,20 @@ function SearchByArticle() {
             }).showToast();
         } finally {
             setExportingStates((prev) => ({ ...prev, [queryId]: false }));
+            setShowExportModal(false);
         }
     };
 
     const handleExportToExcelClick = async (queryId) => {
         if (isExporting) return;
         setIsExporting(true);
+        setShowExportModal(true);
+        setExportProgress('Подготовка данных для Excel...');
 
         try {
             const token = sessionStorage.getItem('token');
+            setExportProgress('Формирование Excel файла...');
+
             const response = await fetch(`${API_HOST}/api/article/export-excel`, {
                 method: 'GET',
                 headers: {
@@ -485,6 +498,7 @@ function SearchByArticle() {
             if (!response.ok) {
                 throw new Error('Ошибка выгрузки данных');
             }
+            setExportProgress('Сохранение файла...');
 
             // Формируем имя файла с текущей датой и временем
             const now = new Date();
@@ -530,6 +544,7 @@ function SearchByArticle() {
             }).showToast();
         } finally {
             setIsExporting(false);
+            setShowExportModal(false);
         }
     };
 
@@ -751,15 +766,20 @@ function SearchByArticle() {
 
         if (isExportingAll) return;
         setIsExportingAll(true);
+        setShowExportModal(true);
+        setExportProgress('Подготовка всех данных для выгрузки...');
+
 
         try {
             const token = sessionStorage.getItem('token');
+            setExportProgress('Соединение с Google Таблицей...');
             const response = await axios.post(`${API_HOST}/api/article/export-all`, {}, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             });
+            setExportProgress('Завершение выгрузки...');
 
             Toastify({
                 text: 'Все данные успешно выгружены в Google Таблицу',
@@ -782,8 +802,23 @@ function SearchByArticle() {
             }).showToast();
         } finally {
             setIsExportingAll(false);
+            setShowExportModal(false);
         }
     };
+
+    const ExportModal = () => (
+        <Modal show={showExportModal} onHide={() => setShowExportModal(false)} centered>
+            <Modal.Header closeButton>
+                <Modal.Title>Выгрузка данных</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <div style={{ textAlign: 'center' }}>
+                    <Spinner animation="border" role="status" />
+                    <p style={{ marginTop: '15px' }}>{exportProgress || 'Выполняется форматирование таблицы и загрузка данных...'}</p>
+                </div>
+            </Modal.Body>
+        </Modal>
+    );
 
     
     return (
@@ -1216,6 +1251,7 @@ function SearchByArticle() {
                     </Modal.Footer>
                 </Modal>
             </div>
+            <ExportModal />
         </div>
     );
 }
