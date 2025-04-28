@@ -1094,6 +1094,8 @@ tr:hover {
 @media (max-width: 480px) {
     header h1 {
         font-size: 1.4rem;
+        margin: 0;
+        padding: 3px 0;
     }
 
     .auth-form h2 {
