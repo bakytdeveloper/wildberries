@@ -3,7 +3,7 @@
     --text-color: #333333;
     --border-color: #dddddd;
     --shadow-color: rgba(0, 0, 0, 0.1);
-    --button-background: #093aee;
+    --button-background: #0056b3;
     --button-hover-background: #3575f6;
     --button-text-color: #ffffff;
     --table-header-background: #bf70ef;
@@ -390,7 +390,7 @@ header {
 .controls_primary {
     margin-left: 10px;
     border-radius: 2px !important;
-    background: #0899b3 !important;
+    background: #0056b3 !important;
     color: white !important;
 }
 
@@ -400,7 +400,8 @@ header {
 }
 
 .controls_primary_warning {
-    background: #25a908 !important;
+    background: #1e8a06 !important;
+    border-color: #1e8a06!important;
 
 }
 .controls_primary_warning:hover {
@@ -445,7 +446,7 @@ button:hover:enabled {
 
 
 .controls_primary_info {
-    background-color: #17a2b8;
+    background-color: #0056b3;
     border-color: #17a2b8;
     color: white;
     width: 40%;
@@ -455,6 +456,7 @@ button:hover:enabled {
 
 .btn-info {
     width: 82%;
+    border: #176db8 2px !important;
 }
 
 .controls_primary_info:hover {
@@ -463,7 +465,7 @@ button:hover:enabled {
 }
 
 .controls_primary_success {
-    background-color: #17a2b8;
+    background-color: #0056b3;
     color: white;
     border: #176db8 2px !important;
     width: 40%;
@@ -485,7 +487,7 @@ table {
 }
 
 .upload-to-excel {
-    background: #08d4cd;
+    background: #0056b3;
     border: 2px solid #06b9f1;
     border-radius: 4px;
     padding: 3px 7px;
@@ -521,10 +523,10 @@ table {
     justify-content: center;
     padding: 4px 9px;
     /*font-weight: bold;*/
-    font-size: 17px;
-    border: 2px solid #ccc;
-    border-radius: 4px;
-    background-color: #04b808;
+    font-size: 16px;
+    border: 1px solid #166e03;
+    border-radius: 2px;
+    background-color: #1e8a06;
     cursor: pointer;
     transition: background-color 0.3s ease;
     margin-right: 10px;
@@ -550,10 +552,10 @@ table {
     justify-content: center;
     min-width: 170px;
     padding: 4px 9px;
-    font-size: 17px;
-    border: 2px solid #ccc;
-    border-radius: 4px;
-    background-color: #07a6ee;
+    font-size: 16px;
+    border: 1px solid #0056b3;
+    border-radius: 2px;
+    background-color: #0056b3;
     cursor: pointer;
     transition: background-color 0.3s ease;
     color: white;
