@@ -72,8 +72,30 @@ const generateExcelForUser = async (userId) => {
         const sheetBrand = workbook.addWorksheet('Бренд');
         const sheetArticle = workbook.addWorksheet('Артикул');
 
+        // Добавляем заголовки
         sheetBrand.addRow(['Запрос', 'Бренд', 'Город', 'Картинка', 'Артикул', 'Описание товара', 'Позиция', 'Время запроса', 'Дата запроса']);
         sheetArticle.addRow(['Запрос', 'Артикул', 'Город', 'Картинка', 'Бренд', 'Описание товара', 'Позиция', 'Время запроса', 'Дата запроса']);
+
+        // Устанавливаем ширину колонок для обоих листов
+        [sheetBrand, sheetArticle].forEach(sheet => {
+            sheet.columns = [
+                { key: 'query', width: 30 },    // Запрос
+                { key: 'id', width: 15 },       // Артикул или Бренд
+                { key: 'city', width: 12 },     // Город
+                { key: 'image', width: 15 },    // Картинка (место для изображения)
+                { key: 'brand', width: 15 },    // Бренд или Артикул
+                { key: 'name', width: 50 },     // Описание товара
+                { key: 'position', width: 10 }, // Позиция
+                { key: 'time', width: 12 },     // Время запроса
+                { key: 'date', width: 12 }      // Дата запроса
+            ];
+
+            // Форматирование заголовков
+            sheet.getRow(1).eachCell((cell) => {
+                cell.font = { bold: true };
+                cell.alignment = { vertical: 'middle', horizontal: 'center' };
+            });
+        });
 
         const [brandQueries, articleQueries] = await Promise.all([
             QueryModel.find({ userId })
