@@ -154,19 +154,6 @@ const exportToExcel = async (req, res) => {
     try {
         const userId = req.userId;
 
-        // Проверяем количество данных перед выбором метода
-        const [brandCount, articleCount] = await Promise.all([
-            QueryModel.countDocuments({ userId }),
-            QueryArticleModel.countDocuments({ userId })
-        ]);
-
-        const totalCount = brandCount + articleCount;
-
-        // Для больших данных (> 1000 записей) используем потоковую передачу
-        if (totalCount > 1000 || req.query.stream === 'true') {
-            return await streamExcelForUser(userId, res);
-        }
-
         const excelBuffer = await generateExcelForUser(userId);
 
         const fileName = `export_${new Date().toISOString()
