@@ -392,6 +392,8 @@ function SearchByBrand() {
     const handleDeleteConfirm = async () => {
         if (deleteQueryId) {
             try {
+                setExportingStates((prev) => ({ ...prev, [deleteQueryId]: true })); // Устанавливаем состояние удаления
+
                 const token = sessionStorage.getItem('token');
                 await axios.delete(`${API_HOST}/api/queries/${deleteQueryId}`, {
                     headers: { Authorization: `Bearer ${token}` }
@@ -416,6 +418,8 @@ function SearchByBrand() {
                     position: "right",
                     style: { background: '#ff0000' }
                 }).showToast();
+            } finally {
+                setExportingStates((prev) => ({ ...prev, [deleteQueryId]: false })); // Сбрасываем состояние удаления
             }
         }
     };
@@ -1238,7 +1242,24 @@ function SearchByBrand() {
                     <Modal.Body>Вы уверены, что хотите удалить этот запрос и все связанные с ним данные?</Modal.Body>
                     <Modal.Footer>
                         <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Отменить</Button>
-                        <Button variant="danger" onClick={handleDeleteConfirm}>Удалить</Button>
+                        <Button
+                            variant="danger"
+                            onClick={handleDeleteConfirm}
+                            disabled={exportingStates[deleteQueryId]} // Блокируем кнопку во время удаления
+                            style={{ minWidth: '80px' }} // Фиксируем минимальную ширину
+                        >
+                            {exportingStates[deleteQueryId] ? (
+                                <Spinner
+                                    as="span"
+                                    animation="border"
+                                    size="sm"
+                                    role="status"
+                                    aria-hidden="true"
+                                />
+                            ) : (
+                                'Удалить'
+                            )}
+                        </Button>
                     </Modal.Footer>
                 </Modal>
             </div>
