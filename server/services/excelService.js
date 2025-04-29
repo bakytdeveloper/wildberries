@@ -4,71 +4,75 @@ const { QueryArticleModel } = require("../models/queryArticleModel");
 const { QueryModel } = require("../models/queryModel");
 const imageCache = new Map();
 
-// Конфигурация
+// Усиленная конфигурация
 const CONFIG = {
-    IMAGE: { TIMEOUT: 15000, RETRIES: 3, RETRY_DELAY: 1000, BATCH_SIZE: 10, SIZE: { width: 30, height: 30 } },
-    DATABASE: { TIMEOUT: 30000 },
-    STREAM: { CHUNK_SIZE: 100 }
+    IMAGE: {
+        TIMEOUT: 10000, // Уменьшен таймаут
+        RETRIES: 2,     // Уменьшено количество попыток
+        RETRY_DELAY: 500,
+        BATCH_SIZE: 15, // Увеличен размер батча
+        SIZE: { width: 30, height: 30 },
+        CONCURRENCY: 5  // Ограничение параллельных загрузок
+    },
+    DATABASE: {
+        TIMEOUT: 20000, // Уменьшен таймаут
+        BATCH_SIZE: 200 // Увеличен размер батча для БД
+    },
+    EXCEL: {
+        STREAMING: true, // Использование потокового режима
+        USE_SHARED_STRINGS: false // Отключение shared strings для производительности
+    }
 };
 
-// Улучшенная загрузка изображений
+// Оптимизированная загрузка изображений с ограничением concurrency
 const downloadImage = async (url) => {
     if (!url) return null;
-    if (imageCache.has(url)) {
-        return imageCache.get(url);
+    if (imageCache.has(url)) return imageCache.get(url);
+
+    try {
+        const response = await axios.get(url, {
+            responseType: 'arraybuffer',
+            timeout: CONFIG.IMAGE.TIMEOUT,
+            validateStatus: (status) => status === 200
+        });
+        const buffer = Buffer.from(response.data, 'binary');
+        imageCache.set(url, buffer);
+        return buffer;
+    } catch (error) {
+        console.error(`Не удалось загрузить изображение: ${url}`);
+        return null;
     }
-    for (let attempt = 1; attempt <= CONFIG.IMAGE.RETRIES; attempt++) {
-        try {
-            const response = await axios.get(url, {
-                responseType: 'arraybuffer',
-                timeout: CONFIG.IMAGE.TIMEOUT,
-                validateStatus: (status) => status === 200
-            });
-            const buffer = Buffer.from(response.data, 'binary');
-            imageCache.set(url, buffer); // Кэширование
-            return buffer;
-        } catch (error) {
-            if (attempt === CONFIG.IMAGE.RETRIES) {
-                console.error(`Не удалось загрузить изображение: ${url}`);
-                return null;
-            }
-            await new Promise(resolve => setTimeout(resolve, CONFIG.IMAGE.RETRY_DELAY));
+};
+
+// Обработка изображений с ограничением параллелизма
+const processImagesWithConcurrency = async (tasks) => {
+    const results = [];
+    const executing = [];
+
+    for (const task of tasks) {
+        const p = task().then(result => {
+            executing.splice(executing.indexOf(p), 1);
+            return result;
+        });
+
+        executing.push(p);
+        results.push(p);
+
+        if (executing.length >= CONFIG.IMAGE.CONCURRENCY) {
+            await Promise.race(executing);
         }
     }
+
+    return (await Promise.all(results)).filter(Boolean);
 };
 
-// Обработка изображений батчами
-const processImagesBatch = async (tasks) => {
-    const results = await Promise.all(tasks.map(task => task()));
-    return results.filter(r => r).map(r => r);
-};
-
-// Создание строки данных
-const createRowData = (product, query, isBrandSheet) => {
-    const position = product?.page > 1 ? `${product.page}${String(product.position).padStart(2, '0')}` : String(product?.position || '');
-    const promoPosition = product?.log?.promoPosition ? `${product.log.promoPosition}*` : position;
-    return {
-        data: [
-            product?.query || query.query,
-            isBrandSheet ? product?.brand || query.brand : product?.id,
-            product?.city || query.city,
-            product?.imageUrl || '',
-            isBrandSheet ? product?.id : product?.brand,
-            product?.name,
-            promoPosition,
-            new Date(product?.queryTime || query.createdAt).toLocaleTimeString(),
-            new Date(product?.queryTime || query.createdAt).toLocaleDateString()
-        ],
-        isPromo: promoPosition.includes('*'),
-        imageUrl: product?.imageUrl
-    };
-};
-
-// Генерация Excel (обычный режим)
+// Генерация Excel с оптимизациями
 const generateExcelForUser = async (userId) => {
     const workbook = new ExcelJS.Workbook();
     workbook.calcProperties.fullCalcOnLoad = false;
+
     try {
+        // Создаем листы один раз
         const sheetBrand = workbook.addWorksheet('Бренд');
         const sheetArticle = workbook.addWorksheet('Артикул');
 
@@ -76,7 +80,7 @@ const generateExcelForUser = async (userId) => {
         sheetBrand.addRow(['Запрос', 'Бренд', 'Город', 'Картинка', 'Артикул', 'Описание товара', 'Позиция', 'Время запроса', 'Дата запроса']);
         sheetArticle.addRow(['Запрос', 'Артикул', 'Город', 'Картинка', 'Бренд', 'Описание товара', 'Позиция', 'Время запроса', 'Дата запроса']);
 
-        // Устанавливаем ширину колонок для обоих листов
+        // Заголовки и форматирование
         [sheetBrand, sheetArticle].forEach(sheet => {
             sheet.columns = [
                 { key: 'query', width: 30 },    // Запрос
@@ -90,62 +94,93 @@ const generateExcelForUser = async (userId) => {
                 { key: 'date', width: 12 }      // Дата запроса
             ];
 
-            // Форматирование заголовков
-            sheet.getRow(1).eachCell((cell) => {
+            sheet.getRow(1).eachCell(cell => {
                 cell.font = { bold: true };
-                cell.alignment = { vertical: 'middle', horizontal: 'center' };
             });
         });
 
+        // Параллельная загрузка данных
         const [brandQueries, articleQueries] = await Promise.all([
             QueryModel.find({ userId })
                 .select('query productTables city brand createdAt')
                 .lean()
-                .populate({ path: 'productTables.products', options: { batchSize: 100 } })
+                .populate({
+                    path: 'productTables.products',
+                    options: { batchSize: CONFIG.DATABASE.BATCH_SIZE }
+                })
                 .maxTimeMS(CONFIG.DATABASE.TIMEOUT),
             QueryArticleModel.find({ userId })
                 .select('query productTables city article createdAt')
                 .lean()
-                .populate({ path: 'productTables.products', options: { batchSize: 100 } })
+                .populate({
+                    path: 'productTables.products',
+                    options: { batchSize: CONFIG.DATABASE.BATCH_SIZE }
+                })
                 .maxTimeMS(CONFIG.DATABASE.TIMEOUT)
         ]);
 
         imageCache.clear();
 
+        // Оптимизированная обработка данных
         const processData = async (queries, sheet, isBrandSheet) => {
             const imageTasks = [];
+            const rows = [];
+
+            // Сначала собираем все данные без записи в Excel
             for (const query of queries) {
                 for (const table of query.productTables) {
                     for (const product of table.products) {
-                        const { data, isPromo, imageUrl } = createRowData(product, query, isBrandSheet);
-                        const row = sheet.addRow(data);
-                        if (isPromo) {
-                            row.getCell(7).font = { bold: true, color: { argb: 'FFFF0000' } };
-                        }
-                        if (imageUrl) {
-                            imageTasks.push(async () => {
-                                try {
-                                    const imageBuffer = await downloadImage(imageUrl);
-                                    if (imageBuffer) {
-                                        const extension = imageUrl.split('.').pop() === 'png' ? 'png' : 'jpeg';
-                                        const imageId = workbook.addImage({ buffer: imageBuffer, extension });
-                                        sheet.addImage(imageId, { tl: { col: 3, row: row.number - 1, offset: 5 }, ext: CONFIG.IMAGE.SIZE });
-                                        sheet.getRow(row.number).height = CONFIG.IMAGE.SIZE.height;
-                                    }
-                                } catch (err) {
-                                    console.error('Ошибка обработки изображения:', err);
-                                }
-                            });
-                            if (imageTasks.length >= CONFIG.IMAGE.BATCH_SIZE) {
-                                await processImagesBatch(imageTasks.splice(0, CONFIG.IMAGE.BATCH_SIZE));
-                                process.nextTick(() => {});
-                            }
-                        }
+                        const position = product?.page > 1
+                            ? `${product.page}${String(product.position).padStart(2, '0')}`
+                            : String(product?.position || '');
+
+                        const promoPosition = product?.log?.promoPosition
+                            ? `${product.log.promoPosition}*`
+                            : position;
+
+                        const rowData = [
+                            product?.query || query.query,
+                            isBrandSheet ? product?.brand || query.brand : product?.id,
+                            product?.city || query.city,
+                            product?.imageUrl || '',
+                            isBrandSheet ? product?.id : product?.brand,
+                            product?.name,
+                            promoPosition,
+                            new Date(product?.queryTime || query.createdAt).toLocaleTimeString(),
+                            new Date(product?.queryTime || query.createdAt).toLocaleDateString()
+                        ];
+
+                        rows.push({ rowData, isPromo: promoPosition.includes('*'), imageUrl: product?.imageUrl });
                     }
                 }
             }
+
+            // Затем добавляем все строки сразу
+            for (const { rowData, isPromo, imageUrl } of rows) {
+                const row = sheet.addRow(rowData);
+                if (isPromo) {
+                    row.getCell(7).font = { bold: true, color: { argb: 'FFFF0000' } };
+                }
+
+                if (imageUrl) {
+                    imageTasks.push(async () => {
+                        const imageBuffer = await downloadImage(imageUrl);
+                        if (imageBuffer) {
+                            const extension = imageUrl.split('.').pop() === 'png' ? 'png' : 'jpeg';
+                            const imageId = workbook.addImage({ buffer: imageBuffer, extension });
+                            sheet.addImage(imageId, {
+                                tl: { col: 3, row: row.number - 1, offset: 5 },
+                                ext: CONFIG.IMAGE.SIZE
+                            });
+                            sheet.getRow(row.number).height = CONFIG.IMAGE.SIZE.height;
+                        }
+                    });
+                }
+            }
+
+            // Параллельная обработка изображений с ограничением concurrency
             if (imageTasks.length > 0) {
-                await processImagesBatch(imageTasks);
+                await processImagesWithConcurrency(imageTasks);
             }
         };
 
@@ -154,17 +189,15 @@ const generateExcelForUser = async (userId) => {
             processData(articleQueries, sheetArticle, false)
         ]);
 
-        const buffer = await workbook.xlsx.writeBuffer();
-        imageCache.clear();
+        // Используем потоковый режим для записи
+        const buffer = await workbook.xlsx.writeBuffer({
+            useSharedStrings: CONFIG.EXCEL.USE_SHARED_STRINGS,
+            useStyles: true
+        });
+
         return buffer;
-    } catch (error) {
-        imageCache.clear();
-        console.error('Ошибка создания Excel:', error);
-        throw error;
     } finally {
-        console.log('Очистка кэша в finally блоке.');
         imageCache.clear();
-        console.log('После очистки кэша в finally, размер imageCache:', imageCache.size);
     }
 };
 
