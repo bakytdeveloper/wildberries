@@ -350,10 +350,11 @@ const AdminPanel = ({ API_HOST }) => {
                                 type="number"
                                 value={subscriptionAmount}
                                 onChange={handleSubscriptionAmountChange}
-                                placeholder="Введите сумму от 1000"
+                                placeholder="Ввод от 1000"
                                 min="1000"
                                 step="1000"
                                 isInvalid={!!amountError}
+                                className="sum-check-input"
                             />
                             <Button variant="outline-secondary" onClick={calculateSubscriptionDate}>
                                 Рассчитать
