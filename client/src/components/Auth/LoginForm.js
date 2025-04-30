@@ -21,11 +21,15 @@ const LoginForm = ({ API_HOST, setIsAuthenticated, setShowProfile, setShowForgot
             setIsAuthenticated(true);
             setShowProfile(true);
 
+            // В handleLogin после успешной авторизации:
             if (response.data.isAdmin) {
+                sessionStorage.setItem('isAdmin', true);
                 window.location.href = '/admin';
             } else {
+                sessionStorage.setItem('isAdmin', false);
                 window.location.reload();
             }
+
         } catch (error) {
             if (error.response && error.response.status === 403) {
                 Toastify({
