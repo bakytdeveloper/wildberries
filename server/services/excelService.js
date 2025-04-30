@@ -7,19 +7,19 @@ const imageCache = new Map();
 // Усиленная конфигурация
 const CONFIG = {
     IMAGE: {
-        TIMEOUT: 10000, // Уменьшен таймаут
+        TIMEOUT: 5000, // Уменьшен таймаут
         RETRIES: 2,     // Уменьшено количество попыток
-        RETRY_DELAY: 500,
-        BATCH_SIZE: 15, // Увеличен размер батча
+        RETRY_DELAY: 300,
+        BATCH_SIZE: 10, // Увеличен размер батча
         SIZE: { width: 30, height: 30 },
-        CONCURRENCY: 5  // Ограничение параллельных загрузок
+        CONCURRENCY: 10  // Ограничение параллельных загрузок
     },
     DATABASE: {
-        TIMEOUT: 20000, // Уменьшен таймаут
-        BATCH_SIZE: 200 // Увеличен размер батча для БД
+        TIMEOUT: 30000, // Увеличьте с 20000
+        BATCH_SIZE: 100  // Уменьшите с 200
     },
     EXCEL: {
-        STREAMING: true, // Использование потокового режима
+        STREAMING: false, // Использование потокового режима
         USE_SHARED_STRINGS: false // Отключение shared strings для производительности
     }
 };
