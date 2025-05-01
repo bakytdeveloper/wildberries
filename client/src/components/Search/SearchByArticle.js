@@ -482,7 +482,7 @@ function SearchByArticle() {
         }
     };
 
-    const handleExportToExcelClick = async (queryId) => {
+    const handleExportToExcelClick = async (queryId, exportType) => {
         if (isExporting) return;
         setIsExporting(true);
         setShowExportModal(true);
@@ -492,7 +492,11 @@ function SearchByArticle() {
             const token = sessionStorage.getItem('token');
             setExportProgress('Формирование Excel файла...');
 
-            const response = await fetch(`${API_HOST}/api/article/export-excel`, {
+            const endpoint = exportType === 'queries'
+                ? `${API_HOST}/api/queries/export-excel`
+                : `${API_HOST}/api/article/export-excel`;
+
+            const response = await fetch(endpoint, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -504,21 +508,10 @@ function SearchByArticle() {
             }
             setExportProgress('Сохранение файла...');
 
-            // Формируем имя файла с текущей датой и временем
-            const now = new Date();
-            const day = String(now.getDate()).padStart(2, '0');
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const year = now.getFullYear();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-            const dateStr = `export_${day}-${month}-${year}_${hours}-${minutes}-${seconds}.xlsx`;
-
-            // Получаем имя файла из заголовка или используем сформированное
+            // Получаем имя файла из заголовка Content-Disposition
             const contentDisposition = response.headers.get('Content-Disposition');
-            let fileName = contentDisposition
-                ? (contentDisposition.match(/filename=(.+)/)?.[1] || dateStr)
-                : dateStr;
+            const fileNameMatch = contentDisposition?.match(/filename="(.+?)"/);
+            const fileName = fileNameMatch ? fileNameMatch[1] : 'export.xlsx';
 
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);

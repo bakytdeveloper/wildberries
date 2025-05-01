@@ -148,10 +148,12 @@ const exportToExcel = async (req, res) => {
 
     try {
         const userId = req.userId;
+        const now = new Date();
+        const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}-${String(now.getSeconds()).padStart(2, '0')}`;
+        const fileName = `export_${formattedDate}.xlsx`;
 
-        // Отправляем заголовки сразу
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition', `attachment; filename=export_${Date.now()}.xlsx`);
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
         res.writeHead(200);
         res.flushHeaders();
 
@@ -171,6 +173,7 @@ const exportToExcel = async (req, res) => {
         }
     }
 };
+
 
 module.exports = {
     createArticleQuery,
