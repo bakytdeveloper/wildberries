@@ -144,30 +144,30 @@ const exportAllToGoogleSheet = async (req, res) => {
 
 // Обновленный экспорт в Excel с поддержкой больших данных
 const exportToExcel = async (req, res) => {
-    req.setTimeout(1200000, () => {
-        if (!res.headersSent) {
-            console.error('Таймаут при генерации Excel');
-            res.status(504).json({ error: 'Время обработки превышено' });
-        }
-    });
+    req.setTimeout(3600 * 1000); // 1 час таймаут
 
     try {
         const userId = req.userId;
 
-        const excelBuffer = await generateExcelForUser(userId);
-
-        const fileName = `export_${new Date().toISOString()
-            .replace(/T/, '_')
-            .replace(/\..+/, '')
-            .replace(/:/g, '-')}.xlsx`;
-
+        // Отправляем заголовки сразу
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
-        res.send(excelBuffer);
+        res.setHeader('Content-Disposition', `attachment; filename=export_${Date.now()}.xlsx`);
+        res.writeHead(200);
+        res.flushHeaders();
+
+        const excelBuffer = await generateExcelForUser(userId, res);
+        res.end(excelBuffer);
     } catch (error) {
         console.error('Ошибка выгрузки данных:', error);
         if (!res.headersSent) {
             res.status(500).json({ error: 'Ошибка выгрузки данных' });
+        } else {
+            try {
+                res.write(JSON.stringify({ error: 'Ошибка выгрузки данных' }));
+                res.end();
+            } catch (e) {
+                console.error('Не удалось отправить ошибку:', e);
+            }
         }
     }
 };

@@ -7,24 +7,24 @@ const imageCache = new Map();
 // Усиленная конфигурация
 const CONFIG = {
     IMAGE: {
-        TIMEOUT: 5000, // Уменьшен таймаут
-        RETRIES: 2,     // Уменьшено количество попыток
+        TIMEOUT: 5000,
+        RETRIES: 2,
         RETRY_DELAY: 300,
-        BATCH_SIZE: 10, // Увеличен размер батча
+        BATCH_SIZE: 10,
         SIZE: { width: 30, height: 30 },
-        CONCURRENCY: 10  // Ограничение параллельных загрузок
+        CONCURRENCY: 10
     },
     DATABASE: {
-        TIMEOUT: 30000, // Увеличьте с 20000
-        BATCH_SIZE: 100  // Уменьшите с 200
+        TIMEOUT: 30000,
+        BATCH_SIZE: 100
     },
     EXCEL: {
-        STREAMING: false, // Использование потокового режима
-        USE_SHARED_STRINGS: false // Отключение shared strings для производительности
+        STREAMING: false,
+        USE_SHARED_STRINGS: false
     }
 };
 
-// Оптимизированная загрузка изображений с ограничением concurrency
+// Оптимизированная загрузка изображений
 const downloadImage = async (url) => {
     if (!url) return null;
     if (imageCache.has(url)) return imageCache.get(url);
@@ -66,13 +66,25 @@ const processImagesWithConcurrency = async (tasks) => {
     return (await Promise.all(results)).filter(Boolean);
 };
 
-// Генерация Excel с оптимизациями
-const generateExcelForUser = async (userId) => {
+const generateExcelForUser = async (userId, res) => {
     const workbook = new ExcelJS.Workbook();
     workbook.calcProperties.fullCalcOnLoad = false;
 
+    // Функция для периодического "пинга" соединения
+    const pingConnection = () => {
+        try {
+            if (res && !res.headersSent) {
+                res.write(' ');
+            }
+        } catch (e) {
+            console.log('Connection closed during ping');
+        }
+    };
+
+    let pingInterval;
+
     try {
-        // Создаем листы один раз
+        // Создаем листы
         const sheetBrand = workbook.addWorksheet('Бренд');
         const sheetArticle = workbook.addWorksheet('Артикул');
 
@@ -80,24 +92,29 @@ const generateExcelForUser = async (userId) => {
         sheetBrand.addRow(['Запрос', 'Бренд', 'Город', 'Картинка', 'Артикул', 'Описание товара', 'Позиция', 'Время запроса', 'Дата запроса']);
         sheetArticle.addRow(['Запрос', 'Артикул', 'Город', 'Картинка', 'Бренд', 'Описание товара', 'Позиция', 'Время запроса', 'Дата запроса']);
 
-        // Заголовки и форматирование
+        // Настройка колонок
         [sheetBrand, sheetArticle].forEach(sheet => {
             sheet.columns = [
-                { key: 'query', width: 30 },    // Запрос
-                { key: 'id', width: 15 },       // Артикул или Бренд
-                { key: 'city', width: 12 },     // Город
-                { key: 'image', width: 15 },    // Картинка (место для изображения)
-                { key: 'brand', width: 15 },    // Бренд или Артикул
-                { key: 'name', width: 50 },     // Описание товара
-                { key: 'position', width: 10 }, // Позиция
-                { key: 'time', width: 12 },     // Время запроса
-                { key: 'date', width: 12 }      // Дата запроса
+                { key: 'query', width: 30 },
+                { key: 'id', width: 15 },
+                { key: 'city', width: 12 },
+                { key: 'image', width: 15 },
+                { key: 'brand', width: 15 },
+                { key: 'name', width: 50 },
+                { key: 'position', width: 10 },
+                { key: 'time', width: 12 },
+                { key: 'date', width: 12 }
             ];
 
             sheet.getRow(1).eachCell(cell => {
                 cell.font = { bold: true };
             });
         });
+
+        // Запускаем пинг соединения каждые 30 секунд
+        if (res) {
+            pingInterval = setInterval(pingConnection, 30000);
+        }
 
         // Параллельная загрузка данных
         const [brandQueries, articleQueries] = await Promise.all([
@@ -121,12 +138,11 @@ const generateExcelForUser = async (userId) => {
 
         imageCache.clear();
 
-        // Оптимизированная обработка данных
+        // Обработка данных
         const processData = async (queries, sheet, isBrandSheet) => {
             const imageTasks = [];
             const rows = [];
 
-            // Сначала собираем все данные без записи в Excel
             for (const query of queries) {
                 for (const table of query.productTables) {
                     for (const product of table.products) {
@@ -155,7 +171,6 @@ const generateExcelForUser = async (userId) => {
                 }
             }
 
-            // Затем добавляем все строки сразу
             for (const { rowData, isPromo, imageUrl } of rows) {
                 const row = sheet.addRow(rowData);
                 if (isPromo) {
@@ -178,7 +193,6 @@ const generateExcelForUser = async (userId) => {
                 }
             }
 
-            // Параллельная обработка изображений с ограничением concurrency
             if (imageTasks.length > 0) {
                 await processImagesWithConcurrency(imageTasks);
             }
@@ -189,7 +203,6 @@ const generateExcelForUser = async (userId) => {
             processData(articleQueries, sheetArticle, false)
         ]);
 
-        // Используем потоковый режим для записи
         const buffer = await workbook.xlsx.writeBuffer({
             useSharedStrings: CONFIG.EXCEL.USE_SHARED_STRINGS,
             useStyles: true
@@ -197,6 +210,7 @@ const generateExcelForUser = async (userId) => {
 
         return buffer;
     } finally {
+        if (pingInterval) clearInterval(pingInterval);
         imageCache.clear();
     }
 };
