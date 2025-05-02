@@ -1,3 +1,4 @@
+const fs = require("fs");
 const {QueryModel} = require("../models/queryModel");
 const {streamExcelForUser} = require("../services/excelService");
 const {exportAllDataToSheet} = require("../services/googleSheetService");
@@ -144,32 +145,47 @@ const exportAllToGoogleSheet = async (req, res) => {
 
 // Обновленный экспорт в Excel с поддержкой больших данных
 const exportToExcel = async (req, res) => {
-    req.setTimeout(3600 * 1000); // 1 час таймаут
+    let tempFilePath;
 
     try {
         const userId = req.userId;
-        const now = new Date();
-        const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}-${String(now.getSeconds()).padStart(2, '0')}`;
-        const fileName = `export_${formattedDate}.xlsx`;
+        const fileName = `export_${Date.now()}.xlsx`;
 
+        // Генерируем файл
+        tempFilePath = await generateExcelForUser(userId);
+
+        // Настраиваем заголовки
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-        res.writeHead(200);
-        res.flushHeaders();
 
-        const excelBuffer = await generateExcelForUser(userId, res);
-        res.end(excelBuffer);
+        // Создаем поток чтения и отправляем файл
+        const fileStream = fs.createReadStream(tempFilePath);
+        fileStream.pipe(res);
+
+        // Удаляем файл после отправки
+        fileStream.on('end', () => {
+            if (tempFilePath && fs.existsSync(tempFilePath)) {
+                fs.unlinkSync(tempFilePath);
+            }
+        });
+
+        fileStream.on('error', (error) => {
+            console.error('Ошибка при отправке файла:', error);
+            if (tempFilePath && fs.existsSync(tempFilePath)) {
+                fs.unlinkSync(tempFilePath);
+            }
+            if (!res.headersSent) {
+                res.status(500).json({ error: 'Ошибка при отправке файла' });
+            }
+        });
+
     } catch (error) {
         console.error('Ошибка выгрузки данных:', error);
+        if (tempFilePath && fs.existsSync(tempFilePath)) {
+            fs.unlinkSync(tempFilePath);
+        }
         if (!res.headersSent) {
             res.status(500).json({ error: 'Ошибка выгрузки данных' });
-        } else {
-            try {
-                res.write(JSON.stringify({ error: 'Ошибка выгрузки данных' }));
-                res.end();
-            } catch (e) {
-                console.error('Не удалось отправить ошибку:', e);
-            }
         }
     }
 };

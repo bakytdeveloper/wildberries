@@ -1,50 +1,74 @@
 const ExcelJS = require('exceljs');
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
 const { QueryArticleModel } = require("../models/queryArticleModel");
 const { QueryModel } = require("../models/queryModel");
 const imageCache = new Map();
 
-// Усиленная конфигурация
+// Конфигурация
 const CONFIG = {
     IMAGE: {
         TIMEOUT: 5000,
         RETRIES: 2,
-        RETRY_DELAY: 300,
-        BATCH_SIZE: 10,
         SIZE: { width: 30, height: 30 },
-        CONCURRENCY: 10
+        CONCURRENCY: 10,
+        MAX_CACHE: 50
     },
     DATABASE: {
         TIMEOUT: 30000,
         BATCH_SIZE: 100
     },
-    EXCEL: {
-        STREAMING: false,
-        USE_SHARED_STRINGS: false
-    }
+    TEMP_DIR: './temp_exports',
+    CLEANUP_INTERVAL: 3600000 // 1 час
 };
 
-// Оптимизированная загрузка изображений
+// Создаем директорию для временных файлов
+if (!fs.existsSync(CONFIG.TEMP_DIR)) {
+    fs.mkdirSync(CONFIG.TEMP_DIR, { recursive: true });
+}
+
+// Очистка старых файлов
+setInterval(() => {
+    fs.readdir(CONFIG.TEMP_DIR, (err, files) => {
+        if (err) return;
+
+        const now = Date.now();
+        files.forEach(file => {
+            const filePath = path.join(CONFIG.TEMP_DIR, file);
+            const stat = fs.statSync(filePath);
+            if (now - stat.mtimeMs > CONFIG.CLEANUP_INTERVAL) {
+                fs.unlinkSync(filePath);
+            }
+        });
+    });
+}, CONFIG.CLEANUP_INTERVAL);
+
 const downloadImage = async (url) => {
     if (!url) return null;
+
+    // Очистка кэша
+    if (imageCache.size >= CONFIG.IMAGE.MAX_CACHE) {
+        const oldestKey = imageCache.keys().next().value;
+        imageCache.delete(oldestKey);
+    }
+
     if (imageCache.has(url)) return imageCache.get(url);
 
     try {
         const response = await axios.get(url, {
             responseType: 'arraybuffer',
-            timeout: CONFIG.IMAGE.TIMEOUT,
-            validateStatus: (status) => status === 200
+            timeout: CONFIG.IMAGE.TIMEOUT
         });
         const buffer = Buffer.from(response.data, 'binary');
         imageCache.set(url, buffer);
         return buffer;
     } catch (error) {
-        console.error(`Не удалось загрузить изображение: ${url}`);
+        console.error(`Ошибка загрузки изображения: ${url}`);
         return null;
     }
 };
 
-// Обработка изображений с ограничением параллелизма
 const processImagesWithConcurrency = async (tasks) => {
     const results = [];
     const executing = [];
@@ -66,22 +90,10 @@ const processImagesWithConcurrency = async (tasks) => {
     return (await Promise.all(results)).filter(Boolean);
 };
 
-const generateExcelForUser = async (userId, res) => {
+const generateExcelForUser = async (userId) => {
+    const tempFilePath = path.join(CONFIG.TEMP_DIR, `export_${userId}_${Date.now()}.xlsx`);
     const workbook = new ExcelJS.Workbook();
     workbook.calcProperties.fullCalcOnLoad = false;
-
-    // Функция для периодического "пинга" соединения
-    const pingConnection = () => {
-        try {
-            if (res && !res.headersSent) {
-                res.write(' ');
-            }
-        } catch (e) {
-            console.log('Connection closed during ping');
-        }
-    };
-
-    let pingInterval;
 
     try {
         // Создаем листы
@@ -111,37 +123,19 @@ const generateExcelForUser = async (userId, res) => {
             });
         });
 
-        // Запускаем пинг соединения каждые 30 секунд
-        if (res) {
-            pingInterval = setInterval(pingConnection, 30000);
-        }
-
-        // Параллельная загрузка данных
+        // Загрузка данных
         const [brandQueries, articleQueries] = await Promise.all([
-            QueryModel.find({ userId })
-                .select('query productTables city brand createdAt')
-                .lean()
-                .populate({
-                    path: 'productTables.products',
-                    options: { batchSize: CONFIG.DATABASE.BATCH_SIZE }
-                })
-                .maxTimeMS(CONFIG.DATABASE.TIMEOUT),
-            QueryArticleModel.find({ userId })
-                .select('query productTables city article createdAt')
-                .lean()
-                .populate({
-                    path: 'productTables.products',
-                    options: { batchSize: CONFIG.DATABASE.BATCH_SIZE }
-                })
-                .maxTimeMS(CONFIG.DATABASE.TIMEOUT)
+            QueryModel.find({ userId }).lean().populate('productTables.products'),
+            QueryArticleModel.find({ userId }).lean().populate('productTables.products')
         ]);
 
         imageCache.clear();
 
-        // Обработка данных
+        // Обработка данных с батчингом
         const processData = async (queries, sheet, isBrandSheet) => {
+            const BATCH_SIZE = 100;
+            let batch = [];
             const imageTasks = [];
-            const rows = [];
 
             for (const query of queries) {
                 for (const table of query.productTables) {
@@ -154,7 +148,7 @@ const generateExcelForUser = async (userId, res) => {
                             ? `${product.log.promoPosition}*`
                             : position;
 
-                        const rowData = [
+                        const row = sheet.addRow([
                             product?.query || query.query,
                             isBrandSheet ? product?.brand || query.brand : product?.id,
                             product?.city || query.city,
@@ -164,32 +158,38 @@ const generateExcelForUser = async (userId, res) => {
                             promoPosition,
                             new Date(product?.queryTime || query.createdAt).toLocaleTimeString(),
                             new Date(product?.queryTime || query.createdAt).toLocaleDateString()
-                        ];
+                        ]);
 
-                        rows.push({ rowData, isPromo: promoPosition.includes('*'), imageUrl: product?.imageUrl });
-                    }
-                }
-            }
-
-            for (const { rowData, isPromo, imageUrl } of rows) {
-                const row = sheet.addRow(rowData);
-                if (isPromo) {
-                    row.getCell(7).font = { bold: true, color: { argb: 'FFFF0000' } };
-                }
-
-                if (imageUrl) {
-                    imageTasks.push(async () => {
-                        const imageBuffer = await downloadImage(imageUrl);
-                        if (imageBuffer) {
-                            const extension = imageUrl.split('.').pop() === 'png' ? 'png' : 'jpeg';
-                            const imageId = workbook.addImage({ buffer: imageBuffer, extension });
-                            sheet.addImage(imageId, {
-                                tl: { col: 3, row: row.number - 1, offset: 5 },
-                                ext: CONFIG.IMAGE.SIZE
-                            });
-                            sheet.getRow(row.number).height = CONFIG.IMAGE.SIZE.height;
+                        if (promoPosition.includes('*')) {
+                            row.getCell(7).font = { bold: true, color: { argb: 'FFFF0000' } };
                         }
-                    });
+
+                        if (product?.imageUrl) {
+                            imageTasks.push(async () => {
+                                const imageBuffer = await downloadImage(product.imageUrl);
+                                if (imageBuffer) {
+                                    const extension = product.imageUrl.split('.').pop() === 'png' ? 'png' : 'jpeg';
+                                    const imageId = workbook.addImage({
+                                        buffer: imageBuffer,
+                                        extension: extension
+                                    });
+
+                                    sheet.addImage(imageId, {
+                                        tl: { col: 3, row: row.number - 1, offset: 5 },
+                                        ext: CONFIG.IMAGE.SIZE
+                                    });
+
+                                    sheet.getRow(row.number).height = CONFIG.IMAGE.SIZE.height;
+                                }
+                            });
+                        }
+
+                        batch.push(row);
+                        if (batch.length >= BATCH_SIZE) {
+                            await processImagesWithConcurrency(imageTasks.splice(0, imageTasks.length));
+                            batch = [];
+                        }
+                    }
                 }
             }
 
@@ -203,16 +203,26 @@ const generateExcelForUser = async (userId, res) => {
             processData(articleQueries, sheetArticle, false)
         ]);
 
-        const buffer = await workbook.xlsx.writeBuffer({
-            useSharedStrings: CONFIG.EXCEL.USE_SHARED_STRINGS,
-            useStyles: true
-        });
+        // Сохраняем во временный файл
+        await workbook.xlsx.writeFile(tempFilePath);
+        return tempFilePath;
 
-        return buffer;
+    } catch (error) {
+        // Удаляем временный файл при ошибке
+        if (fs.existsSync(tempFilePath)) {
+            fs.unlinkSync(tempFilePath);
+        }
+        throw error;
     } finally {
-        if (pingInterval) clearInterval(pingInterval);
         imageCache.clear();
     }
 };
 
-module.exports = { generateExcelForUser };
+module.exports = {
+    generateExcelForUser,
+    cleanupTempFiles: () => {
+        fs.readdirSync(CONFIG.TEMP_DIR).forEach(file => {
+            fs.unlinkSync(path.join(CONFIG.TEMP_DIR, file));
+        });
+    }
+};
