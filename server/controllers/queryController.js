@@ -150,7 +150,13 @@ const exportToExcel = async (req, res) => {
 
     try {
         const userId = req.userId;
-        const fileName = `export_${Date.now()}.xlsx`;
+        // Форматируем дату в виде ДД-ММ-ГГГГ_ЧЧ-ММ-СС
+        const formatDate = (date) => {
+            const pad = (num) => num.toString().padStart(2, '0');
+            return `${pad(date.getDate())}-${pad(date.getMonth() + 1)}-${date.getFullYear()}_${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}`;
+        };
+
+        const fileName = `export_${formatDate(new Date())}.xlsx`;
 
         // Генерируем файл
         tempFilePath = await generateExcelForUser(userId);

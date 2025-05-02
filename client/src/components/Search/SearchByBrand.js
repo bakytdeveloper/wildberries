@@ -463,70 +463,6 @@ function SearchByBrand() {
         }
     };
 
-    const handleExportToExcelClick = async (queryId, exportType) => {
-        if (isExporting) return;
-        setIsExporting(true);
-        setShowExportModal(true);
-        setExportProgress('Подготовка данных для Excel...');
-
-        try {
-            const token = sessionStorage.getItem('token');
-            setExportProgress('Формирование Excel файла...');
-
-            const endpoint = exportType === 'queries'
-                ? `${API_HOST}/api/queries/export-excel`
-                : `${API_HOST}/api/article/export-excel`;
-
-            const response = await fetch(endpoint, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Ошибка выгрузки данных');
-            }
-            setExportProgress('Сохранение файла...');
-
-            // Получаем имя файла из заголовка Content-Disposition
-            const contentDisposition = response.headers.get('Content-Disposition');
-            const fileNameMatch = contentDisposition?.match(/filename="(.+?)"/);
-            const fileName = fileNameMatch ? fileNameMatch[1] : 'export.xlsx';
-
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-
-            Toastify({
-                text: 'Все данные успешно выгружены в Excel',
-                duration: 3000,
-                gravity: 'top',
-                position: 'right',
-                style: { background: '#00cc00' }
-            }).showToast();
-        } catch (error) {
-            console.error('Ошибка выгрузки данных:', error);
-            Toastify({
-                text: 'Ошибка выгрузки данных',
-                duration: 3000,
-                gravity: 'top',
-                position: 'right',
-                style: { background: '#ff0000' }
-            }).showToast();
-        } finally {
-            setIsExporting(false);
-            setShowExportModal(false);
-        }
-    };
-
-
     const handleResetForms = () => {
         setRequestForms([{ id: Date.now(), query: '', brand: '', city: 'г.Москва', isMain: true }]);
         setShowInitialForm(true);
@@ -787,8 +723,76 @@ function SearchByBrand() {
         }
     };
 
+    const handleExportToExcelClick = async (queryId, exportType) => {
+        if (isExporting) return;
+        setIsExporting(true);
+        setShowExportModal(true);
+        setExportProgress('Подготовка данных для Excel...');
+
+        try {
+            const token = sessionStorage.getItem('token');
+            setExportProgress('Формирование Excel файла...');
+
+            const endpoint = exportType === 'queries'
+                ? `${API_HOST}/api/queries/export-excel`
+                : `${API_HOST}/api/article/export-excel`;
+
+            const response = await fetch(endpoint, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Ошибка выгрузки данных');
+            }
+            setExportProgress('Сохранение файла...');
+
+            // Получаем имя файла из заголовка Content-Disposition
+            const contentDisposition = response.headers.get('Content-Disposition');
+            const fileNameMatch = contentDisposition?.match(/filename="(.+?)"/);
+            const fileName = fileNameMatch ? fileNameMatch[1] : 'export.xlsx';
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            Toastify({
+                text: 'Все данные успешно выгружены в Excel',
+                duration: 3000,
+                gravity: 'top',
+                position: 'right',
+                style: { background: '#00cc00' }
+            }).showToast();
+        } catch (error) {
+            console.error('Ошибка выгрузки данных:', error);
+            Toastify({
+                text: 'Ошибка выгрузки данных',
+                duration: 3000,
+                gravity: 'top',
+                position: 'right',
+                style: { background: '#ff0000' }
+            }).showToast();
+        } finally {
+            setIsExporting(false);
+            setShowExportModal(false);
+        }
+    };
+
+
     const ExportModal = () => (
-        <Modal show={showExportModal} onHide={() => setShowExportModal(false)} centered>
+        <Modal
+            show={showExportModal}
+            onHide={() => setShowExportModal(false)}
+            backdrop="static"
+            centered>
             <Modal.Header closeButton>
                 <Modal.Title>Выгрузка данных</Modal.Title>
             </Modal.Header>
