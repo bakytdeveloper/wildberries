@@ -705,7 +705,7 @@ function SearchByArticle() {
 
         try {
             const token = sessionStorage.getItem('token');
-            setExportProgress('Соединение с Google Таблицей...');
+            setExportProgress('Выполняется расстановка данных в Google Таблицу...');
             const response = await axios.post(`${API_HOST}/api/article/export-all`, {}, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -803,25 +803,196 @@ function SearchByArticle() {
     };
 
 
-    const ExportModal = () => (
-        <Modal
-            show={showExportModal}
-            onHide={() => setShowExportModal(false)}
-            backdrop="static"
-            centered>
-            <Modal.Header closeButton>
-                <Modal.Title>Выгрузка данных</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                <div style={{ textAlign: 'center' }}>
-                    <Spinner animation="border" role="status" />
-                    <p style={{ marginTop: '15px' }}>{exportProgress || 'Выполняется форматирование таблицы и загрузка данных...'}</p>
-                </div>
-            </Modal.Body>
-        </Modal>
-    );
+    const ExportModal = () => {
+        const [tips] = useState([
+            "Подсказка: Вы можете открыть Google Таблицу прямо из приложения",
+            "Интересный факт: Данные обновляются каждые 15 минут",
+            "Совет: Используйте фильтры в таблице для удобного просмотра данных",
+            "Подсказка: Вы можете экспортировать данные в Excel и Google таблицу",
+            "Факт: Система обрабатывает до 1000 запросов в минуту"
+        ]);
 
-    
+        const icons = ['📁', '🔍', '📊', '📤', '✅'];
+
+        const [currentTipIndex, setCurrentTipIndex] = useState(0);
+        const [currentIconIndex, setCurrentIconIndex] = useState(0);
+        const [progress, setProgress] = useState(0);
+        const [showFinalizingMessage, setShowFinalizingMessage] = useState(false);
+        const [isClosing, setIsClosing] = useState(false);
+
+        useEffect(() => {
+            // Устанавливаем начальные значения
+            setCurrentTipIndex(Math.floor(Math.random() * tips.length));
+            setCurrentIconIndex(0);
+
+            // Интервал для смены советов каждые 20 секунд
+            const tipsInterval = setInterval(() => {
+                setCurrentTipIndex(prev => (prev + 1) % tips.length);
+            }, 20000);
+
+            // Интервал для смены иконок каждые 20 секунд
+            const iconsInterval = setInterval(() => {
+                setCurrentIconIndex(prev => (prev + 1) % icons.length);
+            }, 20000);
+
+            // Анимация прогресс-бара
+            const progressInterval = setInterval(() => {
+                setProgress(prev => {
+                    if (prev >= 90) {
+                        clearInterval(progressInterval);
+                        setShowFinalizingMessage(true);
+                        return prev;
+                    }
+                    return prev + 5;
+                });
+            }, 1000);
+
+            return () => {
+                clearInterval(tipsInterval);
+                clearInterval(iconsInterval);
+                clearInterval(progressInterval);
+            };
+        }, []);
+
+        // Функция для обработки закрытия модального окна
+        const handleClose = () => {
+            if (progress < 100 && !isClosing) {
+                setIsClosing(true);
+
+                // Быстро заполняем прогресс-бар до 100%
+                const finishInterval = setInterval(() => {
+                    setProgress(prev => {
+                        if (prev >= 100) {
+                            clearInterval(finishInterval);
+                            setShowExportModal(false); // Закрываем модальное окно после завершения
+                            return prev;
+                        }
+                        return prev + 2; // Увеличиваем быстрее для плавного завершения
+                    });
+                }, 100);
+
+                return; // Не закрываем сразу, ждем завершения анимации
+            }
+            setShowExportModal(false);
+        };
+
+        // Функция для получения текущего набора иконок со смещением
+        const getRotatedIcons = () => {
+            return [...icons.slice(currentIconIndex), ...icons.slice(0, currentIconIndex)];
+        };
+
+        return (
+            <Modal
+                show={showExportModal}
+                onHide={handleClose} // Используем нашу функцию для закрытия
+                backdrop="static"
+                centered
+            >
+                <Modal.Header closeButton>
+                    <Modal.Title>Выгрузка данных</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <div style={{ textAlign: 'center' }}>
+                        {/* Анимированный спиннер с иконкой */}
+                        <div style={{ position: 'relative', margin: '20px auto', width: 80, height: 80 }}>
+                            <Spinner
+                                animation="border"
+                                role="status"
+                                style={{ width: '80px', height: '80px', color: '#0d6efd' }}
+                            />
+                            <div style={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%)',
+                                fontSize: '24px'
+                            }}>
+                                📊
+                            </div>
+                        </div>
+
+                        {/* Прогресс-бар с анимацией */}
+                        <div style={{ margin: '20px 0' }}>
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                marginBottom: '5px'
+                            }}>
+                                <span>Прогресс:</span>
+                                <span>{progress}%</span>
+                            </div>
+                            <div style={{
+                                height: '10px',
+                                backgroundColor: '#e9ecef',
+                                borderRadius: '5px',
+                                overflow: 'hidden'
+                            }}>
+                                <div
+                                    style={{
+                                        height: '100%',
+                                        width: `${progress}%`,
+                                        backgroundColor: '#0d6efd',
+                                        transition: 'width 0.3s ease',
+                                        borderRadius: '5px'
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Сообщение о процессе */}
+                        <p style={{ margin: '15px 0', fontWeight: 'bold' }}>
+                            {isClosing ? (
+                                "Завершение выгрузки..."
+                            ) : showFinalizingMessage ? (
+                                "Завершаем обработку данных. Это может занять некоторое время..."
+                            ) : (
+                                exportProgress || 'Выполняется выгрузка данных...'
+                            )}
+                        </p>
+
+                        {/* Визуализация процесса */}
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            margin: '20px 0',
+                            gap: '10px'
+                        }}>
+                            {getRotatedIcons().map((icon, i) => (
+                                <div
+                                    key={i}
+                                    style={{
+                                        opacity: progress > i * 20 ? 1 : 0.3,
+                                        transition: 'opacity 0.5s',
+                                        fontSize: '24px'
+                                    }}
+                                >
+                                    {icon}
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Полезный совет */}
+                        <div style={{
+                            marginTop: '20px',
+                            padding: '10px',
+                            backgroundColor: '#f8f9fa',
+                            borderRadius: '5px',
+                            fontStyle: 'italic'
+                        }}>
+                            {tips[currentTipIndex]}
+                        </div>
+                    </div>
+                </Modal.Body>
+                <Modal.Footer>
+                    <small className="text-muted">
+                        {isClosing ? 'Завершаем процесс...' : 'Пожалуйста, не закрывайте это окно до завершения операции'}
+                    </small>
+                </Modal.Footer>
+            </Modal>
+        );
+    };
+
+
     return (
         <div className="article-page">
             <header>
