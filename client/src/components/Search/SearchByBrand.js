@@ -896,32 +896,32 @@ function SearchByBrand() {
                         </div>
 
                         {/* Прогресс-бар с анимацией */}
-                        <div style={{ margin: '20px 0' }}>
-                            <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                marginBottom: '5px'
-                            }}>
-                                <span>Прогресс:</span>
-                                <span>{progress}%</span>
-                            </div>
-                            <div style={{
-                                height: '10px',
-                                backgroundColor: '#e9ecef',
-                                borderRadius: '5px',
-                                overflow: 'hidden'
-                            }}>
-                                <div
-                                    style={{
-                                        height: '100%',
-                                        width: `${progress}%`,
-                                        backgroundColor: '#0d6efd',
-                                        transition: 'width 0.3s ease',
-                                        borderRadius: '5px'
-                                    }}
-                                />
-                            </div>
-                        </div>
+                        {/*<div style={{ margin: '20px 0' }}>*/}
+                        {/*    <div style={{*/}
+                        {/*        display: 'flex',*/}
+                        {/*        justifyContent: 'space-between',*/}
+                        {/*        marginBottom: '5px'*/}
+                        {/*    }}>*/}
+                        {/*        <span>Прогресс:</span>*/}
+                        {/*        <span>{progress}%</span>*/}
+                        {/*    </div>*/}
+                        {/*    <div style={{*/}
+                        {/*        height: '10px',*/}
+                        {/*        backgroundColor: '#e9ecef',*/}
+                        {/*        borderRadius: '5px',*/}
+                        {/*        overflow: 'hidden'*/}
+                        {/*    }}>*/}
+                        {/*        <div*/}
+                        {/*            style={{*/}
+                        {/*                height: '100%',*/}
+                        {/*                width: `${progress}%`,*/}
+                        {/*                backgroundColor: '#0d6efd',*/}
+                        {/*                transition: 'width 0.3s ease',*/}
+                        {/*                borderRadius: '5px'*/}
+                        {/*            }}*/}
+                        {/*        />*/}
+                        {/*    </div>*/}
+                        {/*</div>*/}
 
                         {/* Сообщение о процессе */}
                         <p style={{ margin: '15px 0', fontWeight: 'bold' }}>

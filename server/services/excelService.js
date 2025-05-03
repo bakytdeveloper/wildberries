@@ -17,10 +17,11 @@ const CONFIG = {
     },
     DATABASE: {
         TIMEOUT: 30000,
-        BATCH_SIZE: 100
+        BATCH_SIZE: 500
     },
     TEMP_DIR: './temp_exports',
-    CLEANUP_INTERVAL: 3600000 // 1 час
+    CLEANUP_INTERVAL: 3600000, // 1 час
+    MAX_ROWS_PER_SHEET: 1000000
 };
 
 // Создаем директорию для временных файлов
@@ -30,18 +31,26 @@ if (!fs.existsSync(CONFIG.TEMP_DIR)) {
 
 // Очистка старых файлов
 setInterval(() => {
-    fs.readdir(CONFIG.TEMP_DIR, (err, files) => {
-        if (err) return;
-
+    try {
+        const files = fs.readdirSync(CONFIG.TEMP_DIR);
         const now = Date.now();
         files.forEach(file => {
-            const filePath = path.join(CONFIG.TEMP_DIR, file);
-            const stat = fs.statSync(filePath);
-            if (now - stat.mtimeMs > CONFIG.CLEANUP_INTERVAL) {
-                fs.unlinkSync(filePath);
+            if (file.startsWith('export_')) {
+                const filePath = path.join(CONFIG.TEMP_DIR, file);
+                try {
+                    const stat = fs.statSync(filePath);
+                    if (now - stat.mtimeMs > CONFIG.CLEANUP_INTERVAL) {
+                        fs.unlinkSync(filePath);
+                        console.log(`Удален временный файл: ${file}`);
+                    }
+                } catch (err) {
+                    console.error(`Ошибка при удалении файла ${file}:`, err);
+                }
             }
         });
-    });
+    } catch (err) {
+        console.error('Ошибка при очистке временных файлов:', err);
+    }
 }, CONFIG.CLEANUP_INTERVAL);
 
 const downloadImage = async (url) => {
@@ -55,17 +64,22 @@ const downloadImage = async (url) => {
 
     if (imageCache.has(url)) return imageCache.get(url);
 
-    try {
-        const response = await axios.get(url, {
-            responseType: 'arraybuffer',
-            timeout: CONFIG.IMAGE.TIMEOUT
-        });
-        const buffer = Buffer.from(response.data, 'binary');
-        imageCache.set(url, buffer);
-        return buffer;
-    } catch (error) {
-        console.error(`Ошибка загрузки изображения: ${url}`);
-        return null;
+    for (let attempt = 1; attempt <= CONFIG.IMAGE.RETRIES; attempt++) {
+        try {
+            const response = await axios.get(url, {
+                responseType: 'arraybuffer',
+                timeout: CONFIG.IMAGE.TIMEOUT
+            });
+            const buffer = Buffer.from(response.data, 'binary');
+            imageCache.set(url, buffer);
+            return buffer;
+        } catch (error) {
+            if (attempt === CONFIG.IMAGE.RETRIES) {
+                console.error(`Ошибка загрузки изображения после ${CONFIG.IMAGE.RETRIES} попыток: ${url}`);
+                return null;
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
     }
 };
 
@@ -77,6 +91,9 @@ const processImagesWithConcurrency = async (tasks) => {
         const p = task().then(result => {
             executing.splice(executing.indexOf(p), 1);
             return result;
+        }).catch(err => {
+            console.error('Ошибка обработки изображения:', err);
+            return null;
         });
 
         executing.push(p);
@@ -123,7 +140,7 @@ const generateExcelForUser = async (userId) => {
             });
         });
 
-        // Загрузка данных
+        // Загрузка данных с пагинацией
         const [brandQueries, articleQueries] = await Promise.all([
             QueryModel.find({ userId }).lean().populate('productTables.products'),
             QueryArticleModel.find({ userId }).lean().populate('productTables.products')
@@ -131,15 +148,28 @@ const generateExcelForUser = async (userId) => {
 
         imageCache.clear();
 
-        // Обработка данных с батчингом
+        // Обработка данных с батчингом и паузами для event loop
         const processData = async (queries, sheet, isBrandSheet) => {
-            const BATCH_SIZE = 100;
-            let batch = [];
+            let rowCount = 0;
             const imageTasks = [];
 
             for (const query of queries) {
                 for (const table of query.productTables) {
                     for (const product of table.products) {
+                        rowCount++;
+
+                        // Пауза для event loop каждые BATCH_SIZE строк
+                        if (rowCount % CONFIG.DATABASE.BATCH_SIZE === 0) {
+                            await new Promise(resolve => setImmediate(resolve));
+                            await processImagesWithConcurrency(imageTasks.splice(0, imageTasks.length));
+                        }
+
+                        // Проверка на максимальное количество строк
+                        if (rowCount >= CONFIG.MAX_ROWS_PER_SHEET) {
+                            console.warn(`Достигнут лимит строк (${CONFIG.MAX_ROWS_PER_SHEET}) для листа ${sheet.name}`);
+                            break;
+                        }
+
                         const position = product?.page > 1
                             ? `${product.page}${String(product.position).padStart(2, '0')}`
                             : String(product?.position || '');
@@ -183,16 +213,11 @@ const generateExcelForUser = async (userId) => {
                                 }
                             });
                         }
-
-                        batch.push(row);
-                        if (batch.length >= BATCH_SIZE) {
-                            await processImagesWithConcurrency(imageTasks.splice(0, imageTasks.length));
-                            batch = [];
-                        }
                     }
                 }
             }
 
+            // Обработать оставшиеся изображения
             if (imageTasks.length > 0) {
                 await processImagesWithConcurrency(imageTasks);
             }
@@ -203,14 +228,18 @@ const generateExcelForUser = async (userId) => {
             processData(articleQueries, sheetArticle, false)
         ]);
 
-        // Сохраняем во временный файл
+        // Сохраняем файл
         await workbook.xlsx.writeFile(tempFilePath);
         return tempFilePath;
 
     } catch (error) {
         // Удаляем временный файл при ошибке
         if (fs.existsSync(tempFilePath)) {
-            fs.unlinkSync(tempFilePath);
+            try {
+                fs.unlinkSync(tempFilePath);
+            } catch (err) {
+                console.error('Ошибка при удалении временного файла:', err);
+            }
         }
         throw error;
     } finally {
@@ -221,8 +250,18 @@ const generateExcelForUser = async (userId) => {
 module.exports = {
     generateExcelForUser,
     cleanupTempFiles: () => {
-        fs.readdirSync(CONFIG.TEMP_DIR).forEach(file => {
-            fs.unlinkSync(path.join(CONFIG.TEMP_DIR, file));
-        });
+        try {
+            const files = fs.readdirSync(CONFIG.TEMP_DIR);
+            files.forEach(file => {
+                try {
+                    fs.unlinkSync(path.join(CONFIG.TEMP_DIR, file));
+                    console.log(`Удален временный файл: ${file}`);
+                } catch (err) {
+                    console.error(`Ошибка при удалении файла ${file}:`, err);
+                }
+            });
+        } catch (err) {
+            console.error('Ошибка при очистке временных файлов:', err);
+        }
     }
 };
