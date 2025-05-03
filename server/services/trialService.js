@@ -83,9 +83,4 @@ const deleteUserData = async (userId) => {
     }
 };
 
-// // Запускаем проверку каждые 6 часов
-// setInterval(checkTrialPeriods, 6 * 60 * 60 * 1000);
-// Первая проверка при запуске сервера
-// setTimeout(checkTrialPeriods, 10000);
-
 module.exports = { checkTrialPeriods, deleteUserData };

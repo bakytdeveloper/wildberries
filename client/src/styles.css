@@ -1025,6 +1025,7 @@ tr:hover {
         position: static;
         margin-top: 0;
         margin-bottom: 15px;
+        margin-left: 84%;
     }
 
     .controls_primary_danger {
