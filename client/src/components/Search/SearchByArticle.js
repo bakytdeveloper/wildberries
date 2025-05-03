@@ -1361,15 +1361,22 @@ function SearchByArticle() {
                                                                             <td className="td_table td_table_article" onClick={() => handlePageRedirect(product.id)}>
                                                                                 {product.id}
                                                                             </td>
-                                                                            <td className="td_table td_table_page" onClick={() => handleProductClick(queryData.query.split('; ')[tableIndex], page, position)}>
+                                                                            <td className="td_table td_table_page"
+                                                                                onClick={() => handleProductClick(
+                                                                                    queryData.query.split('; ')[tableIndex],
+                                                                                    product.log?.promoPosition ? 1 : page, // Передаём 1, если есть promoPosition
+                                                                                    position
+                                                                                )}
+                                                                            >
                                                                                 {product.log?.promoPosition ? (
                                                                                     <span>
-                                                                                        {product.log.promoPosition > 100 ? product.log.promoPosition + 100 : product.log.promoPosition}
+                                                                                           {product.log.promoPosition > 100 ? product.log.promoPosition + 100 : product.log.promoPosition}
                                                                                         <sup style={{ color: 'red', fontWeight: 'bold', marginLeft:'3px' }}>*</sup>
                                                                                     </span>
                                                                                 ) : (
                                                                                     (page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position)
-                                                                                )}                                                                            </td>
+                                                                                )}
+                                                                            </td>
                                                                             {/*<td className="td_table">{product.log?.position || (page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position)}</td>*/}
                                                                             <td className="td_table">{product.brand}</td>
                                                                             <td className="td_table">{product.name}</td>
