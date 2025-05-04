@@ -107,6 +107,78 @@ const processImagesWithConcurrency = async (tasks) => {
     return (await Promise.all(results)).filter(Boolean);
 };
 
+// Функция для проверки, находится ли дата в текущем дне
+const isToday = (date) => {
+    const today = new Date();
+    return date.getDate() === today.getDate() &&
+        date.getMonth() === today.getMonth() &&
+        date.getFullYear() === today.getFullYear();
+};
+
+// Функция для получения ближайшего временного интервала (каждые 4 часа)
+const getNearestInterval = (date) => {
+    const intervals = [0, 4, 8, 12, 16, 20]; // Часы для интервалов
+    const hour = date.getHours();
+
+    // Находим ближайший меньший интервал
+    let nearestInterval = intervals[0];
+    for (const interval of intervals) {
+        if (interval <= hour) {
+            nearestInterval = interval;
+        } else {
+            break;
+        }
+    }
+
+    // Создаем дату с ближайшим интервалом
+    const intervalDate = new Date(date);
+    intervalDate.setHours(nearestInterval, 0, 0, 0);
+
+    return intervalDate;
+};
+
+// Функция для фильтрации данных по временным интервалам
+const filterDataByTimeIntervals = (queries) => {
+    const today = new Date();
+    const filteredQueries = [];
+
+    for (const query of queries) {
+        const queryDate = new Date(query.createdAt);
+
+        // Если данные сегодняшние - добавляем все
+        if (isToday(queryDate)) {
+            filteredQueries.push(query);
+            continue;
+        }
+
+        // Для данных не сегодняшних - проверяем временной интервал
+        const nearestInterval = getNearestInterval(queryDate);
+        const queryTime = queryDate.getTime();
+        const intervalTime = nearestInterval.getTime();
+
+        // Проверяем, что запрос находится в пределах 4 часов от интервала
+        if (queryTime >= intervalTime && queryTime < intervalTime + 4 * 60 * 60 * 1000) {
+            // Проверяем, нет ли уже запроса для этого интервала
+            const existingQueryIndex = filteredQueries.findIndex(q => {
+                const qDate = new Date(q.createdAt);
+                const qInterval = getNearestInterval(qDate);
+                return qInterval.getTime() === intervalTime;
+            });
+
+            // Если нет запроса для этого интервала или текущий запрос ближе к началу интервала
+            if (existingQueryIndex === -1 ||
+                new Date(filteredQueries[existingQueryIndex].createdAt).getTime() > queryTime) {
+                if (existingQueryIndex !== -1) {
+                    filteredQueries.splice(existingQueryIndex, 1);
+                }
+                filteredQueries.push(query);
+            }
+        }
+    }
+
+    return filteredQueries;
+};
+
 const generateExcelForUser = async (userId) => {
     const tempFilePath = path.join(CONFIG.TEMP_DIR, `export_${userId}_${Date.now()}.xlsx`);
     const workbook = new ExcelJS.Workbook();
@@ -145,6 +217,10 @@ const generateExcelForUser = async (userId) => {
             QueryModel.find({ userId }).lean().populate('productTables.products'),
             QueryArticleModel.find({ userId }).lean().populate('productTables.products')
         ]);
+
+        // Фильтрация данных по временным интервалам
+        const filteredBrandQueries = filterDataByTimeIntervals(brandQueries);
+        const filteredArticleQueries = filterDataByTimeIntervals(articleQueries);
 
         imageCache.clear();
 
@@ -224,8 +300,8 @@ const generateExcelForUser = async (userId) => {
         };
 
         await Promise.all([
-            processData(brandQueries, sheetBrand, true),
-            processData(articleQueries, sheetArticle, false)
+            processData(filteredBrandQueries, sheetBrand, true),
+            processData(filteredArticleQueries, sheetArticle, false)
         ]);
 
         // Сохраняем файл
