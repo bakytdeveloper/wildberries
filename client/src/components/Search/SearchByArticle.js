@@ -802,7 +802,6 @@ function SearchByArticle() {
         }
     };
 
-
     const ExportModal = () => {
         const [tips] = useState([
             "Подсказка: Вы можете открыть Google Таблицу прямо из приложения",
@@ -815,76 +814,46 @@ function SearchByArticle() {
         const icons = ['📁', '🔍', '📊', '📤', '✅'];
 
         const [currentTipIndex, setCurrentTipIndex] = useState(0);
-        const [currentIconIndex, setCurrentIconIndex] = useState(0);
-        const [progress, setProgress] = useState(0);
+        const [activeIconIndex, setActiveIconIndex] = useState(0); // Текущая активная иконка
         const [showFinalizingMessage, setShowFinalizingMessage] = useState(false);
         const [isClosing, setIsClosing] = useState(false);
 
         useEffect(() => {
             // Устанавливаем начальные значения
             setCurrentTipIndex(Math.floor(Math.random() * tips.length));
-            setCurrentIconIndex(0);
 
             // Интервал для смены советов каждые 20 секунд
             const tipsInterval = setInterval(() => {
                 setCurrentTipIndex(prev => (prev + 1) % tips.length);
             }, 20000);
 
-            // Интервал для смены иконок каждые 20 секунд
+            // Интервал для поочередного выделения иконок
             const iconsInterval = setInterval(() => {
-                setCurrentIconIndex(prev => (prev + 1) % icons.length);
-            }, 20000);
-
-            // Анимация прогресс-бара
-            const progressInterval = setInterval(() => {
-                setProgress(prev => {
-                    if (prev >= 90) {
-                        clearInterval(progressInterval);
-                        setShowFinalizingMessage(true);
-                        return prev;
-                    }
-                    return prev + 5;
-                });
-            }, 1000);
+                setActiveIconIndex(prev => (prev + 1) % icons.length);
+            }, 3000); // Меняем активную иконку каждую секунду
 
             return () => {
                 clearInterval(tipsInterval);
                 clearInterval(iconsInterval);
-                clearInterval(progressInterval);
             };
         }, []);
 
         // Функция для обработки закрытия модального окна
         const handleClose = () => {
-            if (progress < 100 && !isClosing) {
+            if (!isClosing) {
                 setIsClosing(true);
-
-                // Быстро заполняем прогресс-бар до 100%
-                const finishInterval = setInterval(() => {
-                    setProgress(prev => {
-                        if (prev >= 100) {
-                            clearInterval(finishInterval);
-                            setShowExportModal(false); // Закрываем модальное окно после завершения
-                            return prev;
-                        }
-                        return prev + 2; // Увеличиваем быстрее для плавного завершения
-                    });
-                }, 100);
-
-                return; // Не закрываем сразу, ждем завершения анимации
+                setTimeout(() => {
+                    setShowExportModal(false);
+                }, 500);
+                return;
             }
             setShowExportModal(false);
-        };
-
-        // Функция для получения текущего набора иконок со смещением
-        const getRotatedIcons = () => {
-            return [...icons.slice(currentIconIndex), ...icons.slice(0, currentIconIndex)];
         };
 
         return (
             <Modal
                 show={showExportModal}
-                onHide={handleClose} // Используем нашу функцию для закрытия
+                onHide={handleClose}
                 backdrop="static"
                 centered
             >
@@ -911,34 +880,6 @@ function SearchByArticle() {
                             </div>
                         </div>
 
-                        {/* Прогресс-бар с анимацией */}
-                        {/*<div style={{ margin: '20px 0' }}>*/}
-                        {/*    <div style={{*/}
-                        {/*        display: 'flex',*/}
-                        {/*        justifyContent: 'space-between',*/}
-                        {/*        marginBottom: '5px'*/}
-                        {/*    }}>*/}
-                        {/*        <span>Прогресс:</span>*/}
-                        {/*        <span>{progress}%</span>*/}
-                        {/*    </div>*/}
-                        {/*    <div style={{*/}
-                        {/*        height: '10px',*/}
-                        {/*        backgroundColor: '#e9ecef',*/}
-                        {/*        borderRadius: '5px',*/}
-                        {/*        overflow: 'hidden'*/}
-                        {/*    }}>*/}
-                        {/*        <div*/}
-                        {/*            style={{*/}
-                        {/*                height: '100%',*/}
-                        {/*                width: `${progress}%`,*/}
-                        {/*                backgroundColor: '#0d6efd',*/}
-                        {/*                transition: 'width 0.3s ease',*/}
-                        {/*                borderRadius: '5px'*/}
-                        {/*            }}*/}
-                        {/*        />*/}
-                        {/*    </div>*/}
-                        {/*</div>*/}
-
                         {/* Сообщение о процессе */}
                         <p style={{ margin: '15px 0', fontWeight: 'bold' }}>
                             {isClosing ? (
@@ -950,25 +891,36 @@ function SearchByArticle() {
                             )}
                         </p>
 
-                        {/* Визуализация процесса */}
+                        {/* Визуализация процесса с анимированными иконками */}
                         <div style={{
                             display: 'flex',
                             justifyContent: 'center',
                             margin: '20px 0',
                             gap: '10px'
                         }}>
-                            {getRotatedIcons().map((icon, i) => (
-                                <div
-                                    key={i}
-                                    style={{
-                                        opacity: progress > i * 20 ? 1 : 0.3,
-                                        transition: 'opacity 0.5s',
-                                        fontSize: '24px'
-                                    }}
-                                >
-                                    {icon}
-                                </div>
-                            ))}
+                            {icons.map((icon, i) => {
+                                // Определяем opacity для каждой иконки
+                                // Активная иконка - 1, предыдущие - постепенно уменьшаются
+                                let opacity = 0.3;
+                                if (i === activeIconIndex) opacity = 1;
+                                else if (i === (activeIconIndex - 1 + icons.length) % icons.length) opacity = 0.7;
+                                else if (i === (activeIconIndex - 2 + icons.length) % icons.length) opacity = 0.5;
+
+                                return (
+                                    <div
+                                        key={i}
+                                        style={{
+                                            opacity: opacity,
+                                            transition: 'opacity 0.5s ease-in-out',
+                                            fontSize: '24px',
+                                            transform: opacity === 1 ? 'scale(1.1)' : 'scale(1)',
+                                            // transition: 'all 0.5s ease-in-out'
+                                        }}
+                                    >
+                                        {icon}
+                                    </div>
+                                );
+                            })}
                         </div>
 
                         {/* Полезный совет */}
@@ -991,7 +943,6 @@ function SearchByArticle() {
             </Modal>
         );
     };
-
 
     return (
         <div className="article-page">
