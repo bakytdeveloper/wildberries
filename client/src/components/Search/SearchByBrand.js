@@ -212,11 +212,44 @@ function SearchByBrand() {
 
     const handleSortInputChange = (e) => {
         const value = e.target.value;
-        setSearchTerm(value.trim());
+        setSearchTerm(value); // Сохраняем значение как есть, включая пробелы
+
         if (value.trim() !== '') {
-            setQuery('');
+            const lowerCaseSearchTerm = value.toLowerCase();
+
+            // Фильтруем queries по заголовкам
+            const filtered = allQueries.filter(query => {
+                // Проверяем соответствие основного заголовка
+                const queryMatch = query.query.toLowerCase().includes(lowerCaseSearchTerm);
+                const brandMatch = query.brand.toLowerCase().includes(lowerCaseSearchTerm);
+                const cityMatch = query.city.toLowerCase().includes(lowerCaseSearchTerm);
+
+                // Если есть совпадение в основном заголовке, оставляем весь query
+                if (queryMatch || brandMatch || cityMatch) return true;
+
+                // Если нет, проверяем таблицы внутри
+                if (query.productTables) {
+                    // Проверяем каждую таблицу на соответствие
+                    const hasMatchingTables = query.productTables.some(table => {
+                        const tableQuery = (query.query.split('; ')[table.index] || '').toLowerCase();
+                        const tableBrand = (query.brand.split('; ')[table.index] || '').toLowerCase();
+                        const tableCity = (query.city.split('; ')[table.index] || '').toLowerCase();
+
+                        return tableQuery.includes(lowerCaseSearchTerm) ||
+                            tableBrand.includes(lowerCaseSearchTerm) ||
+                            tableCity.includes(lowerCaseSearchTerm);
+                    });
+
+                    return hasMatchingTables;
+                }
+
+                return false;
+            });
+
+            setFilteredQueries(filtered);
         } else {
-            fetchSavedQueries();
+            // Если строка поиска пустая, показываем все queries
+            setFilteredQueries(allQueries);
         }
     };
 
@@ -929,7 +962,6 @@ function SearchByBrand() {
         );
     };
 
-
     return (
         <div className="app-page">
             <header>
@@ -1263,82 +1295,94 @@ function SearchByBrand() {
                                         </Accordion.Header>
                                         <Accordion.Body>
                                             {hasProducts ? (
-                                                queryData.productTables.map((table, tableIndex) => (
-                                                    <div className="accordion_body_table" key={tableIndex}>
-                                                        <div className="tableIndexDescription">
-                                                            <p><strong>{tableIndex + 1})</strong></p>
-                                                            <p>По Запросу: <strong>{queryData.query.split('; ')[tableIndex]}</strong></p>
-                                                            <p>Бренд: <strong>{queryData.brand.split('; ')[tableIndex]}</strong></p>
-                                                            <p>Город: <strong>{queryData.city.split('; ')[tableIndex]}</strong></p>
-                                                        </div>
-                                                        {table.products.length > 0 ? (
-                                                            <table id="productsTable">
-                                                                <thead>
-                                                                <tr>
-                                                                    <th className="th_table">№</th>
-                                                                    <th className="th_table">Картинка</th>
-                                                                    <th className="th_table">Бренд</th>
-                                                                    <th className="th_table">Артикул</th>
-                                                                    <th className="th_table">Позиция</th>
-                                                                    {/*<th className="th_table">Прежняя Позиция</th>*/}
-                                                                    <th className="th_table">Наименование</th>
-                                                                    <th className="th_table">Время запроса</th>
-                                                                    <th className="th_table">Дата запроса</th>
-                                                                </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                {table.products.map((product, i) => {
-                                                                    const queryTime = new Date(queryData.queryTime || queryData.createdAt);
-                                                                    const date = queryTime.toLocaleDateString();
-                                                                    const time = queryTime.toLocaleTimeString();
-                                                                    const page = product.page;
-                                                                    const position = product.position;
-                                                                    return (
-                                                                        <tr key={i}>
-                                                                            <td className="td_table">{i + 1}</td>
-                                                                            <td className="td_table td_table_image">
-                                                                                <img
-                                                                                    className="td_table_img"
-                                                                                    src={product.imageUrl}
-                                                                                    alt={product.name}
-                                                                                    onClick={() => handleImageClick(product.imageUrl)}
-                                                                                />
-                                                                            </td>
-                                                                            <td className="td_table">{product.brand}</td>
-                                                                            <td className="td_table td_table_article" onClick={() => handlePageRedirect(product.id)}>
-                                                                                {product.id}
-                                                                            </td>
-                                                                            <td className="td_table td_table_page" onClick={() => handleProductClick(queryData.query.split('; ')[tableIndex], page, position)}>
-                                                                                {product.log?.promoPosition ? (
-                                                                                    <span>
-                                                                                        {product.log.promoPosition > 100 ? product.log.promoPosition + 100 : product.log.promoPosition}
-                                                                                        <sup style={{ color: 'red', fontWeight: 'bold', marginLeft: '3px' }}>*</sup>
-                                                                                   </span>
-                                                                                ) : (
-                                                                                    (page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position)
-                                                                                )}
-                                                                            </td>
-                                                                            <td className="td_table">{product.name}</td>
-                                                                            <td className="td_table">{time}</td>
-                                                                            <td className="td_table">{date}</td>
-                                                                        </tr>
-                                                                    );
-                                                                })}
-                                                                </tbody>
-                                                            </table>
-                                                        ) : (
-                                                            <div className="no-products-message" style={{ backgroundColor: '#ffcccb', color: '#000000', padding: '10px', borderRadius: '5px' }}>
-                                                                <strong>По Запросу:</strong> {queryData.query.split('; ')[tableIndex]}
-                                                                <br />
-                                                                <strong>Бренд:</strong> {queryData.brand.split('; ')[tableIndex]}
-                                                                <br />
-                                                                <strong>Город:</strong> {queryData.city.split('; ')[tableIndex]}
-                                                                <br />
-                                                                <strong>Товары не найдены.</strong>
+                                                queryData.productTables.map((table, tableIndex) => {
+                                                    const tableQuery = queryData.query.split('; ')[tableIndex] || '';
+                                                    const tableBrand = queryData.brand.split('; ')[tableIndex] || '';
+                                                    const tableCity = queryData.city.split('; ')[tableIndex] || '';
+
+                                                    const shouldShowTable = searchTerm.trim() === '' ||
+                                                        tableQuery.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                                        tableBrand.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                                        tableCity.toLowerCase().includes(searchTerm.toLowerCase());
+
+                                                    if (!shouldShowTable) return null;
+
+                                                    return (
+                                                        <div className="accordion_body_table" key={tableIndex}>
+                                                            <div className="tableIndexDescription">
+                                                                <p><strong>{tableIndex + 1})</strong></p>
+                                                                <p>По Запросу: <strong>{tableQuery}</strong></p>
+                                                                <p>Бренд: <strong>{tableBrand}</strong></p>
+                                                                <p>Город: <strong>{tableCity}</strong></p>
                                                             </div>
-                                                        )}
-                                                    </div>
-                                                ))
+                                                            {table.products.length > 0 ? (
+                                                                <table id="productsTable">
+                                                                    <thead>
+                                                                    <tr>
+                                                                        <th className="th_table">№</th>
+                                                                        <th className="th_table">Картинка</th>
+                                                                        <th className="th_table">Бренд</th>
+                                                                        <th className="th_table">Артикул</th>
+                                                                        <th className="th_table">Позиция</th>
+                                                                        <th className="th_table">Наименование</th>
+                                                                        <th className="th_table">Время запроса</th>
+                                                                        <th className="th_table">Дата запроса</th>
+                                                                    </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                    {table.products.map((product, i) => {
+                                                                        const queryTime = new Date(queryData.queryTime || queryData.createdAt);
+                                                                        const date = queryTime.toLocaleDateString();
+                                                                        const time = queryTime.toLocaleTimeString();
+                                                                        const page = product.page;
+                                                                        const position = product.position;
+                                                                        return (
+                                                                            <tr key={i}>
+                                                                                <td className="td_table">{i + 1}</td>
+                                                                                <td className="td_table td_table_image">
+                                                                                    <img
+                                                                                        className="td_table_img"
+                                                                                        src={product.imageUrl}
+                                                                                        alt={product.name}
+                                                                                        onClick={() => handleImageClick(product.imageUrl)}
+                                                                                    />
+                                                                                </td>
+                                                                                <td className="td_table">{product.brand}</td>
+                                                                                <td className="td_table td_table_article" onClick={() => handlePageRedirect(product.id)}>
+                                                                                    {product.id}
+                                                                                </td>
+                                                                                <td className="td_table td_table_page" onClick={() => handleProductClick(tableQuery, page, position)}>
+                                                                                    {product.log?.promoPosition ? (
+                                                                                        <span>
+                                                    {product.log.promoPosition > 100 ? product.log.promoPosition + 100 : product.log.promoPosition}
+                                                                                            <sup style={{ color: 'red', fontWeight: 'bold', marginLeft: '3px' }}>*</sup>
+                                               </span>
+                                                                                    ) : (
+                                                                                        (page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position)
+                                                                                    )}
+                                                                                </td>
+                                                                                <td className="td_table">{product.name}</td>
+                                                                                <td className="td_table">{time}</td>
+                                                                                <td className="td_table">{date}</td>
+                                                                            </tr>
+                                                                        );
+                                                                    })}
+                                                                    </tbody>
+                                                                </table>
+                                                            ) : (
+                                                                <div className="no-products-message" style={{ backgroundColor: '#ffcccb', color: '#000000', padding: '10px', borderRadius: '5px' }}>
+                                                                    <strong>По Запросу:</strong> {tableQuery}
+                                                                    <br />
+                                                                    <strong>Бренд:</strong> {tableBrand}
+                                                                    <br />
+                                                                    <strong>Город:</strong> {tableCity}
+                                                                    <br />
+                                                                    <strong>Товары не найдены.</strong>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })
                                             ) : (
                                                 <div className="no-products-message" style={{ backgroundColor: '#ffcccb', color: '#000000', padding: '10px', borderRadius: '5px' }}>
                                                     <strong>Запрос:</strong> {queryData.query}
