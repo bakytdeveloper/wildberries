@@ -181,9 +181,12 @@ const filterDataByTimeIntervals = (queries) => {
 };
 
 const generateExcelForUser = async (userId) => {
-    const tempFileName = `export_${userId}_${Date.now()}`;
-    const tempXlsxPath = path.join(CONFIG.TEMP_DIR, `${tempFileName}.xlsx`);
-    const tempZipPath = path.join(CONFIG.TEMP_DIR, `${tempFileName}.zip`);
+    const formattedDateTime = new Date().toISOString()
+        .replace(/T/, '_')  // заменяем T на подчеркивание
+        .replace(/\..+/, '') // удаляем миллисекунды
+        .replace(/:/g, '-'); // заменяем двоеточия на дефисы
+
+    const tempXlsxPath = path.join(CONFIG.TEMP_DIR, `export_${userId}_${formattedDateTime}.xlsx`);
 
     const workbook = new ExcelJS.Workbook();
     workbook.calcProperties.fullCalcOnLoad = false;
@@ -386,28 +389,9 @@ const generateExcelForUser = async (userId) => {
             useSharedStrings: true
         });
 
-        // Создаем ZIP архив с максимальным сжатием
-        await new Promise((resolve, reject) => {
-            const output = fs.createWriteStream(tempZipPath);
-            const archive = archiver('zip', {
-                zlib: { level: 9, memLevel: 9 }
-            });
-
-            output.on('close', () => {
-                console.log(`ZIP архив создан. Исходный размер: ${fs.statSync(tempXlsxPath).size} байт, сжатый: ${archive.pointer()} байт`);
-                fs.unlinkSync(tempXlsxPath);
-                resolve(tempZipPath);
-            });
-
-            archive.on('error', reject);
-            archive.pipe(output);
-            archive.file(tempXlsxPath, { name: `${tempFileName}.xlsx`, store: false });
-            archive.finalize();
-        });
-
-        return tempZipPath;
+        return tempXlsxPath;
     } catch (error) {
-        [tempXlsxPath, tempZipPath].forEach(filePath => {
+        [tempXlsxPath].forEach(filePath => {
             if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
         });
         throw error;

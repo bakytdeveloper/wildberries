@@ -149,20 +149,12 @@ const exportToExcel = async (req, res) => {
 
     try {
         const userId = req.userId;
-        const formatDate = (date) => {
-            const pad = (num) => num.toString().padStart(2, '0');
-            return `${pad(date.getDate())}-${pad(date.getMonth() + 1)}-${date.getFullYear()}_${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}`;
-        };
-
-        // Оставляем имя файла с расширением .xlsx, но отправляем ZIP
-        const fileName = `export_${new Date().toISOString().replace(/[:.]/g, '-')}.zip`;
+        const fileName = `export_${new Date().toISOString().replace(/[:.]/g, '-')}.xlsx`;
 
         tempFilePath = await generateExcelForUser(userId);
 
-        // Устанавливаем правильные заголовки
-        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-        res.setHeader('Content-Encoding', 'zip');
 
         const fileStream = fs.createReadStream(tempFilePath);
         fileStream.pipe(res);

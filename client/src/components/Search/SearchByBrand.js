@@ -732,15 +732,6 @@ function SearchByBrand() {
         setExportProgress('Подготовка данных для Excel...');
 
         try {
-            // Показываем пользователю информацию о том, что это ZIP-архив
-            Toastify({
-                text: 'Файл будет скачан в формате ZIP. После скачивания распакуйте архив для получения Excel-файла.',
-                duration: 5000,
-                gravity: 'top',
-                position: 'right',
-                style: { background: '#2196F3' }
-            }).showToast();
-
             const token = sessionStorage.getItem('token');
             setExportProgress('Выполняется формирование Excel файла...');
 
@@ -763,12 +754,7 @@ function SearchByBrand() {
             // Получаем имя файла из заголовка Content-Disposition
             const contentDisposition = response.headers.get('Content-Disposition');
             const fileNameMatch = contentDisposition?.match(/filename="(.+?)"/);
-            let fileName = fileNameMatch ? fileNameMatch[1] : 'export.zip';
-
-            // Если имя файла заканчивается на .xlsx, меняем на .zip
-            if (fileName.endsWith('.xlsx')) {
-                fileName = fileName.replace('.xlsx', '.zip');
-            }
+            let fileName = fileNameMatch ? fileNameMatch[1] : 'export.xlsx';
 
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
