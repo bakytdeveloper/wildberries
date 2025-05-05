@@ -15,7 +15,6 @@ import { FaTimes } from 'react-icons/fa'; // Импортируем иконку
 import { Modal } from 'react-bootstrap';
 import { Link, useLocation } from 'react-router-dom';
 
-//   zip
 
 function SearchByBrand() {
     const [query, setQuery] = useState('');
@@ -767,7 +766,7 @@ function SearchByBrand() {
             document.body.removeChild(a);
 
             Toastify({
-                text: 'Файл успешно скачан. Распакуйте ZIP-архив для получения Excel-файла.',
+                text: 'Excel файл успешно скачан.',
                 duration: 5000,
                 gravity: 'top',
                 position: 'right',

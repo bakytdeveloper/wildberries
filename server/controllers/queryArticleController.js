@@ -143,7 +143,7 @@ const exportAllToGoogleSheet = async (req, res) => {
     }
 };
 
-// Экспорт в Excel с поддержкой ZIP
+// Экспорт в Excel
 const exportToExcel = async (req, res) => {
     let tempFilePath;
 
