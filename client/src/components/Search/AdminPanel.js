@@ -201,6 +201,7 @@ const AdminPanel = ({ API_HOST }) => {
     const handleLogout = () => {
         sessionStorage.removeItem('token');
         window.location.href = '/';
+        sessionStorage.removeItem('token');
     };
 
     const handleSubscriptionAmountChange = (e) => {
