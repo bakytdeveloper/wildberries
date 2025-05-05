@@ -2,6 +2,7 @@ const ExcelJS = require('exceljs');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
+const archiver = require('archiver'); // Добавляем модуль archiver
 const { QueryArticleModel } = require("../models/queryArticleModel");
 const { QueryModel } = require("../models/queryModel");
 const imageCache = new Map();
@@ -180,37 +181,43 @@ const filterDataByTimeIntervals = (queries) => {
 };
 
 const generateExcelForUser = async (userId) => {
-    const tempFilePath = path.join(CONFIG.TEMP_DIR, `export_${userId}_${Date.now()}.xlsx`);
+    const tempFileName = `export_${userId}_${Date.now()}`;
+    const tempXlsxPath = path.join(CONFIG.TEMP_DIR, `${tempFileName}.xlsx`);
+    const tempZipPath = path.join(CONFIG.TEMP_DIR, `${tempFileName}.zip`);
+
     const workbook = new ExcelJS.Workbook();
     workbook.calcProperties.fullCalcOnLoad = false;
+    workbook.calcProperties.calcMode = 'manual';
 
     try {
         // Создаем листы
-        const sheetBrand = workbook.addWorksheet('Бренд');
-        const sheetArticle = workbook.addWorksheet('Артикул');
+        const sheetBrand = workbook.addWorksheet('Бренд', { views: [{ showGridLines: false }] });
+        const sheetArticle = workbook.addWorksheet('Артикул', { views: [{ showGridLines: false }] });
+
+        // Разные заголовки для каждого листа
+        const brandHeaders = ['Запрос', 'Бренд', 'Город', 'Картинка', 'Артикул', 'Описание товара', 'Позиция', 'Время запроса', 'Дата запроса'];
+        const articleHeaders = ['Запрос', 'Артикул', 'Город', 'Картинка', 'Бренд', 'Описание товара', 'Позиция', 'Время запроса', 'Дата запроса'];
 
         // Добавляем заголовки
-        sheetBrand.addRow(['Запрос', 'Бренд', 'Город', 'Картинка', 'Артикул', 'Описание товара', 'Позиция', 'Время запроса', 'Дата запроса']);
-        sheetArticle.addRow(['Запрос', 'Артикул', 'Город', 'Картинка', 'Бренд', 'Описание товара', 'Позиция', 'Время запроса', 'Дата запроса']);
+        sheetBrand.addRow(brandHeaders);
+        sheetArticle.addRow(articleHeaders);
 
-        // Настройка колонок
-        [sheetBrand, sheetArticle].forEach(sheet => {
-            sheet.columns = [
-                { key: 'query', width: 30 },
-                { key: 'id', width: 15 },
-                { key: 'city', width: 12 },
-                { key: 'image', width: 15 },
-                { key: 'brand', width: 15 },
-                { key: 'name', width: 50 },
-                { key: 'position', width: 10 },
-                { key: 'time', width: 12 },
-                { key: 'date', width: 12 }
-            ];
+        // Настраиваем колонки для каждого листа отдельно
+        sheetBrand.columns = brandHeaders.map((header, i) => ({
+            header,
+            key: `col${i+1}`, // Используем простые ключи вместо преобразованных имен
+            width: [30, 15, 12, 15, 15, 50, 10, 12, 12][i]
+        }));
 
-            sheet.getRow(1).eachCell(cell => {
-                cell.font = { bold: true };
-            });
-        });
+        sheetArticle.columns = articleHeaders.map((header, i) => ({
+            header,
+            key: `col${i+1}`, // Используем простые ключи вместо преобразованных имен
+            width: [30, 15, 12, 15, 15, 50, 10, 12, 12][i]
+        }));
+
+        // Стили для заголовков
+        sheetBrand.getRow(1).font = { bold: true };
+        sheetArticle.getRow(1).font = { bold: true };
 
         // Загрузка данных с пагинацией
         const [brandQueries, articleQueries] = await Promise.all([
@@ -224,28 +231,31 @@ const generateExcelForUser = async (userId) => {
 
         imageCache.clear();
 
-        // Обработка данных с батчингом и паузами для event loop
-        const processData = async (queries, sheet, isBrandSheet) => {
-            let rowCount = 0;
+        // Функция для обработки изображений
+        const processImage = async (imageUrl) => {
+            try {
+                const buffer = await downloadImage(imageUrl);
+                if (!buffer) return null;
+
+                const sharp = require('sharp');
+                return await sharp(buffer)
+                    .resize(100, 100, { fit: 'inside' })
+                    .jpeg({ quality: 70 })
+                    .png({ compressionLevel: 6 })
+                    .toBuffer();
+            } catch (err) {
+                console.error('Ошибка обработки изображения:', err);
+                return null;
+            }
+        };
+
+        // Обработка данных для листа "Бренд"
+        const processBrandData = async (queries, sheet) => {
             const imageTasks = [];
 
             for (const query of queries) {
                 for (const table of query.productTables) {
                     for (const product of table.products) {
-                        rowCount++;
-
-                        // Пауза для event loop каждые BATCH_SIZE строк
-                        if (rowCount % CONFIG.DATABASE.BATCH_SIZE === 0) {
-                            await new Promise(resolve => setImmediate(resolve));
-                            await processImagesWithConcurrency(imageTasks.splice(0, imageTasks.length));
-                        }
-
-                        // Проверка на максимальное количество строк
-                        if (rowCount >= CONFIG.MAX_ROWS_PER_SHEET) {
-                            console.warn(`Достигнут лимит строк (${CONFIG.MAX_ROWS_PER_SHEET}) для листа ${sheet.name}`);
-                            break;
-                        }
-
                         const position = product?.page > 1
                             ? `${product.page}${String(product.position).padStart(2, '0')}`
                             : String(product?.position || '');
@@ -256,67 +266,150 @@ const generateExcelForUser = async (userId) => {
 
                         const row = sheet.addRow([
                             product?.query || query.query,
-                            isBrandSheet ? product?.brand || query.brand : product?.id,
+                            product?.brand || query.brand,
                             product?.city || query.city,
                             product?.imageUrl || '',
-                            isBrandSheet ? product?.id : product?.brand,
+                            product?.id,
                             product?.name,
                             promoPosition,
                             new Date(product?.queryTime || query.createdAt).toLocaleTimeString(),
                             new Date(product?.queryTime || query.createdAt).toLocaleDateString()
                         ]);
 
+                        // Позиция находится в 7-м столбце (индекс 6)
                         if (promoPosition.includes('*')) {
                             row.getCell(7).font = { bold: true, color: { argb: 'FFFF0000' } };
                         }
 
                         if (product?.imageUrl) {
-                            imageTasks.push(async () => {
-                                const imageBuffer = await downloadImage(product.imageUrl);
-                                if (imageBuffer) {
+                            imageTasks.push((async () => {
+                                const optimizedImage = await processImage(product.imageUrl);
+                                if (optimizedImage) {
                                     const extension = product.imageUrl.split('.').pop() === 'png' ? 'png' : 'jpeg';
                                     const imageId = workbook.addImage({
-                                        buffer: imageBuffer,
+                                        buffer: optimizedImage,
                                         extension: extension
                                     });
 
+                                    // Картинка добавляется в 4-й столбец (индекс 3)
                                     sheet.addImage(imageId, {
                                         tl: { col: 3, row: row.number - 1, offset: 5 },
-                                        ext: CONFIG.IMAGE.SIZE
+                                        ext: { width: 30, height: 30 }
                                     });
-
-                                    sheet.getRow(row.number).height = CONFIG.IMAGE.SIZE.height;
                                 }
-                            });
+                            })());
+                        }
+
+                        if (imageTasks.length >= CONFIG.IMAGE.CONCURRENCY) {
+                            await Promise.all(imageTasks.splice(0, CONFIG.IMAGE.CONCURRENCY));
                         }
                     }
                 }
             }
 
-            // Обработать оставшиеся изображения
-            if (imageTasks.length > 0) {
-                await processImagesWithConcurrency(imageTasks);
+            await Promise.all(imageTasks);
+        };
+
+        // Обработка данных для листа "Артикул"
+        const processArticleData = async (queries, sheet) => {
+            const imageTasks = [];
+
+            for (const query of queries) {
+                for (const table of query.productTables) {
+                    for (const product of table.products) {
+                        const position = product?.page > 1
+                            ? `${product.page}${String(product.position).padStart(2, '0')}`
+                            : String(product?.position || '');
+
+                        const promoPosition = product?.log?.promoPosition
+                            ? `${product.log.promoPosition}*`
+                            : position;
+
+                        const row = sheet.addRow([
+                            product?.query || query.query,
+                            product?.id,
+                            product?.city || query.city,
+                            product?.imageUrl || '',
+                            product?.brand,
+                            product?.name,
+                            promoPosition,
+                            new Date(product?.queryTime || query.createdAt).toLocaleTimeString(),
+                            new Date(product?.queryTime || query.createdAt).toLocaleDateString()
+                        ]);
+
+                        // Позиция находится в 7-м столбце (индекс 6)
+                        if (promoPosition.includes('*')) {
+                            row.getCell(7).font = { bold: true, color: { argb: 'FFFF0000' } };
+                        }
+
+                        if (product?.imageUrl) {
+                            imageTasks.push((async () => {
+                                const optimizedImage = await processImage(product.imageUrl);
+                                if (optimizedImage) {
+                                    const extension = product.imageUrl.split('.').pop() === 'png' ? 'png' : 'jpeg';
+                                    const imageId = workbook.addImage({
+                                        buffer: optimizedImage,
+                                        extension: extension
+                                    });
+
+                                    // Картинка добавляется в 4-й столбец (индекс 3)
+                                    sheet.addImage(imageId, {
+                                        tl: { col: 3, row: row.number - 1, offset: 5 },
+                                        ext: { width: 30, height: 30 }
+                                    });
+                                }
+                            })());
+                        }
+
+                        if (imageTasks.length >= CONFIG.IMAGE.CONCURRENCY) {
+                            await Promise.all(imageTasks.splice(0, CONFIG.IMAGE.CONCURRENCY));
+                        }
+                    }
+                }
             }
+
+            await Promise.all(imageTasks);
         };
 
         await Promise.all([
-            processData(filteredBrandQueries, sheetBrand, true),
-            processData(filteredArticleQueries, sheetArticle, false)
+            processBrandData(filteredBrandQueries, sheetBrand),
+            processArticleData(filteredArticleQueries, sheetArticle)
         ]);
 
-        // Сохраняем файл
-        await workbook.xlsx.writeFile(tempFilePath);
-        return tempFilePath;
+        // Оптимизация: отключаем автофильтры перед сохранением
+        workbook.worksheets.forEach(sheet => {
+            sheet.autoFilter = null;
+        });
 
+        // Сохраняем с оптимизацией
+        await workbook.xlsx.writeFile(tempXlsxPath, {
+            useSharedStrings: true
+        });
+
+        // Создаем ZIP архив с максимальным сжатием
+        await new Promise((resolve, reject) => {
+            const output = fs.createWriteStream(tempZipPath);
+            const archive = archiver('zip', {
+                zlib: { level: 9, memLevel: 9 }
+            });
+
+            output.on('close', () => {
+                console.log(`ZIP архив создан. Исходный размер: ${fs.statSync(tempXlsxPath).size} байт, сжатый: ${archive.pointer()} байт`);
+                fs.unlinkSync(tempXlsxPath);
+                resolve(tempZipPath);
+            });
+
+            archive.on('error', reject);
+            archive.pipe(output);
+            archive.file(tempXlsxPath, { name: `${tempFileName}.xlsx`, store: false });
+            archive.finalize();
+        });
+
+        return tempZipPath;
     } catch (error) {
-        // Удаляем временный файл при ошибке
-        if (fs.existsSync(tempFilePath)) {
-            try {
-                fs.unlinkSync(tempFilePath);
-            } catch (err) {
-                console.error('Ошибка при удалении временного файла:', err);
-            }
-        }
+        [tempXlsxPath, tempZipPath].forEach(filePath => {
+            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        });
         throw error;
     } finally {
         imageCache.clear();

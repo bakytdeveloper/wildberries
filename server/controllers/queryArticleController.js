@@ -143,32 +143,30 @@ const exportAllToGoogleSheet = async (req, res) => {
     }
 };
 
-// Обновленный экспорт в Excel с поддержкой больших данных
+// Экспорт в Excel с поддержкой ZIP
 const exportToExcel = async (req, res) => {
     let tempFilePath;
 
     try {
         const userId = req.userId;
-        // Форматируем дату в виде ДД-ММ-ГГГГ_ЧЧ-ММ-СС
         const formatDate = (date) => {
             const pad = (num) => num.toString().padStart(2, '0');
             return `${pad(date.getDate())}-${pad(date.getMonth() + 1)}-${date.getFullYear()}_${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}`;
         };
 
-        const fileName = `export_${formatDate(new Date())}.xlsx`;
+        // Оставляем имя файла с расширением .xlsx, но отправляем ZIP
+        const fileName = `export_${new Date().toISOString().replace(/[:.]/g, '-')}.zip`;
 
-        // Генерируем файл
         tempFilePath = await generateExcelForUser(userId);
 
-        // Настраиваем заголовки
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        // Устанавливаем правильные заголовки
+        res.setHeader('Content-Type', 'application/zip');
         res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        res.setHeader('Content-Encoding', 'zip');
 
-        // Создаем поток чтения и отправляем файл
         const fileStream = fs.createReadStream(tempFilePath);
         fileStream.pipe(res);
 
-        // Удаляем файл после отправки
         fileStream.on('end', () => {
             if (tempFilePath && fs.existsSync(tempFilePath)) {
                 fs.unlinkSync(tempFilePath);
@@ -195,7 +193,6 @@ const exportToExcel = async (req, res) => {
         }
     }
 };
-
 
 module.exports = {
     createArticleQuery,

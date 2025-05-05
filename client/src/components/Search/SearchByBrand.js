@@ -15,6 +15,8 @@ import { FaTimes } from 'react-icons/fa'; // Импортируем иконку
 import { Modal } from 'react-bootstrap';
 import { Link, useLocation } from 'react-router-dom';
 
+//   zip
+
 function SearchByBrand() {
     const [query, setQuery] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
@@ -730,9 +732,17 @@ function SearchByBrand() {
         setExportProgress('Подготовка данных для Excel...');
 
         try {
+            // Показываем пользователю информацию о том, что это ZIP-архив
+            Toastify({
+                text: 'Файл будет скачан в формате ZIP. После скачивания распакуйте архив для получения Excel-файла.',
+                duration: 5000,
+                gravity: 'top',
+                position: 'right',
+                style: { background: '#2196F3' }
+            }).showToast();
+
             const token = sessionStorage.getItem('token');
-            setExportProgress('Выполняется формирование Excel файла' +
-                ' и подготовка всех данных для выгрузки...');
+            setExportProgress('Выполняется формирование Excel файла...');
 
             const endpoint = exportType === 'queries'
                 ? `${API_HOST}/api/queries/export-excel`
@@ -753,7 +763,12 @@ function SearchByBrand() {
             // Получаем имя файла из заголовка Content-Disposition
             const contentDisposition = response.headers.get('Content-Disposition');
             const fileNameMatch = contentDisposition?.match(/filename="(.+?)"/);
-            const fileName = fileNameMatch ? fileNameMatch[1] : 'export.xlsx';
+            let fileName = fileNameMatch ? fileNameMatch[1] : 'export.zip';
+
+            // Если имя файла заканчивается на .xlsx, меняем на .zip
+            if (fileName.endsWith('.xlsx')) {
+                fileName = fileName.replace('.xlsx', '.zip');
+            }
 
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
@@ -766,8 +781,8 @@ function SearchByBrand() {
             document.body.removeChild(a);
 
             Toastify({
-                text: 'Все данные успешно выгружены в Excel',
-                duration: 3000,
+                text: 'Файл успешно скачан. Распакуйте ZIP-архив для получения Excel-файла.',
+                duration: 5000,
                 gravity: 'top',
                 position: 'right',
                 style: { background: '#00cc00' }

@@ -746,6 +746,15 @@ function SearchByArticle() {
         setExportProgress('Подготовка данных для Excel...');
 
         try {
+
+            Toastify({
+                text: 'Файл будет скачан в формате ZIP. После скачивания распакуйте архив для получения Excel-файла.',
+                duration: 5000,
+                gravity: 'top',
+                position: 'right',
+                style: { background: '#2196F3' }
+            }).showToast();
+
             const token = sessionStorage.getItem('token');
             setExportProgress('Формирование Excel файла...');
 
@@ -768,7 +777,12 @@ function SearchByArticle() {
             // Получаем имя файла из заголовка Content-Disposition
             const contentDisposition = response.headers.get('Content-Disposition');
             const fileNameMatch = contentDisposition?.match(/filename="(.+?)"/);
-            const fileName = fileNameMatch ? fileNameMatch[1] : 'export.xlsx';
+            let fileName = fileNameMatch ? fileNameMatch[1] : 'export.zip';
+
+            // Если имя файла заканчивается на .xlsx, меняем на .zip
+            if (fileName.endsWith('.xlsx')) {
+                fileName = fileName.replace('.xlsx', '.zip');
+            }
 
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
@@ -781,8 +795,8 @@ function SearchByArticle() {
             document.body.removeChild(a);
 
             Toastify({
-                text: 'Все данные успешно выгружены в Excel',
-                duration: 3000,
+                text: 'Файл успешно скачан. Распакуйте ZIP-архив для получения Excel-файла.',
+                duration: 5000,
                 gravity: 'top',
                 position: 'right',
                 style: { background: '#00cc00' }
