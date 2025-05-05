@@ -212,43 +212,39 @@ function SearchByBrand() {
 
     const handleSortInputChange = (e) => {
         const value = e.target.value;
-        setSearchTerm(value); // Сохраняем значение как есть, включая пробелы
+        setSearchTerm(value);
 
         if (value.trim() !== '') {
             const lowerCaseSearchTerm = value.toLowerCase();
 
-            // Фильтруем queries по заголовкам
-            const filtered = allQueries.filter(query => {
-                // Проверяем соответствие основного заголовка
-                const queryMatch = query.query.toLowerCase().includes(lowerCaseSearchTerm);
-                const brandMatch = query.brand.toLowerCase().includes(lowerCaseSearchTerm);
-                const cityMatch = query.city.toLowerCase().includes(lowerCaseSearchTerm);
+            setFilteredQueries(allQueries.filter(query => {
+                // Проверяем совпадения в основном заголовке
+                const queryMatch = query.query?.toLowerCase().includes(lowerCaseSearchTerm) || false;
+                const brandMatch = query.brand?.toLowerCase().includes(lowerCaseSearchTerm) || false;
+                const cityMatch = query.city?.toLowerCase().includes(lowerCaseSearchTerm) || false;
 
-                // Если есть совпадение в основном заголовке, оставляем весь query
-                if (queryMatch || brandMatch || cityMatch) return true;
+                // Проверяем совпадения в headerTextItems
+                const headerItems = query.query.split('; ').map((q, i) => {
+                    const b = query.brand.split('; ')[i] || '';
+                    const c = query.city.split('; ')[i] || '';
+                    return `${q} - ${b} (${c})`.toLowerCase();
+                });
 
-                // Если нет, проверяем таблицы внутри
-                if (query.productTables) {
-                    // Проверяем каждую таблицу на соответствие
-                    const hasMatchingTables = query.productTables.some(table => {
-                        const tableQuery = (query.query.split('; ')[table.index] || '').toLowerCase();
-                        const tableBrand = (query.brand.split('; ')[table.index] || '').toLowerCase();
-                        const tableCity = (query.city.split('; ')[table.index] || '').toLowerCase();
+                const headerMatch = headerItems.some(item => item.includes(lowerCaseSearchTerm));
 
-                        return tableQuery.includes(lowerCaseSearchTerm) ||
-                            tableBrand.includes(lowerCaseSearchTerm) ||
-                            tableCity.includes(lowerCaseSearchTerm);
-                    });
+                // Проверяем совпадения в таблицах продуктов
+                const tableMatch = query.productTables?.some(table => {
+                    const tableQuery = (query.query.split('; ')[table.index] || '').toLowerCase();
+                    const tableBrand = (query.brand.split('; ')[table.index] || '').toLowerCase();
+                    const tableCity = (query.city.split('; ')[table.index] || '').toLowerCase();
+                    return tableQuery.includes(lowerCaseSearchTerm) ||
+                        tableBrand.includes(lowerCaseSearchTerm) ||
+                        tableCity.includes(lowerCaseSearchTerm);
+                }) || false;
 
-                    return hasMatchingTables;
-                }
-
-                return false;
-            });
-
-            setFilteredQueries(filtered);
+                return queryMatch || brandMatch || cityMatch || headerMatch || tableMatch;
+            }));
         } else {
-            // Если строка поиска пустая, показываем все queries
             setFilteredQueries(allQueries);
         }
     };
@@ -1196,8 +1192,24 @@ function SearchByBrand() {
                                     const brand = queryData.brand.split('; ')[i] || '';
                                     const city = queryData.city.split('; ')[i] || '';
                                     const fullText = `${query} - ${brand} (${city})`;
-                                    const truncatedText = windowWidth < 768 ? truncateText(fullText, 24) : fullText; // Обрезаем текст для мобильных устройств
-                                    return <div key={i}>{truncatedText}</div>;
+                                    const searchTermLower = searchTerm.toLowerCase();
+                                    const fullTextLower = fullText.toLowerCase();
+
+                                    // Подсветка совпадений
+                                    if (searchTerm && fullTextLower.includes(searchTermLower)) {
+                                        const startIndex = fullTextLower.indexOf(searchTermLower);
+                                        const endIndex = startIndex + searchTerm.length;
+                                        return (
+                                            <div key={i}>
+                                                {fullText.substring(0, startIndex)}
+                                                <span className="search-text-background">
+                                                    {fullText.substring(startIndex, endIndex)}
+                                                </span>
+                                                {fullText.substring(endIndex)}
+                                            </div>
+                                        );
+                                    }
+                                    return <div key={i}>{windowWidth < 768 ? truncateText(fullText, 24) : fullText}</div>;
                                 });
 
                                 return (

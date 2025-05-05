@@ -31,6 +31,9 @@
     --exit-button-background: #d5d9d9;
     --exit-button-color: #0a0000;
     --exit-button-border-color: #0a0000;
+
+    --search-text-background: #f1f136;
+    --search-text-color: black;
 }
 
 [data-theme="dark"] {
@@ -67,6 +70,8 @@
     --exit-button-border-color: #ffffff;
     --exit-button-background: #302f2f;
 
+    --search-text-background: #f1f136;
+    --search-text-color: black;
 }
 
 #root {
@@ -789,6 +794,11 @@ tr:hover {
 
 .logout-container Button:hover {
     background-color: #c9302c;
+}
+
+.search-text-background {
+    background-color: var(--search-text-background);
+    color:  var(--search-text-color);
 }
 
 @media (max-width: 768px) {
