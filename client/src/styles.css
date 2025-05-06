@@ -1117,6 +1117,10 @@ tr:hover {
     .sum-check-input {
         width: 60% !important;
     }
+
+    .modal-export-header {
+        font-size: 17px!important;
+    }
 }
 
 @media (max-width: 480px) {

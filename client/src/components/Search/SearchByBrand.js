@@ -877,7 +877,7 @@ function SearchByBrand() {
                 centered
             >
                 <Modal.Header closeButton>
-                    <Modal.Title>В данный момент выполняется</Modal.Title>
+                    <Modal.Title className="modal-export-header">В данный момент выполняется</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     <div style={{ textAlign: 'center' }}>
