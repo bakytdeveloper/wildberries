@@ -801,6 +801,15 @@ tr:hover {
     color:  var(--search-text-color);
 }
 
+.trips-text {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    font-style: italic;
+    height: 100px;
+}
+
 @media (max-width: 768px) {
 
     html, body, #root {
