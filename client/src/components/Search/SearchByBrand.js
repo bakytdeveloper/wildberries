@@ -1195,23 +1195,31 @@ function SearchByBrand() {
                                     const searchTermLower = searchTerm.toLowerCase();
                                     const fullTextLower = fullText.toLowerCase();
 
+                                    // Проверяем, есть ли совпадение с поисковым запросом
+                                    const hasMatch = searchTerm && fullTextLower.includes(searchTermLower);
+
+                                    // Если есть поисковый запрос и нет совпадения - возвращаем null (не рендерим)
+                                    if (searchTerm && !hasMatch) {
+                                        return null;
+                                    }
+
                                     // Подсветка совпадений
-                                    if (searchTerm && fullTextLower.includes(searchTermLower)) {
+                                    if (hasMatch) {
                                         const startIndex = fullTextLower.indexOf(searchTermLower);
                                         const endIndex = startIndex + searchTerm.length;
                                         return (
                                             <div key={i}>
                                                 {fullText.substring(0, startIndex)}
-                                                <span className="search-text-background">
+                                                <span style={{backgroundColor: "yellow"}} className="search-text-background">
                                                     {fullText.substring(startIndex, endIndex)}
                                                 </span>
                                                 {fullText.substring(endIndex)}
                                             </div>
                                         );
                                     }
-                                    return <div key={i}>{windowWidth < 768 ? truncateText(fullText, 24) : fullText}</div>;
-                                });
 
+                                    return <div key={i}>{windowWidth < 768 ? truncateText(fullText, 24) : fullText}</div>;
+                                }).filter(item => item !== null); // Фильтруем null значения
                                 return (
                                     <Accordion.Item eventKey={index.toString()} key={index}>
                                         <Accordion.Header>
