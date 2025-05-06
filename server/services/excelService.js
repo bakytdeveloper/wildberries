@@ -2,7 +2,6 @@ const ExcelJS = require('exceljs');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
-const archiver = require('archiver'); // Добавляем модуль archiver
 const { QueryArticleModel } = require("../models/queryArticleModel");
 const { QueryModel } = require("../models/queryModel");
 const imageCache = new Map();
@@ -84,30 +83,6 @@ const downloadImage = async (url) => {
     }
 };
 
-const processImagesWithConcurrency = async (tasks) => {
-    const results = [];
-    const executing = [];
-
-    for (const task of tasks) {
-        const p = task().then(result => {
-            executing.splice(executing.indexOf(p), 1);
-            return result;
-        }).catch(err => {
-            console.error('Ошибка обработки изображения:', err);
-            return null;
-        });
-
-        executing.push(p);
-        results.push(p);
-
-        if (executing.length >= CONFIG.IMAGE.CONCURRENCY) {
-            await Promise.race(executing);
-        }
-    }
-
-    return (await Promise.all(results)).filter(Boolean);
-};
-
 // Функция для проверки, находится ли дата в текущем дне
 const isToday = (date) => {
     const today = new Date();
@@ -140,7 +115,6 @@ const getNearestInterval = (date) => {
 
 // Функция для фильтрации данных по временным интервалам
 const filterDataByTimeIntervals = (queries) => {
-    const today = new Date();
     const filteredQueries = [];
 
     for (const query of queries) {
