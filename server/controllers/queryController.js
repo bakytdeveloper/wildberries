@@ -150,7 +150,7 @@ const exportToExcel = async (req, res) => {
 
     try {
         const userId = req.userId;
-        const fileName = `PosWB_${new Date().toISOString().replace(/[:.]/g, '-')}.xlsx`;
+        const fileName = `PosWB_${formatLocalDateTime(new Date())}.xlsx`;
 
         tempFilePath = await generateExcelForUser(userId);
 
@@ -186,6 +186,21 @@ const exportToExcel = async (req, res) => {
         }
     }
 };
+
+// Новая функция для форматирования локальной даты и времени
+function formatLocalDateTime(date) {
+    const pad = (num) => num.toString().padStart(2, '0');
+
+    return [
+        date.getFullYear(),
+        pad(date.getMonth() + 1),
+        pad(date.getDate()),
+        '_',
+        pad(date.getHours()),
+        pad(date.getMinutes()),
+        pad(date.getSeconds())
+    ].join('');
+}
 
 
 module.exports = {
