@@ -35,7 +35,7 @@ setInterval(() => {
         const files = fs.readdirSync(CONFIG.TEMP_DIR);
         const now = Date.now();
         files.forEach(file => {
-            if (file.startsWith('export_')) {
+            if (file.startsWith('PosWB_')) {
                 const filePath = path.join(CONFIG.TEMP_DIR, file);
                 try {
                     const stat = fs.statSync(filePath);
@@ -160,7 +160,7 @@ const generateExcelForUser = async (userId) => {
         .replace(/\..+/, '') // удаляем миллисекунды
         .replace(/:/g, '-'); // заменяем двоеточия на дефисы
 
-    const tempXlsxPath = path.join(CONFIG.TEMP_DIR, `export_${userId}_${formattedDateTime}.xlsx`);
+    const tempXlsxPath = path.join(CONFIG.TEMP_DIR, `PosWB_${userId}_${formattedDateTime}.xlsx`);
 
     const workbook = new ExcelJS.Workbook();
     workbook.calcProperties.fullCalcOnLoad = false;
