@@ -198,7 +198,7 @@ function formatLocalDateTime(date) {
         pad(date.getHours()),
         pad(date.getMinutes()),
         pad(date.getSeconds())
-    ].join('');
+    ].join('-');
 }
 
 module.exports = {
