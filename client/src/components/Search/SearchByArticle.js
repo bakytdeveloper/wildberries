@@ -776,7 +776,7 @@ function SearchByArticle() {
 
         try {
             const token = sessionStorage.getItem('token');
-            setExportProgress('Формирование Excel файла...');
+            setExportProgress('Формирование Excel файла и расстановка данных...');
 
             const endpoint = exportType === 'queries'
                 ? `${API_HOST}/api/queries/export-excel`
@@ -792,7 +792,7 @@ function SearchByArticle() {
             if (!response.ok) {
                 throw new Error('Ошибка выгрузки данных');
             }
-            setExportProgress('Сохранение файла...');
+            setExportProgress('Идёт подготова к выгрузке...');
 
             // Получаем имя файла из заголовка Content-Disposition
             const contentDisposition = response.headers.get('Content-Disposition');

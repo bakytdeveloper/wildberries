@@ -179,6 +179,14 @@ const generateExcelForUser = async (userId) => {
         sheetBrand.addRow(brandHeaders);
         sheetArticle.addRow(articleHeaders);
 
+        // Фиксируем заголовки при скролле
+        sheetBrand.views = [
+            { state: 'frozen', ySplit: 1 } // Замораживаем первую строку
+        ];
+        sheetArticle.views = [
+            { state: 'frozen', ySplit: 1 } // Замораживаем первую строку
+        ];
+
         // Настраиваем колонки для каждого листа отдельно
         sheetBrand.columns = brandHeaders.map((header, i) => ({
             header,

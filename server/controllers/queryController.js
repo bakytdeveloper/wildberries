@@ -150,7 +150,7 @@ const exportToExcel = async (req, res) => {
 
     try {
         const userId = req.userId;
-        const fileName = `export_${new Date().toISOString().replace(/[:.]/g, '-')}.xlsx`;
+        const fileName = `PosWB_${new Date().toISOString().replace(/[:.]/g, '-')}.xlsx`;
 
         tempFilePath = await generateExcelForUser(userId);
 
