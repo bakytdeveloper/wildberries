@@ -216,7 +216,7 @@ const generateExcelForUser = async (userId) => {
 
                 const sharp = require('sharp');
                 return await sharp(buffer)
-                    .resize(100, 100, { fit: 'inside' })
+                    .resize(150, 150, { fit: 'inside' })
                     .jpeg({ quality: 70 })
                     .png({ compressionLevel: 6 })
                     .toBuffer();
