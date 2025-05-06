@@ -1227,7 +1227,7 @@ function SearchByArticle() {
                                         return (
                                             <div key={i}>
                                                 {fullText.substring(0, startIndex)}
-                                                <span style={{backgroundColor: "yellow"}} className="search-text-background">
+                                                <span className="search-text-background">
                                                     {fullText.substring(startIndex, endIndex)}
                                                 </span>
                                                 {fullText.substring(endIndex)}
