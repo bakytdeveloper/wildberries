@@ -792,7 +792,7 @@ function SearchByArticle() {
             if (!response.ok) {
                 throw new Error('Ошибка выгрузки данных');
             }
-            setExportProgress('Идёт подготова к выгрузке...');
+            setExportProgress('Подготовка к выгрузке...');
 
             // Получаем имя файла из заголовка Content-Disposition
             const contentDisposition = response.headers.get('Content-Disposition');
@@ -893,7 +893,7 @@ function SearchByArticle() {
                 centered
             >
                 <Modal.Header closeButton>
-                    <Modal.Title>Выгрузка данных</Modal.Title>
+                    <Modal.Title>В данный момент выполняется</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     <div style={{ textAlign: 'center' }}>
