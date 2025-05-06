@@ -959,13 +959,7 @@ function SearchByArticle() {
                         </div>
 
                         {/* Полезный совет */}
-                        <div style={{
-                            marginTop: '20px',
-                            padding: '10px',
-                            backgroundColor: '#f8f9fa',
-                            borderRadius: '5px',
-                            fontStyle: 'italic'
-                        }}>
+                        <div className="trips-text">
                             {tips[currentTipIndex]}
                         </div>
                     </div>
