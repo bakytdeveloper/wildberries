@@ -59,7 +59,7 @@ function SearchByArticle() {
     });
     const [showDeleteByParamsModal, setShowDeleteByParamsModal] = useState(false);
 
-    
+
     // Добавить эффект для скрытия меню:
     useEffect(() => {
         if (formsDisabled) {
@@ -1015,6 +1015,11 @@ function SearchByArticle() {
                 style: { background: '#00c851' }
             }).showToast();
             setShowDeleteByParamsModal(false);
+            setDeleteForm({
+                query: '',
+                article: '',
+                city: 'г.Москва'
+            });
         } catch (error) {
             console.error('Ошибка удаления запросов:', error);
             Toastify({
@@ -1224,22 +1229,25 @@ function SearchByArticle() {
                                         )}
                                     </Button>
                                     </div>
-                                    <Button
-                                        className="controls_primary controls_primary_info"
-                                        variant="info"
-                                        onClick={handleOpenGoogleSheet}
-                                        title="Открыть мою Google Таблицу"
-                                    >
-                                        Открыть Google таблицу
-                                    </Button>
+                                    <div className="open-sheet-and-delete-request">
+                                        <Button
+                                            className="controls_primary controls_primary_info controls_primary_info_google_sheet"
+                                            variant="info"
+                                            onClick={handleOpenGoogleSheet}
+                                            title="Открыть мою Google Таблицу"
+                                        >
+                                            Открыть Google таблицу
+                                        </Button>
 
-                                    <Button
-                                        variant="danger"
-                                        onClick={() => setShowDeleteByParamsModal(true)}
-                                        title="Удалить запросы по параметрам"
-                                    >
-                                        Удалить запросы
-                                    </Button>
+                                        <Button
+                                            className="controls_primary_info_delete_request"
+                                            variant="danger"
+                                            onClick={() => setShowDeleteByParamsModal(true)}
+                                            title="Удалить запросы по параметрам"
+                                        >
+                                            Удалить запрос
+                                        </Button>
+                                    </div>
                                 </div>
                                 <div className="search-bar">
                                     <Form className="search" onSubmit={(e) => e.preventDefault()}>

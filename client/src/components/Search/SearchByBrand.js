@@ -996,7 +996,13 @@ function SearchByBrand() {
                 position: "right",
                 style: { background: '#00c851' }
             }).showToast();
+            // Закрываем модальное окно и очищаем форму
             setShowDeleteByParamsModal(false);
+            setDeleteForm({
+                query: '',
+                brand: '',  // или article: '' для SearchByArticle
+                city: 'г.Москва'
+            });
         } catch (error) {
             console.error('Ошибка удаления запросов:', error);
             Toastify({
@@ -1210,8 +1216,10 @@ function SearchByBrand() {
                                            )}
                                        </Button>
                                    </div>
+
+                                    <div className="open-sheet-and-delete-request">
                                     <Button
-                                        className="controls_primary controls_primary_info"
+                                        className="controls_primary controls_primary_info controls_primary_info_google_sheet"
                                         variant="info"
                                         onClick={handleOpenGoogleSheet}
                                         title="Открыть мою Google Таблицу"
@@ -1219,12 +1227,14 @@ function SearchByBrand() {
                                        Открыть Google таблицу
                                     </Button>
                                     <Button
+                                        className="controls_primary_info_delete_request"
                                         variant="danger"
                                         onClick={() => setShowDeleteByParamsModal(true)}
                                         title="Удалить запросы по параметрам"
                                     >
-                                        Удалить запросы
+                                        Удалить запрос
                                     </Button>
+                                    </div>
                                 </div>
                                 <div className="search-bar">
                                     <Form className="search" onSubmit={(e) => e.preventDefault()}>

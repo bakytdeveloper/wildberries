@@ -810,6 +810,24 @@ tr:hover {
     height: 110px;
 }
 
+.open-sheet-and-delete-request {
+    display: flex;
+}
+
+.controls_primary_info_google_sheet {
+    width: 45%;
+    padding: 0!important;
+}
+
+.controls_primary_info_delete_request {
+    width: 35%;
+    padding: 0;
+    margin-top: 10px;
+    border-radius: 2px!important;
+    margin-left: 8px!important;
+
+}
+
 @media (max-width: 768px) {
 
     html, body, #root {
@@ -1148,6 +1166,24 @@ tr:hover {
     .controls {
         padding: 2px;
     }
+
+
+
+    .controls_primary_info_google_sheet {
+        width: 58%;
+        padding: 0!important;
+        font-size: 10px;
+    }
+
+    .controls_primary_info_delete_request {
+        width: 40%;
+        padding: 0!important;
+        margin-top: 10px;
+        border-radius: 2px!important;
+        margin-left: 3px!important;
+        font-size: 14px!important;
+    }
+
 }
 
 @media (max-width: 480px) {
