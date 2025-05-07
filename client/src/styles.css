@@ -1131,13 +1131,22 @@ tr:hover {
         font-size: 17px!important;
     }
 
-    .controls_primary_search {
-        font-weight: bold!important;
+    .right-controls-search {
+        display: flex;
+        justify-content: space-between;
+    }
+    .right-controls-exports-sheets {
+        display: flex;
+        justify-content: space-between;
     }
 
-    .controls_primary {
-        padding-left: 6px!important;
-        padding-right: 6px!important;
+    .controls_primary.controls_primary_search.btn.btn-primary {
+        font-weight: bold!important;
+        padding-left: 10px!important;
+        padding-right: 10px!important;
+    }
+    .controls {
+        padding: 2px;
     }
 }
 

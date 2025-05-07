@@ -1118,6 +1118,7 @@ function SearchByArticle() {
                             </div>
                             <div className="right-controls">
                                 <div className="controls">
+                                    <div className="right-controls-search">
                                     <Button
                                         className="controls_success"
                                         onClick={addRequestForm}
@@ -1127,6 +1128,9 @@ function SearchByArticle() {
                                     </Button>
                                     <Button className="controls_primary controls_primary_search" onClick={fetchProductsByArticle} disabled={isRequesting}>Поиск</Button>
                                     <Button className="controls_primary controls_primary_warning"  variant="warning" onClick={handleSearchAllQueries}>Все запросы</Button>
+                                    </div>
+
+                                    <div className="right-controls-exports-sheets">
                                     <Button
                                         className="controls_primary controls_primary_info upload_to_google"
                                         variant="success"
@@ -1166,6 +1170,7 @@ function SearchByArticle() {
                                             'Выгрузить в Excel'
                                         )}
                                     </Button>
+                                    </div>
                                     <Button
                                         className="controls_primary controls_primary_info"
                                         variant="info"

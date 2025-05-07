@@ -1104,56 +1104,61 @@ function SearchByBrand() {
                             </div>
                             <div className="right-controls">
                                 <div className="controls">
-                                    <Button
-                                        className="controls_success"
-                                        onClick={addRequestForm}
-                                        disabled={requestForms.length >= 15}
-                                    >
-                                        Добавить запрос
-                                    </Button>
-                                    <Button className="controls_primary controls_primary_search" onClick={fetchProducts} disabled={isRequesting}>Поиск</Button>
-                                    <Button className="controls_primary controls_primary_warning"  variant="warning" onClick={handleSearchAllQueries}>Все запросы</Button>
-                                    <Button
-                                        className="controls_primary controls_primary_info upload_to_google"
-                                        variant="success"
-                                        onClick={handleExportAllToGoogleSheet}
-                                        title="Выгрузить все данные в Google Таблицу"
-                                    >
-                                        {isExportingAll ? (
-                                            <Spinner
-                                                as="span"
-                                                animation="border"
-                                                size="sm"
-                                                role="status"
-                                                aria-hidden="true"
-                                                style={{ width: '1rem', height: '1rem' }}
-                                            />
-                                        ) : (
-                                            'Выгрузить в Google'
-                                        )}
-                                    </Button>
+                                   <div className="right-controls-search">
+                                       <Button
+                                           className="controls_success"
+                                           onClick={addRequestForm}
+                                           disabled={requestForms.length >= 15}
+                                       >
+                                           Добавить запрос
+                                       </Button>
+                                       <Button className="controls_primary controls_primary_search" onClick={fetchProducts} disabled={isRequesting}>Поиск</Button>
+                                       <Button className="controls_primary controls_primary_warning"  variant="warning" onClick={handleSearchAllQueries}>Все запросы</Button>
+
+                                   </div>
+                                   <div className="right-controls-exports-sheets">
+                                       <Button
+                                           className="controls_primary controls_primary_info upload_to_google"
+                                           variant="success"
+                                           onClick={handleExportAllToGoogleSheet}
+                                           title="Выгрузить все данные в Google Таблицу"
+                                       >
+                                           {isExportingAll ? (
+                                               <Spinner
+                                                   as="span"
+                                                   animation="border"
+                                                   size="sm"
+                                                   role="status"
+                                                   aria-hidden="true"
+                                                   style={{ width: '1rem', height: '1rem' }}
+                                               />
+                                           ) : (
+                                               'Выгрузить в Google'
+                                           )}
+                                       </Button>
 
 
-                                    <Button
-                                        className="controls_primary controls_primary_success"
-                                        variant="success"
-                                        onClick={() => handleExportToExcelClick('all')}
-                                        disabled={isExporting}
-                                        title="Выгрузить все данные в Excel"
-                                    >
-                                        {isExporting ? (
-                                            <Spinner
-                                                as="span"
-                                                animation="border"
-                                                size="sm"
-                                                role="status"
-                                                aria-hidden="true"
-                                                style={{ width: '1rem', height: '1rem' }}
-                                            />
-                                        ) : (
-                                            'Выгрузить в Excel'
-                                        )}
-                                    </Button>
+                                       <Button
+                                           className="controls_primary controls_primary_success"
+                                           variant="success"
+                                           onClick={() => handleExportToExcelClick('all')}
+                                           disabled={isExporting}
+                                           title="Выгрузить все данные в Excel"
+                                       >
+                                           {isExporting ? (
+                                               <Spinner
+                                                   as="span"
+                                                   animation="border"
+                                                   size="sm"
+                                                   role="status"
+                                                   aria-hidden="true"
+                                                   style={{ width: '1rem', height: '1rem' }}
+                                               />
+                                           ) : (
+                                               'Выгрузить в Excel'
+                                           )}
+                                       </Button>
+                                   </div>
                                     <Button
                                         className="controls_primary controls_primary_info"
                                         variant="info"
