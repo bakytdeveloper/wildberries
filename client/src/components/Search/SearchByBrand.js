@@ -1526,7 +1526,7 @@ function SearchByBrand() {
             <ExportModal />
             <Modal show={showDeleteByParamsModal} onHide={() => setShowDeleteByParamsModal(false)}>
                 <Modal.Header closeButton>
-                    <Modal.Title>Удаление запросов</Modal.Title>
+                    <Modal.Title>Удаление запроса</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     <Form>
@@ -1564,7 +1564,7 @@ function SearchByBrand() {
                         </Form.Group>
                     </Form>
                     <Alert variant="warning">
-                        Будет удалена вся информация по запросам, где все три поля совпадают.
+                        Осторожно! Будет удалена вся информация по запросу, где все три поля совпадают, и не будут отображаться их прошлые позиции.
                     </Alert>
                 </Modal.Body>
                 <Modal.Footer>
