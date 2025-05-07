@@ -1125,7 +1125,7 @@ function SearchByArticle() {
                                     >
                                         Добавить запрос
                                     </Button>
-                                    <Button className="controls_primary" onClick={fetchProductsByArticle} disabled={isRequesting}>Поиск</Button>
+                                    <Button className="controls_primary controls_primary_search" onClick={fetchProductsByArticle} disabled={isRequesting}>Поиск</Button>
                                     <Button className="controls_primary controls_primary_warning"  variant="warning" onClick={handleSearchAllQueries}>Все запросы</Button>
                                     <Button
                                         className="controls_primary controls_primary_info upload_to_google"

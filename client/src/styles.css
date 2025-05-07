@@ -1130,6 +1130,15 @@ tr:hover {
     .modal-export-header {
         font-size: 17px!important;
     }
+
+    .controls_primary_search {
+        font-weight: bold!important;
+    }
+
+    .controls_primary {
+        padding-left: 6px!important;
+        padding-right: 6px!important;
+    }
 }
 
 @media (max-width: 480px) {
