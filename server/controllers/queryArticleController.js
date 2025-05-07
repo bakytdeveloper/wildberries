@@ -201,11 +201,77 @@ function formatLocalDateTime(date) {
     ].join('');
 }
 
+// Удаление запросов по параметрам (запрос, артикул, город)
+const deleteArticleQueriesByParams = async (req, res) => {
+    try {
+        const { query, article, city } = req.body;
+        const userId = req.userId;
+
+        if (!query || !article || !city) {
+            return res.status(400).json({ error: 'Необходимо указать запрос, артикул и город' });
+        }
+
+        // Находим все запросы пользователя, где есть совпадение
+        const userQueries = await QueryArticleModel.find({ userId });
+        let deletedCount = 0;
+
+        // Обновляем каждый запрос, удаляя только совпадающие комбинации
+        for (const q of userQueries) {
+            const queries = q.query.split('; ');
+            const articles = q.article.split('; ');
+            const cities = q.city.split('; ');
+
+            // Находим индексы совпадающих комбинаций
+            const indexesToRemove = [];
+            queries.forEach((qPart, i) => {
+                if (qPart.toLowerCase() === query.toLowerCase() &&
+                    (articles[i] || '').toLowerCase() === article.toLowerCase() &&
+                    (cities[i] || '').toLowerCase() === city.toLowerCase()) {
+                    indexesToRemove.push(i);
+                }
+            });
+
+            if (indexesToRemove.length > 0) {
+                // Удаляем совпадающие комбинации из всех массивов
+                const newQueries = queries.filter((_, i) => !indexesToRemove.includes(i));
+                const newArticles = articles.filter((_, i) => !indexesToRemove.includes(i));
+                const newCities = cities.filter((_, i) => !indexesToRemove.includes(i));
+
+                // Обновляем таблицы продуктов, удаляя соответствующие
+                const newProductTables = q.productTables.filter((_, i) => !indexesToRemove.includes(i));
+
+                if (newQueries.length === 0) {
+                    // Если не осталось комбинаций - удаляем весь запрос
+                    await q.deleteOne();
+                    deletedCount++;
+                } else {
+                    // Обновляем запрос, оставляя только несовпадающие комбинации
+                    q.query = newQueries.join('; ');
+                    q.article = newArticles.join('; ');
+                    q.city = newCities.join('; ');
+                    q.productTables = newProductTables;
+                    await q.save();
+                    deletedCount += indexesToRemove.length;
+                }
+            }
+        }
+
+        res.json({
+            message: `Удалено ${deletedCount} комбинаций запросов`,
+            deletedCount
+        });
+    } catch (error) {
+        console.error('Ошибка удаления запросов:', error);
+        res.status(500).json({ error: 'Ошибка удаления запросов' });
+    }
+};
+
 module.exports = {
     createArticleQuery,
     getArticleQueries,
     deleteArticleQuery,
     exportToGoogleSheet,
     exportAllToGoogleSheet,
-    exportToExcel
+    exportToExcel,
+    deleteArticleQueriesByParams
 };
