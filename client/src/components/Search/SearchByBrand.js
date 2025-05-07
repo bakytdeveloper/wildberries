@@ -52,6 +52,14 @@ function SearchByBrand() {
     const [isExportingAll, setIsExportingAll] = useState(false);
     const [showExportModal, setShowExportModal] = useState(false);
     const [exportProgress, setExportProgress] = useState('');
+    const [deleteForm, setDeleteForm] = useState({
+        query: '',
+        brand: '',
+        city: 'г.Москва'
+    });
+    const [showDeleteByParamsModal, setShowDeleteByParamsModal] = useState(false);
+
+
 
     useEffect(() => {
         if (formsDisabled) {
@@ -958,6 +966,49 @@ function SearchByBrand() {
         );
     };
 
+    const handleDeleteByParamsChange = (e) => {
+        const { name, value } = e.target;
+        setDeleteForm(prev => ({ ...prev, [name]: value }));
+    };
+
+
+    const handleDeleteByParamsSubmit = async () => {
+        try {
+            const token = sessionStorage.getItem('token');
+            const response = await axios.delete(`${API_HOST}/api/queries/by-params/delete`, {
+                data: deleteForm,
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (response.data.deletedCount > 0) {
+                // Полностью обновляем список запросов после изменений
+                const freshResponse = await axios.get(`${API_HOST}/api/queries`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setAllQueries(freshResponse.data);
+                setFilteredQueries(freshResponse.data);
+            }
+
+            Toastify({
+                text: response.data.message,
+                duration: 3000,
+                gravity: "top",
+                position: "right",
+                style: { background: '#00c851' }
+            }).showToast();
+            setShowDeleteByParamsModal(false);
+        } catch (error) {
+            console.error('Ошибка удаления запросов:', error);
+            Toastify({
+                text: "Ошибка удаления запросов: " + (error.response?.data?.error || error.message),
+                duration: 3000,
+                gravity: "top",
+                position: "right",
+                style: { background: '#ff0000' }
+            }).showToast();
+        }
+    };
+
     return (
         <div className="app-page">
             <header>
@@ -1166,6 +1217,13 @@ function SearchByBrand() {
                                         title="Открыть мою Google Таблицу"
                                     >
                                        Открыть Google таблицу
+                                    </Button>
+                                    <Button
+                                        variant="danger"
+                                        onClick={() => setShowDeleteByParamsModal(true)}
+                                        title="Удалить запросы по параметрам"
+                                    >
+                                        Удалить запросы
                                     </Button>
                                 </div>
                                 <div className="search-bar">
@@ -1456,6 +1514,58 @@ function SearchByBrand() {
                 </Modal>
             </div>
             <ExportModal />
+            <Modal show={showDeleteByParamsModal} onHide={() => setShowDeleteByParamsModal(false)}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Удаление запросов</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Запрос</Form.Label>
+                            <Form.Control
+                                type="text"
+                                name="query"
+                                value={deleteForm.query}
+                                onChange={handleDeleteByParamsChange}
+                                placeholder="Введите запрос для удаления"
+                            />
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Бренд</Form.Label>
+                            <Form.Control
+                                type="text"
+                                name="brand"
+                                value={deleteForm.brand}
+                                onChange={handleDeleteByParamsChange}
+                                placeholder="Введите бренд для удаления"
+                            />
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Город</Form.Label>
+                            <DropdownButton
+                                id="dropdown-basic-button"
+                                title={deleteForm.city}
+                                onSelect={(city) => setDeleteForm(prev => ({ ...prev, city }))}
+                            >
+                                {Object.keys(cityDestinations).map((city) => (
+                                    <Dropdown.Item key={city} eventKey={city}>{city}</Dropdown.Item>
+                                ))}
+                            </DropdownButton>
+                        </Form.Group>
+                    </Form>
+                    <Alert variant="warning">
+                        Будет удалена вся информация по запросам, где все три поля совпадают.
+                    </Alert>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowDeleteByParamsModal(false)}>
+                        Отмена
+                    </Button>
+                    <Button variant="danger" onClick={handleDeleteByParamsSubmit}>
+                        Удалить
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </div>
     );
 }

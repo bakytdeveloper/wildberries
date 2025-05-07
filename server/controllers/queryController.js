@@ -9,6 +9,7 @@ const { fetchAndParseProducts } = require('../services/productService');
 const { UserModel } = require('../models/userModel');
 const { addDataToSheet } = require('../services/googleSheetService');
 const path = require('path');
+const mongoose = require('mongoose');
 
 // Получение всех запросов
 const getQueries = async (req, res) => {
@@ -203,11 +204,76 @@ function formatLocalDateTime(date) {
 }
 
 
+const deleteQueriesByParams = async (req, res) => {
+    try {
+        const { query, brand, city } = req.body;
+        const userId = req.userId;
+
+        if (!query || !brand || !city) {
+            return res.status(400).json({ error: 'Необходимо указать запрос, бренд и город' });
+        }
+
+        // Находим все запросы пользователя, где есть совпадение
+        const userQueries = await QueryModel.find({ userId });
+        let deletedCount = 0;
+
+        // Обновляем каждый запрос, удаляя только совпадающие комбинации
+        for (const q of userQueries) {
+            const queries = q.query.split('; ');
+            const brands = q.brand.split('; ');
+            const cities = q.city.split('; ');
+
+            // Находим индексы совпадающих комбинаций
+            const indexesToRemove = [];
+            queries.forEach((qPart, i) => {
+                if (qPart.toLowerCase() === query.toLowerCase() &&
+                    (brands[i] || '').toLowerCase() === brand.toLowerCase() &&
+                    (cities[i] || '').toLowerCase() === city.toLowerCase()) {
+                    indexesToRemove.push(i);
+                }
+            });
+
+            if (indexesToRemove.length > 0) {
+                // Удаляем совпадающие комбинации из всех массивов
+                const newQueries = queries.filter((_, i) => !indexesToRemove.includes(i));
+                const newBrands = brands.filter((_, i) => !indexesToRemove.includes(i));
+                const newCities = cities.filter((_, i) => !indexesToRemove.includes(i));
+
+                // Обновляем таблицы продуктов, удаляя соответствующие
+                const newProductTables = q.productTables.filter((_, i) => !indexesToRemove.includes(i));
+
+                if (newQueries.length === 0) {
+                    // Если не осталось комбинаций - удаляем весь запрос
+                    await q.deleteOne();
+                    deletedCount++;
+                } else {
+                    // Обновляем запрос, оставляя только несовпадающие комбинации
+                    q.query = newQueries.join('; ');
+                    q.brand = newBrands.join('; ');
+                    q.city = newCities.join('; ');
+                    q.productTables = newProductTables;
+                    await q.save();
+                    deletedCount += indexesToRemove.length;
+                }
+            }
+        }
+
+        res.json({
+            message: `Удалено ${deletedCount} комбинаций запросов`,
+            deletedCount
+        });
+    } catch (error) {
+        console.error('Ошибка удаления запросов:', error);
+        res.status(500).json({ error: 'Ошибка удаления запросов' });
+    }
+};
+
 module.exports = {
     getQueries,
     createQuery,
     deleteQuery,
     exportToGoogleSheet,
     exportAllToGoogleSheet,
-    exportToExcel
+    exportToExcel,
+    deleteQueriesByParams
 };
