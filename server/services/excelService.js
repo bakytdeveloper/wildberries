@@ -168,41 +168,42 @@ const generateExcelForUser = async (userId) => {
 
     try {
         // Создаем листы
-        const sheetBrand = workbook.addWorksheet('Бренд', { views: [{ showGridLines: false }] });
-        const sheetArticle = workbook.addWorksheet('Артикул', { views: [{ showGridLines: false }] });
+        const sheetBrand = workbook.addWorksheet('Бренд', {
+            views: [{ showGridLines: false }],
+            pageSetup: { fitToPage: true }
+        });
+        const sheetArticle = workbook.addWorksheet('Артикул', {
+            views: [{ showGridLines: false }],
+            pageSetup: { fitToPage: true }
+        });
 
-        // Разные заголовки для каждого листа
+        // Заголовки
         const brandHeaders = ['Запрос', 'Бренд', 'Город', 'Картинка', 'Артикул', 'Описание товара', 'Позиция', 'Время запроса', 'Дата (м/д/г)'];
         const articleHeaders = ['Запрос', 'Артикул', 'Город', 'Картинка', 'Бренд', 'Описание товара', 'Позиция', 'Время запроса', 'Дата (м/д/г)'];
 
-        // Добавляем заголовки
-        sheetBrand.addRow(brandHeaders);
-        sheetArticle.addRow(articleHeaders);
+        // Добавляем заголовки и настраиваем стили
+        [sheetBrand, sheetArticle].forEach((sheet, index) => {
+            const headers = index === 0 ? brandHeaders : articleHeaders;
+            const headerRow = sheet.addRow(headers);
 
-        // Фиксируем заголовки при скролле
-        sheetBrand.views = [
-            { state: 'frozen', ySplit: 1 }
-        ];
-        sheetArticle.views = [
-            { state: 'frozen', ySplit: 1 }
-        ];
+            // Стили для заголовков
+            headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+            headerRow.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FF0070C0' }
+            };
 
-        // Настраиваем колонки
-        sheetBrand.columns = brandHeaders.map((header, i) => ({
-            header,
-            key: `col${i+1}`,
-            width: [30, 15, 12, 15, 15, 50, 10, 12, 12][i]
-        }));
+            // Фиксируем заголовки
+            sheet.views = [{ state: 'frozen', ySplit: 1 }];
 
-        sheetArticle.columns = articleHeaders.map((header, i) => ({
-            header,
-            key: `col${i+1}`,
-            width: [30, 15, 12, 15, 15, 50, 10, 12, 12][i]
-        }));
-
-        // Стили для заголовков
-        sheetBrand.getRow(1).font = { bold: true };
-        sheetArticle.getRow(1).font = { bold: true };
+            // Настраиваем ширину колонок
+            sheet.columns = headers.map((header, i) => ({
+                header,
+                key: `col${i+1}`,
+                width: [30, 15, 12, 15, 15, 50, 10, 12, 12][i]
+            }));
+        });
 
         // Загрузка данных
         const [brandQueries, articleQueries] = await Promise.all([
@@ -216,35 +217,79 @@ const generateExcelForUser = async (userId) => {
 
         imageCache.clear();
 
-        // Функция для обработки изображений
+        // Улучшенная функция обработки изображений
         const processImage = async (imageUrl) => {
-            try {
-                const buffer = await downloadImage(imageUrl);
-                if (!buffer) return null;
+            if (!imageUrl) return null;
 
+            try {
+                // Проверяем кэш
+                if (imageCache.has(imageUrl)) {
+                    return imageCache.get(imageUrl);
+                }
+
+                // Загружаем изображение
+                const response = await axios.get(imageUrl, {
+                    responseType: 'arraybuffer',
+                    timeout: CONFIG.IMAGE.TIMEOUT
+                });
+
+                const buffer = Buffer.from(response.data, 'binary');
+
+                // Оптимизируем изображение
                 const sharp = require('sharp');
-                return await sharp(buffer)
-                    .resize(150, 150, { fit: 'inside' })
-                    .jpeg({ quality: 70 })
-                    .png({ compressionLevel: 6 })
+                const optimizedImage = await sharp(buffer)
+                    .resize(150, 150, {
+                        fit: 'inside',
+                        withoutEnlargement: true
+                    })
+                    .jpeg({ quality: 80 })
                     .toBuffer();
-            } catch (err) {
-                console.error('Ошибка обработки изображения:', err);
+
+                // Кэшируем
+                if (imageCache.size < CONFIG.IMAGE.MAX_CACHE) {
+                    imageCache.set(imageUrl, optimizedImage);
+                }
+
+                return optimizedImage;
+            } catch (error) {
+                console.error(`Ошибка загрузки изображения ${imageUrl}:`, error.message);
                 return null;
             }
         };
 
-        // Общая функция для обработки данных с добавлением пустых строк
+        // Функция для добавления изображения в ячейку
+        const addImageToCell = async (sheet, rowNumber, imageUrl) => {
+            try {
+                const imageBuffer = await processImage(imageUrl);
+                if (!imageBuffer) return;
+
+                const extension = imageUrl.toLowerCase().endsWith('.png') ? 'png' : 'jpeg';
+                const imageId = workbook.addImage({
+                    buffer: imageBuffer,
+                    extension: extension
+                });
+
+                sheet.addImage(imageId, {
+                    tl: { col: 3, row: rowNumber - 1, offset: 5 },
+                    ext: { width: 30, height: 30 },
+                    editAs: 'oneCell' // Привязываем изображение к одной ячейке
+                });
+            } catch (error) {
+                console.error('Ошибка вставки изображения:', error);
+            }
+        };
+
+        // Общая функция для обработки данных
         const processData = async (queries, sheet, isBrandSheet) => {
-            const imageTasks = [];
             let previousQuery = null;
+            const imageTasks = [];
 
             for (const query of queries) {
-                // Добавляем пустую строку перед новой группой запросов (кроме первой)
-                if (previousQuery && query.query !== previousQuery.query) {
+                // Добавляем пустую строку между разными запросами
+                if (previousQuery !== null && query.query !== previousQuery) {
                     sheet.addRow(Array(9).fill(''));
                 }
-                previousQuery = query;
+                previousQuery = query.query;
 
                 for (const table of query.productTables) {
                     for (const product of table.products) {
@@ -256,12 +301,12 @@ const generateExcelForUser = async (userId) => {
                             ? `${product.log.promoPosition}*`
                             : position;
 
-                        // Формируем данные строки в зависимости от типа листа
+                        // Формируем данные строки
                         const rowData = isBrandSheet ? [
                             product?.query || query.query,
                             product?.brand || query.brand,
                             product?.city || query.city,
-                            product?.imageUrl || '',
+                            '', // Место для изображения
                             product?.id,
                             product?.name,
                             promoPosition,
@@ -271,7 +316,7 @@ const generateExcelForUser = async (userId) => {
                             product?.query || query.query,
                             product?.id,
                             product?.city || query.city,
-                            product?.imageUrl || '',
+                            '', // Место для изображения
                             product?.brand,
                             product?.name,
                             promoPosition,
@@ -279,39 +324,28 @@ const generateExcelForUser = async (userId) => {
                             new Date(product?.queryTime || query.createdAt).toLocaleDateString()
                         ];
 
+                        // Добавляем строку
                         const row = sheet.addRow(rowData);
 
-                        // Форматирование для позиций с *
+                        // Форматирование для промо-позиций
                         if (promoPosition.includes('*')) {
                             row.getCell(7).font = { bold: true, color: { argb: 'FFFF0000' } };
                         }
 
-                        // Обработка изображений
+                        // Добавляем задачу на обработку изображения
                         if (product?.imageUrl) {
-                            imageTasks.push((async () => {
-                                const optimizedImage = await processImage(product.imageUrl);
-                                if (optimizedImage) {
-                                    const extension = product.imageUrl.split('.').pop() === 'png' ? 'png' : 'jpeg';
-                                    const imageId = workbook.addImage({
-                                        buffer: optimizedImage,
-                                        extension: extension
-                                    });
+                            imageTasks.push(addImageToCell(sheet, row.number, product.imageUrl));
 
-                                    sheet.addImage(imageId, {
-                                        tl: { col: 3, row: row.number - 1, offset: 5 },
-                                        ext: { width: 30, height: 30 }
-                                    });
-                                }
-                            })());
-                        }
-
-                        if (imageTasks.length >= CONFIG.IMAGE.CONCURRENCY) {
-                            await Promise.all(imageTasks.splice(0, CONFIG.IMAGE.CONCURRENCY));
+                            // Ограничиваем количество параллельных задач
+                            if (imageTasks.length >= CONFIG.IMAGE.CONCURRENCY) {
+                                await Promise.all(imageTasks.splice(0, CONFIG.IMAGE.CONCURRENCY));
+                            }
                         }
                     }
                 }
             }
 
+            // Ожидаем завершения всех задач с изображениями
             await Promise.all(imageTasks);
         };
 
@@ -324,11 +358,16 @@ const generateExcelForUser = async (userId) => {
         // Оптимизация перед сохранением
         workbook.worksheets.forEach(sheet => {
             sheet.autoFilter = null;
+            // Автоподбор высоты строк для лучшего отображения
+            sheet.eachRow(row => {
+                row.height = 30; // Фиксированная высота строки
+            });
         });
 
-        // Сохраняем файл
+        // Сохранение файла
         await workbook.xlsx.writeFile(tempXlsxPath, {
-            useSharedStrings: true
+            useSharedStrings: true,
+            useStyles: true
         });
 
         return tempXlsxPath;
@@ -341,6 +380,7 @@ const generateExcelForUser = async (userId) => {
         imageCache.clear();
     }
 };
+
 module.exports = {
     generateExcelForUser,
     cleanupTempFiles: () => {
