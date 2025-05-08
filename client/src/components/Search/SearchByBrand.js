@@ -477,7 +477,7 @@ function SearchByBrand() {
                     'Content-Type': 'application/json'
                 }
             });
-            setExportProgress('Завершение выгрузки...');
+            setExportProgress('Выгрузка данных...');
             console.log('Выгрузка данных:', response.data);
             Toastify({
                 text: 'Данные успешно выгружены в Google Таблицу.',
@@ -725,7 +725,7 @@ function SearchByBrand() {
 
         try {
             const token = sessionStorage.getItem('token');
-            setExportProgress('Выполняется расстановка данных в Google Таблицу...');
+            setExportProgress('Расстановка данных в Google Таблицу...');
 
             const response = await axios.post(`${API_HOST}/api/queries/export-all`, {}, {
                 headers: {
@@ -734,7 +734,7 @@ function SearchByBrand() {
                 }
             });
 
-            setExportProgress('Завершение выгрузки...');
+            setExportProgress('Выгрузка данных...');
 
             Toastify({
                 text: 'Все данные успешно выгружены в Google Таблицу',
@@ -913,9 +913,9 @@ function SearchByBrand() {
                             {isClosing ? (
                                 "Завершение выгрузки..."
                             ) : showFinalizingMessage ? (
-                                "Завершаем обработку данных. Это может занять некоторое время..."
+                                "Завершение обработки данных. Это может занять некоторое время..."
                             ) : (
-                                exportProgress || 'Выполняется выгрузка данных...'
+                                exportProgress || 'Выгрузка данных...'
                             )}
                         </p>
 
@@ -959,7 +959,7 @@ function SearchByBrand() {
                 </Modal.Body>
                 <Modal.Footer>
                     <small className="text-muted">
-                        {isClosing ? 'Завершаем процесс...' : 'Пожалуйста, не закрывайте это окно до завершения операции'}
+                        {isClosing ? 'Завершение процесс...' : 'Пожалуйста, не закрывайте это окно до завершения операции'}
                     </small>
                 </Modal.Footer>
             </Modal>
