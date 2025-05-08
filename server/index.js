@@ -74,8 +74,8 @@ const connectWithRetry = () => {
 
 // Добавляем новую задачу для AutoQueryService (каждые 4 часа)
 // cron.schedule('*/5 * * * *', async () => {
-//     cron.schedule('0 */4 * * *', async () => {
-cron.schedule('0 0,8,12,16,20 * * *', async () => {
+    cron.schedule('0 */4 * * *', async () => {
+// cron.schedule('0 0,8,12,16,20 * * *', async () => {
     try {
         console.log('Запуск автоматических запросов для всех пользователей...');
         await autoQueryService.processAllUsers();

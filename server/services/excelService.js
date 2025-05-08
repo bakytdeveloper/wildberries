@@ -360,7 +360,7 @@ const generateExcelForUser = async (userId) => {
             sheet.autoFilter = null;
             // Автоподбор высоты строк для лучшего отображения
             sheet.eachRow(row => {
-                row.height = 30; // Фиксированная высота строки
+                row.height = 25; // Фиксированная высота строки
             });
         });
 

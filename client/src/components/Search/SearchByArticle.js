@@ -760,7 +760,7 @@ function SearchByArticle() {
             }).showToast();
 
             // Открываем таблицу после выгрузки
-            // handleOpenGoogleSheet();
+            handleOpenGoogleSheet();
         } catch (error) {
             console.error('Ошибка выгрузки всех данных:', error);
             Toastify({
@@ -845,13 +845,15 @@ function SearchByArticle() {
             "Подсказка: Вы можете открыть свою Google Таблицу прямо из приложения",
             "Интересный факт: Вы можете просматривать позиции товаров любого магазина с сайта wildberries",
             "Факт: Система обрабатывает до 1000 запросов в минуту",
+            "Интересный факт: Если у номера позиции есть красная звёздочка, то есть *, то эта позиция по Рекламной Акции",
             "Подсказка: Для получения сбалансированной и внятной информации, нужно удалять избыточные запросы",
             "Интересный факт: Все авто-выгрузки в Google таблицу осуществляются автоматически каждые 4 часа, начиная с 00:00",
             "Совет: Используйте поисковик по заголовкам для удобного просмотра данных на сайте",
             "Подсказка: Вы можете экспортировать данные в Excel и Google таблицу",
             "Интересный факт: Даже если вы не выгрузили данные в Google таблицу, мы сделаем это за вас автоматически",
             "Факт: Система обрабатывает до 1000 запросов в минуту",
-            "Факт: Чётко выстроенные запросы, даду чётко выстроенные ответы, и корректно выстроенную таблицу",
+            "Факт: Чётко выстроенные запросы, дадут чётко выстроенные ответы, и корректно выстроенную таблицу",
+            "Интересный факт: Если у номера позиции есть красная звёздочка, то есть *, то эта позиция по Рекламной Акции",
             "Информация: Позиции товаров могут немного отличаться, так как сайт wildberries динамичный",
             "Интересный факт: Все авто-запросы на сайте осуществляются автоматически каждые 4 часа, начиная с 00:00",
             "ИЗВИНИТЕ: Если объём данных для выгрузки в таблицу велик, то это может занять немного больше времени"
@@ -868,7 +870,7 @@ function SearchByArticle() {
             setCurrentTipIndex(Math.floor(Math.random() * tips.length));
             const tipsInterval = setInterval(() => {
                 setCurrentTipIndex(prev => (prev + 1) % tips.length);
-            }, 20000);
+            }, 12000);
 
             const iconsInterval = setInterval(() => {
                 setActiveIconIndex(prev => (prev + 1) % icons.length);
@@ -893,13 +895,17 @@ function SearchByArticle() {
 
         const renderTip = (tip) => {
             const colonIndex = tip.indexOf(':');
-            if (colonIndex === -1) {
-                return tip;
+            let contentAfterColon = tip.substring(colonIndex + 1);
+
+            // Обрабатываем специальный случай с звёздочкой
+            if (tip.includes("звёздочка, то есть *")) {
+                contentAfterColon = contentAfterColon.replace(/\*/g, '<span style="font-weight: bold; color: red;">*</span>');
             }
+
             return (
                 <>
-                    <strong>{tip.substring(0, colonIndex + 1)}</strong>
-                    {tip.substring(colonIndex + 1)}
+                    {colonIndex !== -1 && <strong>{tip.substring(0, colonIndex + 1)}</strong>}
+                    <span dangerouslySetInnerHTML={{ __html: contentAfterColon }} />
                 </>
             );
         };
