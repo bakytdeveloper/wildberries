@@ -182,6 +182,7 @@ const generateExcelForUser = async (userId) => {
         const articleHeaders = ['Запрос', 'Артикул', 'Город', 'Картинка', 'Бренд', 'Описание товара', 'Позиция', 'Время запроса', 'Дата (м/д/г)'];
 
         // Добавляем заголовки и настраиваем стили
+// Добавляем заголовки и настраиваем стили
         [sheetBrand, sheetArticle].forEach((sheet, index) => {
             const headers = index === 0 ? brandHeaders : articleHeaders;
             const headerRow = sheet.addRow(headers);
@@ -191,8 +192,17 @@ const generateExcelForUser = async (userId) => {
             headerRow.fill = {
                 type: 'pattern',
                 pattern: 'solid',
-                fgColor: { argb: 'FF0070C0' }
+                fgColor: { argb: 'FF0070C0' } // Темно-синий цвет фона
             };
+
+            // Добавляем вертикальные разделители между заголовками
+            headerRow.eachCell((cell, colNumber) => {
+                if (colNumber < headers.length) {
+                    cell.border = {
+                        right: { style: 'thin', color: { argb: 'FF003366' } } // Темно-синяя линия
+                    };
+                }
+            });
 
             // Фиксируем заголовки
             sheet.views = [{ state: 'frozen', ySplit: 1 }];
@@ -204,7 +214,7 @@ const generateExcelForUser = async (userId) => {
                 width: [30, 15, 12, 15, 15, 50, 10, 12, 12][i]
             }));
         });
-
+        
         // Загрузка данных
         const [brandQueries, articleQueries] = await Promise.all([
             QueryModel.find({ userId }).lean().populate('productTables.products'),
