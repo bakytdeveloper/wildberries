@@ -16,7 +16,6 @@ import { Link, useLocation } from 'react-router-dom';
 import axios from "axios";
 
 function SearchByArticle() {
-    const [query, setQuery] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [loadingMessage, setLoadingMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
@@ -50,6 +49,7 @@ function SearchByArticle() {
     const [isExporting, setIsExporting] = useState(false);
     const [isExportingAll, setIsExportingAll] = useState(false);
     const [showExportModal, setShowExportModal] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [exportProgress, setExportProgress] = useState('');
     // Добавляем состояние для формы удаления
     const [deleteForm, setDeleteForm] = useState({
@@ -1000,6 +1000,7 @@ function SearchByArticle() {
 
 // Обработчик отправки формы удаления
     const handleDeleteByParamsSubmit = async () => {
+        setIsDeleting(true); // Активируем спиннер
         try {
             const token = sessionStorage.getItem('token');
 
@@ -1045,6 +1046,8 @@ function SearchByArticle() {
                 position: "right",
                 style: { background: '#ff0000' }
             }).showToast();
+        } finally {
+            setIsDeleting(false); // Выключаем спиннер в любом случае
         }
     };
 
@@ -1601,8 +1604,21 @@ function SearchByArticle() {
                     <Button variant="secondary" onClick={() => setShowDeleteByParamsModal(false)}>
                         Отмена
                     </Button>
-                    <Button variant="danger" onClick={handleDeleteByParamsSubmit}>
-                        Удалить
+                    <Button variant="danger"
+                            disabled={isDeleting}
+                            style={{ minWidth: '85px' }}
+                            onClick={handleDeleteByParamsSubmit}>
+                        {isDeleting ? (
+                            <Spinner
+                                as="span"
+                                animation="border"
+                                size="sm"
+                                role="status"
+                                aria-hidden="true"
+                            />
+                        ) : (
+                            'Удалить'
+                        )}
                     </Button>
                 </Modal.Footer>
             </Modal>

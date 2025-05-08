@@ -52,6 +52,7 @@ function SearchByBrand() {
     const [isExportingAll, setIsExportingAll] = useState(false);
     const [showExportModal, setShowExportModal] = useState(false);
     const [exportProgress, setExportProgress] = useState('');
+    const [isDeleting, setIsDeleting] = useState(false);
     const [deleteForm, setDeleteForm] = useState({
         query: '',
         brand: '',
@@ -982,6 +983,7 @@ function SearchByBrand() {
 
 
     const handleDeleteByParamsSubmit = async () => {
+        setIsDeleting(true); // Активируем спиннер
         try {
             const token = sessionStorage.getItem('token');
 
@@ -1029,6 +1031,8 @@ function SearchByBrand() {
                 position: "right",
                 style: { background: '#ff0000' }
             }).showToast();
+        } finally {
+            setIsDeleting(false); // Выключаем спиннер в любом случае
         }
     };
 
@@ -1588,8 +1592,21 @@ function SearchByBrand() {
                     <Button variant="secondary" onClick={() => setShowDeleteByParamsModal(false)}>
                         Отмена
                     </Button>
-                    <Button variant="danger" onClick={handleDeleteByParamsSubmit}>
-                        Удалить
+                    <Button variant="danger"
+                            disabled={isDeleting}
+                            style={{ minWidth: '85px' }}
+                            onClick={handleDeleteByParamsSubmit}>
+                        {isDeleting ? (
+                            <Spinner
+                                as="span"
+                                animation="border"
+                                size="sm"
+                                role="status"
+                                aria-hidden="true"
+                            />
+                        ) : (
+                            'Удалить'
+                        )}
                     </Button>
                 </Modal.Footer>
             </Modal>
