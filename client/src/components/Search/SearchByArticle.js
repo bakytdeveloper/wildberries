@@ -860,23 +860,19 @@ function SearchByArticle() {
         const icons = ['📁', '🔍', '📊', '📤', '✅'];
 
         const [currentTipIndex, setCurrentTipIndex] = useState(0);
-        const [activeIconIndex, setActiveIconIndex] = useState(0); // Текущая активная иконка
+        const [activeIconIndex, setActiveIconIndex] = useState(0);
         const [showFinalizingMessage, setShowFinalizingMessage] = useState(false);
         const [isClosing, setIsClosing] = useState(false);
 
         useEffect(() => {
-            // Устанавливаем начальные значения
             setCurrentTipIndex(Math.floor(Math.random() * tips.length));
-
-            // Интервал для смены советов каждые 20 секунд
             const tipsInterval = setInterval(() => {
                 setCurrentTipIndex(prev => (prev + 1) % tips.length);
             }, 20000);
 
-            // Интервал для поочередного выделения иконок
             const iconsInterval = setInterval(() => {
                 setActiveIconIndex(prev => (prev + 1) % icons.length);
-            }, 3000); // Меняем активную иконку каждую секунду
+            }, 3000);
 
             return () => {
                 clearInterval(tipsInterval);
@@ -884,7 +880,6 @@ function SearchByArticle() {
             };
         }, []);
 
-        // Функция для обработки закрытия модального окна
         const handleClose = () => {
             if (!isClosing) {
                 setIsClosing(true);
@@ -894,6 +889,19 @@ function SearchByArticle() {
                 return;
             }
             setShowExportModal(false);
+        };
+
+        const renderTip = (tip) => {
+            const colonIndex = tip.indexOf(':');
+            if (colonIndex === -1) {
+                return tip;
+            }
+            return (
+                <>
+                    <strong>{tip.substring(0, colonIndex + 1)}</strong>
+                    {tip.substring(colonIndex + 1)}
+                </>
+            );
         };
 
         return (
@@ -908,7 +916,6 @@ function SearchByArticle() {
                 </Modal.Header>
                 <Modal.Body>
                     <div style={{ textAlign: 'center' }}>
-                        {/* Анимированный спиннер с иконкой */}
                         <div style={{ position: 'relative', margin: '20px auto', width: 80, height: 80 }}>
                             <Spinner
                                 animation="border"
@@ -926,7 +933,6 @@ function SearchByArticle() {
                             </div>
                         </div>
 
-                        {/* Сообщение о процессе */}
                         <p style={{ margin: '15px 0', fontWeight: 'bold' }}>
                             {isClosing ? (
                                 "Выгрузка..."
@@ -937,7 +943,6 @@ function SearchByArticle() {
                             )}
                         </p>
 
-                        {/* Визуализация процесса с анимированными иконками */}
                         <div style={{
                             display: 'flex',
                             justifyContent: 'center',
@@ -945,8 +950,6 @@ function SearchByArticle() {
                             gap: '10px'
                         }}>
                             {icons.map((icon, i) => {
-                                // Определяем opacity для каждой иконки
-                                // Активная иконка - 1, предыдущие - постепенно уменьшаются
                                 let opacity = 0.3;
                                 if (i === activeIconIndex) opacity = 1;
                                 else if (i === (activeIconIndex - 1 + icons.length) % icons.length) opacity = 0.7;
@@ -960,7 +963,6 @@ function SearchByArticle() {
                                             transition: 'opacity 0.5s ease-in-out',
                                             fontSize: '24px',
                                             transform: opacity === 1 ? 'scale(1.1)' : 'scale(1)',
-                                            // transition: 'all 0.5s ease-in-out'
                                         }}
                                     >
                                         {icon}
@@ -969,9 +971,8 @@ function SearchByArticle() {
                             })}
                         </div>
 
-                        {/* Полезный совет */}
                         <div className="trips-text">
-                            {tips[currentTipIndex]}
+                            {renderTip(tips[currentTipIndex])}
                         </div>
                     </div>
                 </Modal.Body>

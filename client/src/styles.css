@@ -828,6 +828,11 @@ tr:hover {
 
 }
 
+.trips-text strong {
+    font-weight: 600;
+    color: #0d6efd;
+}
+
 @media (max-width: 768px) {
 
     html, body, #root {
