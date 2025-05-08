@@ -182,7 +182,6 @@ const generateExcelForUser = async (userId) => {
         const articleHeaders = ['Запрос', 'Артикул', 'Город', 'Картинка', 'Бренд', 'Описание товара', 'Позиция', 'Время запроса', 'Дата (м/д/г)'];
 
         // Добавляем заголовки и настраиваем стили
-// Добавляем заголовки и настраиваем стили
         [sheetBrand, sheetArticle].forEach((sheet, index) => {
             const headers = index === 0 ? brandHeaders : articleHeaders;
             const headerRow = sheet.addRow(headers);
@@ -199,7 +198,7 @@ const generateExcelForUser = async (userId) => {
             headerRow.eachCell((cell, colNumber) => {
                 if (colNumber < headers.length) {
                     cell.border = {
-                        right: { style: 'thin', color: { argb: 'FF003366' } } // Темно-синяя линия
+                        right: { style: 'thin', color: { argb: 'FFCCCCCC' } } // Темно-синяя линия
                     };
                 }
             });
