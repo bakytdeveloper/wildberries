@@ -419,22 +419,52 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
 
         // 3. Фильтруем строки по дате и сохраняем все данные ячеек
         const rowsToKeep = [];
+        let currentGroup = [];
+        let hasEmptyRowBeforeGroup = false;
+
         for (let i = 0; i < gridData.length; i++) {
             const row = gridData[i];
+            const isEmptyRow = !row.values || row.values.every(cell =>
+                !cell.formattedValue || cell.formattedValue.trim() === ''
+            );
+
+            // Если это пустая строка, сохраняем текущую группу и начинаем новую
+            if (isEmptyRow) {
+                if (currentGroup.length > 0) {
+                    rowsToKeep.push(...currentGroup);
+                    currentGroup = [];
+                }
+                hasEmptyRowBeforeGroup = true;
+                continue;
+            }
+
             const dateCell = row.values?.[8]; // Столбец I (индекс 8)
-            if (!dateCell) continue;
+            if (!dateCell) {
+                // Если нет даты, но строка не пустая, сохраняем ее
+                if (hasEmptyRowBeforeGroup && currentGroup.length === 0) {
+                    rowsToKeep.push({ values: Array(9).fill({ userEnteredValue: { stringValue: '' } }) });
+                    hasEmptyRowBeforeGroup = false;
+                }
+                currentGroup.push(row);
+                continue;
+            }
 
             const dateValue = dateCell.effectiveValue?.numberValue
                 ? new Date((dateCell.effectiveValue.numberValue - 25569) * 86400 * 1000)
                 : new Date(dateCell.formattedValue);
 
             if (dateValue >= thresholdDate) {
-                const rowData = row.values.map(cell => ({
-                    userEnteredValue: cell.userEnteredValue || { stringValue: '' },
-                    userEnteredFormat: cell.userEnteredFormat || {}
-                }));
-                rowsToKeep.push({ values: rowData });
+                if (hasEmptyRowBeforeGroup && currentGroup.length === 0) {
+                    rowsToKeep.push({ values: Array(9).fill({ userEnteredValue: { stringValue: '' } }) });
+                    hasEmptyRowBeforeGroup = false;
+                }
+                currentGroup.push(row);
             }
+        }
+
+        // Добавляем последнюю группу, если она есть
+        if (currentGroup.length > 0) {
+            rowsToKeep.push(...currentGroup);
         }
 
         // 4. Получаем заголовки с их форматированием
@@ -451,39 +481,43 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
             range: `${sheetName}!A2:I`
         });
 
-        if (rowsToKeep.length > 0) {
+        if (rowsToKeep.length > 0 || headerRow) {
             // 6. Подготавливаем запрос на обновление
             const requests = [];
 
             // Добавляем заголовки
-            requests.push({
-                updateCells: {
-                    range: {
-                        sheetId: sheetIdValue,
-                        startRowIndex: 0,
-                        endRowIndex: 1,
-                        startColumnIndex: 0,
-                        endColumnIndex: 9 // Столбец I
-                    },
-                    rows: [headerRow],
-                    fields: 'userEnteredValue,userEnteredFormat'
-                }
-            });
+            if (headerRow) {
+                requests.push({
+                    updateCells: {
+                        range: {
+                            sheetId: sheetIdValue,
+                            startRowIndex: 0,
+                            endRowIndex: 1,
+                            startColumnIndex: 0,
+                            endColumnIndex: 9 // Столбец I
+                        },
+                        rows: [headerRow],
+                        fields: 'userEnteredValue,userEnteredFormat'
+                    }
+                });
+            }
 
             // Добавляем оставшиеся строки
-            requests.push({
-                updateCells: {
-                    range: {
-                        sheetId: sheetIdValue,
-                        startRowIndex: 1,
-                        endRowIndex: 1 + rowsToKeep.length,
-                        startColumnIndex: 0,
-                        endColumnIndex: 9 // Столбец I
-                    },
-                    rows: rowsToKeep,
-                    fields: 'userEnteredValue,userEnteredFormat'
-                }
-            });
+            if (rowsToKeep.length > 0) {
+                requests.push({
+                    updateCells: {
+                        range: {
+                            sheetId: sheetIdValue,
+                            startRowIndex: 1,
+                            endRowIndex: 1 + rowsToKeep.length,
+                            startColumnIndex: 0,
+                            endColumnIndex: 9 // Столбец I
+                        },
+                        rows: rowsToKeep,
+                        fields: 'userEnteredValue,userEnteredFormat'
+                    }
+                });
+            }
 
             // 7. Выполняем запрос
             await sheets.spreadsheets.batchUpdate({
@@ -492,14 +526,14 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
             });
         }
 
-        console.log(`Удалены данные старше ${daysThreshold} дней`);
+        console.log(`Удалены данные старше ${daysThreshold} дней в таблице ${sheetName}`);
+        return { success: true, message: `Данные старше ${daysThreshold} дней удалены` };
     } catch (error) {
         console.error('Ошибка очистки старых данных:', error.message);
         console.error('Полный вывод ошибки:', JSON.stringify(error, null, 2));
         throw error;
     }
 }
-
 
 module.exports = {
     createSpreadsheetForUser,
