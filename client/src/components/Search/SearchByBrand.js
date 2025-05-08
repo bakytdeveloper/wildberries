@@ -975,8 +975,16 @@ function SearchByBrand() {
     const handleDeleteByParamsSubmit = async () => {
         try {
             const token = sessionStorage.getItem('token');
+
+            // Создаем копию формы с триммированными значениями
+            const trimmedForm = {
+                query: deleteForm.query.trim(),
+                brand: deleteForm.brand.trim(),  // или article: deleteForm.article.trim() для SearchByArticle
+                city: deleteForm.city.trim()
+            };
+
             const response = await axios.delete(`${API_HOST}/api/queries/by-params/delete`, {
-                data: deleteForm,
+                data: trimmedForm,
                 headers: { Authorization: `Bearer ${token}` }
             });
 

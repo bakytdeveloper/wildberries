@@ -993,8 +993,15 @@ function SearchByArticle() {
     const handleDeleteByParamsSubmit = async () => {
         try {
             const token = sessionStorage.getItem('token');
+
+            const trimmedForm = {
+                query: deleteForm.query.trim(),
+                article: deleteForm.article.trim(),  // Используем article вместо brand
+                city: deleteForm.city.trim()
+            };
+
             const response = await axios.delete(`${API_HOST}/api/article/by-params/delete`, {
-                data: deleteForm,
+                data: trimmedForm,
                 headers: { Authorization: `Bearer ${token}` }
             });
 
