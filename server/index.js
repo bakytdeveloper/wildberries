@@ -87,7 +87,7 @@ const connectWithRetry = () => {
 
 // Задача очистки Google Sheets (каждый день в 02:00)
 // cron.schedule('*/5 * * * *', async () => {
-cron.schedule('50 14 * * *', async () => {
+cron.schedule('48 15 * * *', async () => {
 // cron.schedule('45 1 * * *', async () => {
     if (appState.tasks.isCleanupRunning) {
         console.log('Очистка уже выполняется, пропускаем...');

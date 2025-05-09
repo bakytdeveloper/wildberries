@@ -397,13 +397,12 @@ async function clearSheet(sheetId, sheetName) {
     }
 }
 
-
-
 async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
     const sheets = getSheetsInstance();
     const batchSize = 100; // Обрабатываем по 100 строк за раз
     let processedRows = 0;
     let deletedRows = 0;
+    let shouldStopProcessing = false;
 
     try {
         console.log(`Начало очистки старых данных в таблице ${sheetName}`);
@@ -443,9 +442,10 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
         const thresholdDate = new Date(now.setDate(now.getDate() - daysThreshold));
         const rowsToKeep = [];
         let currentGroup = [];
-        let hasDataBeforeGroup = false; // Флаг, указывающий, что перед группой есть данные
+        let hasDataBeforeGroup = false;
+        let allRowsYoungInBatch = false;
 
-        for (let startRow = 1; startRow < totalRows; startRow += batchSize) {
+        for (let startRow = 1; startRow < totalRows && !shouldStopProcessing; startRow += batchSize) {
             const endRow = Math.min(startRow + batchSize, totalRows);
             const range = `${sheetName}!A${startRow + 1}:I${endRow + 1}`;
 
@@ -459,18 +459,21 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
             const gridData = response.data.sheets?.[0]?.data?.[0]?.rowData || [];
             processedRows += gridData.length;
 
-            // Обрабатываем каждую строку
+            // Проверяем, есть ли в этой порции старые данные
+            let hasOldDataInBatch = false;
+            const batchRowsToKeep = [];
+            let batchCurrentGroup = [];
+
             for (const row of gridData) {
                 const isEmptyRow = !row.values || row.values.every(cell =>
                     !cell.formattedValue || cell.formattedValue.trim() === ''
                 );
 
                 if (isEmptyRow) {
-                    // Если это разделительная строка и перед ней были данные, сохраняем её
-                    if (currentGroup.length > 0 || hasDataBeforeGroup) {
-                        rowsToKeep.push(...currentGroup);
-                        currentGroup = [];
-                        rowsToKeep.push({ values: Array(9).fill({ userEnteredValue: { stringValue: '' } }) });
+                    if (batchCurrentGroup.length > 0 || hasDataBeforeGroup) {
+                        batchRowsToKeep.push(...batchCurrentGroup);
+                        batchCurrentGroup = [];
+                        batchRowsToKeep.push({ values: Array(9).fill({ userEnteredValue: { stringValue: '' } }) });
                         hasDataBeforeGroup = true;
                     }
                     continue;
@@ -478,7 +481,7 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
 
                 const dateCell = row.values?.[8]; // Столбец I (индекс 8)
                 if (!dateCell) {
-                    currentGroup.push(row);
+                    batchCurrentGroup.push(row);
                     hasDataBeforeGroup = true;
                     continue;
                 }
@@ -490,29 +493,55 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
                         : new Date(dateCell.formattedValue);
                 } catch (e) {
                     console.warn('Не удалось распознать дату, сохраняем строку', dateCell);
-                    currentGroup.push(row);
+                    batchCurrentGroup.push(row);
                     hasDataBeforeGroup = true;
                     continue;
                 }
 
                 if (dateValue >= thresholdDate) {
-                    currentGroup.push(row);
+                    batchCurrentGroup.push(row);
                     hasDataBeforeGroup = true;
                 } else {
                     deletedRows++;
+                    hasOldDataInBatch = true;
                 }
+            }
+
+            // Добавляем последнюю группу в порции
+            if (batchCurrentGroup.length > 0) {
+                batchRowsToKeep.push(...batchCurrentGroup);
+            }
+
+            // Если в порции есть старые данные, добавляем их в общий массив
+            if (hasOldDataInBatch) {
+                rowsToKeep.push(...batchRowsToKeep);
+            } else {
+                // Если все строки в порции новые, добавляем их и останавливаем обработку
+                rowsToKeep.push(...batchRowsToKeep);
+                allRowsYoungInBatch = true;
+
+                // Добавляем все оставшиеся строки без проверки
+                if (endRow < totalRows) {
+                    const remainingRange = `${sheetName}!A${endRow + 1}:I${totalRows + 1}`;
+                    const remainingResponse = await sheets.spreadsheets.values.get({
+                        spreadsheetId: sheetId,
+                        range: remainingRange,
+                    });
+
+                    if (remainingResponse.data.values) {
+                        const remainingRowsCount = remainingResponse.data.values.length;
+                        processedRows += remainingRowsCount;
+                        console.log(`Пропущена проверка ${remainingRowsCount} новых строк`);
+                    }
+                }
+
+                shouldStopProcessing = true;
+                console.log(`Обнаружены только новые данные, прекращаем проверку на строке ${endRow}`);
             }
 
             // Освобождаем память
             await new Promise(resolve => setImmediate(resolve));
         }
-
-        // Добавляем последнюю группу, если она есть
-        if (currentGroup.length > 0) {
-            rowsToKeep.push(...currentGroup);
-        }
-
-        console.log(`Обработано строк: ${processedRows}, удалено строк: ${deletedRows}`);
 
         // 5. Подготавливаем запросы для обновления таблицы
         const requests = [];
@@ -563,13 +592,17 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
             }
 
             const filteredRows = rowsToKeep.slice(firstNonEmptyIndex);
+            const filteredRowsCount = filteredRows.length;
+
+            // Исправление ошибки с диапазоном - убедимся, что endRowIndex корректный
+            const endRowIndex = Math.max(1 + filteredRowsCount, 2); // Минимум 2, чтобы не было ошибки
 
             requests.push({
                 updateCells: {
                     range: {
                         sheetId: sheetIdValue,
                         startRowIndex: 1,
-                        endRowIndex: 1 + filteredRows.length,
+                        endRowIndex: endRowIndex,
                         startColumnIndex: 0,
                         endColumnIndex: 9
                     },
@@ -585,15 +618,23 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
             requestBody: { requests }
         });
 
-        console.log(`Очистка таблицы ${sheetName} завершена. Сохранено строк: ${rowsToKeep.length}`);
-        return { success: true, message: `Данные старше ${daysThreshold} дней удалены` };
+        console.log(`Очистка таблицы ${sheetName} завершена. Обработано строк: ${processedRows}, удалено строк: ${deletedRows}, сохранено строк: ${rowsToKeep.length}`);
+        return {
+            success: true,
+            message: `Данные старше ${daysThreshold} дней удалены`,
+            stats: {
+                processedRows,
+                deletedRows,
+                keptRows: rowsToKeep.length,
+                earlyExit: allRowsYoungInBatch
+            }
+        };
     } catch (error) {
         console.error('Ошибка очистки старых данных:', error.message);
         console.error('Stack trace:', error.stack);
         throw error;
     }
 }
-
 
 module.exports = {
     createSpreadsheetForUser,
