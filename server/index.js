@@ -87,9 +87,10 @@ const connectWithRetry = () => {
 
 // Задача очистки Google Sheets (каждый день в 02:00)
 // cron.schedule('*/5 * * * *', async () => {
-// cron.schedule('0 11 * * *', async () => {
-cron.schedule('25 12 * * *', async () => {
+cron.schedule('50 14 * * *', async () => {
+// cron.schedule('45 1 * * *', async () => {
     if (appState.tasks.isCleanupRunning) {
+        console.log('Очистка уже выполняется, пропускаем...');
         return;
     }
 
@@ -98,27 +99,35 @@ cron.schedule('25 12 * * *', async () => {
         console.log('Запуск задачи очистки Google Sheets...');
 
         const users = await UserModel.find({ spreadsheetId: { $exists: true } }).lean();
+        const totalUsers = users.length;
+        let processedUsers = 0;
 
-        if (Array.isArray(users)) {
-            for (const user of users) {
-                try {
-                    await cleanupOldData(user.spreadsheetId, 'Бренд', 7);
-                    await cleanupOldData(user.spreadsheetId, 'Артикул', 7);
-                } catch (error) {
-                    console.error(`Ошибка очистки данных для пользователя ${user.email}:`, error);
-                }
+        for (const user of users) {
+            try {
+                console.log(`Обработка пользователя ${user.email} (${processedUsers + 1}/${totalUsers})`);
+                await cleanupOldData(user.spreadsheetId, 'Бренд', 7);
+                await cleanupOldData(user.spreadsheetId, 'Артикул', 7);
+                processedUsers++;
+
+                // Пауза между пользователями
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            } catch (error) {
+                console.error(`Ошибка очистки данных для пользователя ${user.email}:`, error.message);
             }
-        } else {
-            console.error('Ошибка: ожидается массив пользователей');
         }
 
-        console.log('Задача очистки Google Sheets завершена');
+        console.log(`Задача очистки завершена. Обработано пользователей: ${processedUsers}/${totalUsers}`);
     } catch (error) {
+        if (error.message.includes('JavaScript heap out of memory')) {
+            console.error('Ошибка памяти - перезапускаем процесс');
+            process.exit(1); // PM2 автоматически перезапустит
+        }
         console.error('Ошибка в задаче очистки Google Sheets:', error);
     } finally {
         appState.tasks.isCleanupRunning = false;
     }
 });
+
 
 // Задача удаления старых данных (каждый день в 03:00)
 cron.schedule('0 3 * * *', async () => {

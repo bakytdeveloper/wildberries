@@ -746,7 +746,7 @@ function SearchByBrand() {
             }).showToast();
 
             // Открываем таблицу после выгрузки
-            handleOpenGoogleSheet();
+            // handleOpenGoogleSheet();
         } catch (error) {
             console.error('Ошибка выгрузки всех данных:', error);
             Toastify({
