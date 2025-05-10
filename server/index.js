@@ -87,7 +87,7 @@ const connectWithRetry = () => {
 });
 
 
-cron.schedule('15 22 * * *', cleanupAllUsers);
+cron.schedule('10 0 * * *', cleanupAllUsers);
 
 
 // Задача удаления старых данных (каждый день в 03:00)

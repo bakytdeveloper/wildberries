@@ -599,7 +599,7 @@ async function cleanupOldData(sheetId, sheetNames, daysThreshold = 7) {
             // 1. Получаем метаданные листа
             const spreadsheet = await sheets.spreadsheets.get({
                 spreadsheetId: sheetId,
-                fields: 'sheets(properties(sheetId,title))'
+                fields: 'sheets(properties(sheetId,title,gridProperties(rowCount)))'
             });
             const sheet = spreadsheet.data.sheets.find(s => s.properties.title === sheetName);
             if (!sheet) {
@@ -607,12 +607,13 @@ async function cleanupOldData(sheetId, sheetNames, daysThreshold = 7) {
                 continue;
             }
             const sheetIdValue = sheet.properties.sheetId;
+            const rowCount = sheet.properties.gridProperties.rowCount;
 
-            // 2. Получаем все данные с форматированием
+            // 2. Получаем данные (значения и формулы)
             const response = await sheets.spreadsheets.get({
                 spreadsheetId: sheetId,
-                ranges: [`${sheetName}!A1:I`],
-                includeGridData: true
+                ranges: [`${sheetName}!A1:I${rowCount}`],
+                fields: 'sheets(data(rowData(values(userEnteredValue,userEnteredFormat,effectiveValue))))'
             });
 
             const gridData = response.data.sheets?.[0]?.data?.[0]?.rowData || [];
@@ -621,120 +622,120 @@ async function cleanupOldData(sheetId, sheetNames, daysThreshold = 7) {
                 continue;
             }
 
-            // 3. Фильтруем данные и сохраняем пустые строки
+            // 3. Фильтруем данные по дате и сохраняем URL изображений
             const now = new Date();
             const thresholdDate = new Date(now.setDate(now.getDate() - daysThreshold));
             const rowsToKeep = [];
             const headerRow = gridData[0];
-            let lastRequestHadData = false;
+
+            // Добавляем заголовок
+            rowsToKeep.push(headerRow);
 
             for (let i = 1; i < gridData.length; i++) {
                 const row = gridData[i];
-
-                // Проверяем, является ли строка пустой (разделителем)
-                const isEmptyRow = !row.values || row.values.every(cell => !cell || !cell.formattedValue);
-
-                if (isEmptyRow) {
-                    // Сохраняем пустую строку только если предыдущий запрос содержал данные
-                    if (lastRequestHadData) {
-                        rowsToKeep.push(row);
-                        lastRequestHadData = false;
-                    }
-                    continue;
-                }
-
                 const dateCell = row.values?.[8]; // Колонка I (индекс 8)
 
                 if (!dateCell) {
                     rowsToKeep.push(row);
-                    lastRequestHadData = true;
                     continue;
                 }
 
-                let dateValue;
                 try {
-                    dateValue = dateCell.effectiveValue?.numberValue
+                    const dateValue = dateCell.effectiveValue?.numberValue
                         ? new Date((dateCell.effectiveValue.numberValue - 25569) * 86400 * 1000)
-                        : new Date(dateCell.formattedValue);
+                        : new Date(dateCell.effectiveValue?.stringValue || dateCell.userEnteredValue?.stringValue || '');
+
+                    if (dateValue >= thresholdDate) {
+                        rowsToKeep.push(row);
+                    }
                 } catch {
                     rowsToKeep.push(row);
-                    lastRequestHadData = true;
-                    continue;
-                }
-
-                if (dateValue >= thresholdDate) {
-                    rowsToKeep.push(row);
-                    lastRequestHadData = true;
                 }
             }
 
-            console.log(`Очистка таблицы ${sheetName} завершена. Сохранено строк: ${rowsToKeep.length}`);
+            console.log(`Очистка таблицы ${sheetName} завершена. Сохранено строк: ${rowsToKeep.length - 1}`);
 
             // 4. Подготавливаем запросы для обновления
             const requests = [
-                // Очищаем лист
-                {
-                    updateCells: {
-                        range: {
-                            sheetId: sheetIdValue,
-                            startRowIndex: 1,
-                            endRowIndex: gridData.length,
-                            startColumnIndex: 0,
-                            endColumnIndex: 9
-                        },
-                        fields: 'userEnteredValue'
-                    }
-                },
-                // Добавляем заголовки
+                // Очищаем весь лист
                 {
                     updateCells: {
                         range: {
                             sheetId: sheetIdValue,
                             startRowIndex: 0,
-                            endRowIndex: 1,
+                            endRowIndex: rowCount,
                             startColumnIndex: 0,
                             endColumnIndex: 9
                         },
-                        rows: [headerRow],
-                        fields: 'userEnteredValue,userEnteredFormat'
+                        fields: 'userEnteredValue'
                     }
                 }
             ];
 
-            // Добавляем форматирование для позиций со звездочкой и собираем строки для вставки
-            const rowsToInsert = [];
-            let currentRequestHasData = false;
+            // 5. Форматируем данные для записи и обрабатываем изображения
+            const dataToWrite = [];
+            let lastHadData = false;
+            const IMAGE_COLUMN_INDEX = 3; // Колонка D (индекс 3)
 
-            rowsToKeep.forEach((row, index) => {
-                const isEmptyRow = !row.values || row.values.every(cell => !cell || !cell.formattedValue);
+            for (let i = 0; i < rowsToKeep.length; i++) {
+                const row = rowsToKeep[i];
+                const isEmptyRow = !row.values || row.values.every(cell =>
+                    !cell || (!cell.effectiveValue && !cell.userEnteredValue)
+                );
 
                 if (isEmptyRow) {
-                    // Добавляем пустую строку только если предыдущий блок содержал данные
-                    if (currentRequestHasData) {
-                        rowsToInsert.push(row);
-                        currentRequestHasData = false;
+                    if (lastHadData) {
+                        dataToWrite.push({ values: Array(9).fill({}) }); // Пустая строка
+                        lastHadData = false;
                     }
                 } else {
-                    // Обычная строка с данными
-                    rowsToInsert.push(row);
-                    currentRequestHasData = true;
+                    const newRow = { values: [] };
 
-                    // Проверяем форматирование для звездочки
-                    const positionCell = row.values?.[6]; // Колонка G (индекс 6)
-                    if (positionCell?.formattedValue?.includes('*')) {
+                    // Обрабатываем каждую ячейку в строке
+                    for (let col = 0; col < 9; col++) {
+                        const cell = row.values?.[col];
+
+                        // Для колонки с изображениями (D) используем формулу IMAGE()
+                        if (col === IMAGE_COLUMN_INDEX && cell?.effectiveValue?.stringValue) {
+                            const imageUrl = cell.effectiveValue.stringValue;
+                            newRow.values.push({
+                                userEnteredValue: {
+                                    formulaValue: `=IMAGE("${imageUrl}")`
+                                },
+                                userEnteredFormat: cell.userEnteredFormat
+                            });
+                        }
+                        // Для остальных ячеек сохраняем оригинальные значения
+                        else if (cell) {
+                            newRow.values.push({
+                                userEnteredValue: cell.userEnteredValue || cell.effectiveValue,
+                                userEnteredFormat: cell.userEnteredFormat
+                            });
+                        } else {
+                            newRow.values.push({});
+                        }
+                    }
+
+                    dataToWrite.push(newRow);
+                    lastHadData = true;
+
+                    // Проверяем позицию со звездочкой (колонка G, индекс 6)
+                    const positionCell = row.values?.[6];
+                    if (positionCell?.effectiveValue?.stringValue?.includes('*') ||
+                        positionCell?.userEnteredValue?.stringValue?.includes('*')) {
                         requests.push({
                             repeatCell: {
                                 range: {
                                     sheetId: sheetIdValue,
-                                    startRowIndex: rowsToInsert.length, // Учитываем заголовок
-                                    endRowIndex: rowsToInsert.length + 1,
+                                    startRowIndex: dataToWrite.length - 1,
+                                    endRowIndex: dataToWrite.length,
                                     startColumnIndex: 6,
                                     endColumnIndex: 7
                                 },
                                 cell: {
                                     userEnteredFormat: {
                                         textFormat: {
-                                            foregroundColor: { red: 1, green: 0, blue: 0 }, // Красный
+                                            foregroundColor: { red: 1, green: 0, blue: 0 },
                                             bold: true
                                         }
                                     }
@@ -744,26 +745,25 @@ async function cleanupOldData(sheetId, sheetNames, daysThreshold = 7) {
                         });
                     }
                 }
-            });
-
-            // Добавляем оставшиеся строки с данными и пустыми разделителями
-            if (rowsToInsert.length > 0) {
-                requests.push({
-                    updateCells: {
-                        range: {
-                            sheetId: sheetIdValue,
-                            startRowIndex: 1,
-                            endRowIndex: 1 + rowsToInsert.length,
-                            startColumnIndex: 0,
-                            endColumnIndex: 9
-                        },
-                        rows: rowsToInsert,
-                        fields: 'userEnteredValue,userEnteredFormat'
-                    }
-                });
             }
 
-            // 5. Выполняем обновление
+            // 6. Добавляем запрос на запись данных
+            requests.push({
+                updateCells: {
+                    range: {
+                        sheetId: sheetIdValue,
+                        startRowIndex: 0,
+                        endRowIndex: dataToWrite.length,
+                        startColumnIndex: 0,
+                        endColumnIndex: 9
+                    },
+                    rows: dataToWrite,
+                    fields: 'userEnteredValue,userEnteredFormat'
+                }
+            });
+
+            // 7. Выполняем обновление с интервалом
+            await new Promise(resolve => setTimeout(resolve, 1000));
             await sheets.spreadsheets.batchUpdate({
                 spreadsheetId: sheetId,
                 requestBody: { requests }
@@ -786,11 +786,11 @@ async function cleanupAllUsers() {
 
     console.log('\nЗапуск задачи очистки Google Sheets...');
 
-    const users = await UserModel.find({ spreadsheetId: { $exists: true } }).lean();
-    const totalUsers = users.length;
-    let processedUsers = 0;
-
     try {
+        const users = await UserModel.find({ spreadsheetId: { $exists: true } }).lean();
+        const totalUsers = users.length;
+        let processedUsers = 0;
+
         for (const user of users) {
             console.log(`\nОбработка пользователя ${user.email} (${processedUsers + 1}/${totalUsers})`);
 
@@ -798,12 +798,14 @@ async function cleanupAllUsers() {
                 await cleanupOldData(user.spreadsheetId, ['Бренд', 'Артикул'], 7);
                 processedUsers++;
 
-                // Добавляем задержку между пользователями
+                // Увеличиваем задержку между пользователями
                 if (processedUsers < totalUsers) {
-                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    await new Promise(resolve => setTimeout(resolve, 5000));
                 }
             } catch (error) {
                 console.error(`\nОшибка очистки данных для пользователя ${user.email}:`, error.message);
+                // При ошибке делаем большую паузу
+                await new Promise(resolve => setTimeout(resolve, 30000));
             }
         }
 
@@ -814,6 +816,7 @@ async function cleanupAllUsers() {
         appState.tasks.isCleanupRunning = false;
     }
 }
+
 
 module.exports = {
     createSpreadsheetForUser,
