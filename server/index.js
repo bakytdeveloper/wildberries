@@ -10,6 +10,7 @@ const userRoutes = require('./routes/userRoutes');
 const queryArticleRoutes = require('./routes/queryArticleRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const cron = require("node-cron");
+const {cleanupAllUsers} = require("./services/googleSheetService");
 const {cleanupBrokenLinks} = require("./services/linkCleanupService");
 const {checkSubscriptions} = require("./controllers/adminController");
 const {QueryArticleModel} = require("./models/queryArticleModel");
@@ -85,44 +86,8 @@ const connectWithRetry = () => {
     }
 });
 
-// Задача очистки Google Sheets (каждый день в 02:00)
-// cron.schedule('*/5 * * * *', async () => {
-cron.schedule('0 18 * * *', async () => {
-// cron.schedule('45 1 * * *', async () => {
-    if (appState.tasks.isCleanupRunning) return;
 
-    try {
-        appState.tasks.isCleanupRunning = true;
-        console.log('Запуск задачи очистки Google Sheets...');
-
-        const users = await UserModel.find({ spreadsheetId: { $exists: true } }).lean();
-        const totalUsers = users.length;
-        let processedUsers = 0;
-
-        for (const user of users) {
-            try {
-                console.log(`Обработка пользователя ${user.email} (${processedUsers + 1}/${totalUsers})`);
-
-                // Добавляем задержку между пользователями
-                if (processedUsers > 0) await new Promise(resolve => setTimeout(resolve, 5000));
-
-                await cleanupOldData(user.spreadsheetId, 'Бренд', 7);
-                await cleanupOldData(user.spreadsheetId, 'Артикул', 7);
-                processedUsers++;
-            } catch (error) {
-                console.error(`Ошибка очистки данных для пользователя ${user.email}:`, error.message);
-                // При ошибке квоты прерываем выполнение
-                if (error.message.includes('Quota exceeded')) break;
-            }
-        }
-
-        console.log(`Задача очистки завершена. Обработано пользователей: ${processedUsers}/${totalUsers}`);
-    } catch (error) {
-        console.error('Ошибка в задаче очистки Google Sheets:', error);
-    } finally {
-        appState.tasks.isCleanupRunning = false;
-    }
-});
+cron.schedule('15 22 * * *', cleanupAllUsers);
 
 
 // Задача удаления старых данных (каждый день в 03:00)

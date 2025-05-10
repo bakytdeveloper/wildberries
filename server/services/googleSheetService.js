@@ -1,5 +1,7 @@
 const { google } = require('googleapis');
 const dotenv = require('dotenv');
+const appState = require("googleapis/build/src/apis/tasks");
+const {UserModel} = require("../models/userModel");
 
 dotenv.config();
 
@@ -397,91 +399,255 @@ async function clearSheet(sheetId, sheetName) {
     }
 }
 
-async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
-    const sheets = getSheetsInstance();
-    const batchSize = 100;
-    let processedRows = 0;
-    let deletedRows = 0;
-    let stopProcessing = false;
+// async function cleanupOldData(sheetId, sheetNames, daysThreshold = 7) {
+//     const sheets = getSheetsInstance();
+//
+//     for (const sheetName of sheetNames) {
+//         console.log(`Начало очистки старых данных в таблице ${sheetName}`);
+//
+//         try {
+//             // 1. Получаем метаданные листа
+//             const spreadsheet = await sheets.spreadsheets.get({
+//                 spreadsheetId: sheetId,
+//                 fields: 'sheets(properties(sheetId,title))'
+//             });
+//             const sheet = spreadsheet.data.sheets.find(s => s.properties.title === sheetName);
+//             if (!sheet) {
+//                 console.log(`Лист "${sheetName}" не найден`);
+//                 continue;
+//             }
+//             const sheetIdValue = sheet.properties.sheetId;
+//
+//             // 2. Получаем все данные с форматированием
+//             const response = await sheets.spreadsheets.get({
+//                 spreadsheetId: sheetId,
+//                 ranges: [`${sheetName}!A1:I`],
+//                 includeGridData: true
+//             });
+//
+//             const gridData = response.data.sheets?.[0]?.data?.[0]?.rowData || [];
+//             if (gridData.length <= 1) {
+//                 console.log(`Нет данных для очистки в таблице ${sheetName}`);
+//                 continue;
+//             }
+//
+//             // 3. Фильтруем данные
+//             const now = new Date();
+//             const thresholdDate = new Date(now.setDate(now.getDate() - daysThreshold));
+//             const rowsToKeep = [];
+//             const headerRow = gridData[0];
+//
+//             for (let i = 1; i < gridData.length; i++) {
+//                 const row = gridData[i];
+//                 const dateCell = row.values?.[8]; // Колонка I (индекс 8)
+//
+//                 if (!dateCell) {
+//                     rowsToKeep.push(row);
+//                     continue;
+//                 }
+//
+//                 let dateValue;
+//                 try {
+//                     dateValue = dateCell.effectiveValue?.numberValue
+//                         ? new Date((dateCell.effectiveValue.numberValue - 25569) * 86400 * 1000)
+//                         : new Date(dateCell.formattedValue);
+//                 } catch {
+//                     rowsToKeep.push(row);
+//                     continue;
+//                 }
+//
+//                 if (dateValue >= thresholdDate) {
+//                     rowsToKeep.push(row);
+//                 }
+//             }
+//
+//             console.log(`Очистка таблицы ${sheetName} завершена. Сохранено строк: ${rowsToKeep.length}`);
+//
+//             // 4. Подготавливаем запросы для обновления
+//             const requests = [
+//                 // Очищаем лист
+//                 {
+//                     updateCells: {
+//                         range: {
+//                             sheetId: sheetIdValue,
+//                             startRowIndex: 1,
+//                             endRowIndex: gridData.length,
+//                             startColumnIndex: 0,
+//                             endColumnIndex: 9
+//                         },
+//                         fields: 'userEnteredValue'
+//                     }
+//                 },
+//                 // Добавляем заголовки
+//                 {
+//                     updateCells: {
+//                         range: {
+//                             sheetId: sheetIdValue,
+//                             startRowIndex: 0,
+//                             endRowIndex: 1,
+//                             startColumnIndex: 0,
+//                             endColumnIndex: 9
+//                         },
+//                         rows: [headerRow],
+//                         fields: 'userEnteredValue,userEnteredFormat'
+//                     }
+//                 }
+//             ];
+//
+//             // Добавляем форматирование для позиций со звездочкой
+//             rowsToKeep.forEach((row, index) => {
+//                 const positionCell = row.values?.[6]; // Колонка G (индекс 6)
+//                 if (positionCell?.formattedValue?.includes('*')) {
+//                     requests.push({
+//                         repeatCell: {
+//                             range: {
+//                                 sheetId: sheetIdValue,
+//                                 startRowIndex: index + 1,
+//                                 endRowIndex: index + 2,
+//                                 startColumnIndex: 6,
+//                                 endColumnIndex: 7
+//                             },
+//                             cell: {
+//                                 userEnteredFormat: {
+//                                     textFormat: {
+//                                         foregroundColor: { red: 1, green: 0, blue: 0 }, // Красный
+//                                         bold: true
+//                                     }
+//                                 }
+//                             },
+//                             fields: 'userEnteredFormat.textFormat'
+//                         }
+//                     });
+//                 }
+//             });
+//
+//             // Добавляем оставшиеся строки
+//             if (rowsToKeep.length > 0) {
+//                 requests.push({
+//                     updateCells: {
+//                         range: {
+//                             sheetId: sheetIdValue,
+//                             startRowIndex: 1,
+//                             endRowIndex: 1 + rowsToKeep.length,
+//                             startColumnIndex: 0,
+//                             endColumnIndex: 9
+//                         },
+//                         rows: rowsToKeep,
+//                         fields: 'userEnteredValue,userEnteredFormat'
+//                     }
+//                 });
+//             }
+//
+//             // 5. Выполняем обновление
+//             await sheets.spreadsheets.batchUpdate({
+//                 spreadsheetId: sheetId,
+//                 requestBody: { requests }
+//             });
+//
+//         } catch (error) {
+//             console.error(`Ошибка обработки ${sheetName}:`, error.message);
+//             if (error.message.includes('Quota exceeded')) {
+//                 await new Promise(resolve => setTimeout(resolve, 60000));
+//                 return cleanupOldData(sheetId, sheetNames, daysThreshold);
+//             }
+//         }
+//     }
+// }
+//
+// async function cleanupAllUsers() {
+//     if (appState.tasks.isCleanupRunning) return;
+//     appState.tasks.isCleanupRunning = true;
+//
+//     console.log('Запуск задачи очистки Google Sheets...');
+//
+//     const users = await UserModel.find({ spreadsheetId: { $exists: true } }).lean();
+//     const totalUsers = users.length;
+//     let processedUsers = 0;
+//
+//     try {
+//         for (const user of users) {
+//             console.log(`Обработка пользователя ${user.email} (${processedUsers + 1}/${totalUsers})`);
+//
+//             try {
+//                 await cleanupOldData(user.spreadsheetId, ['Бренд', 'Артикул'], 7);
+//                 processedUsers++;
+//
+//                 // Добавляем задержку между пользователями
+//                 if (processedUsers < totalUsers) {
+//                     await new Promise(resolve => setTimeout(resolve, 2000));
+//                 }
+//             } catch (error) {
+//                 console.error(`Ошибка очистки данных для пользователя ${user.email}:`, error.message);
+//             }
+//         }
+//
+//         console.log(`Задача очистки завершена. Обработано пользователей: ${processedUsers}/${totalUsers}`);
+//     } catch (error) {
+//         console.error('Ошибка в задаче очистки Google Sheets:', error);
+//     } finally {
+//         appState.tasks.isCleanupRunning = false;
+//     }
+// }
 
-    try {
+async function cleanupOldData(sheetId, sheetNames, daysThreshold = 7) {
+    const sheets = getSheetsInstance();
+
+    for (const sheetName of sheetNames) {
         console.log(`Начало очистки старых данных в таблице ${sheetName}`);
 
-        // 1. Получаем общее количество строк
-        const lastRowResponse = await sheets.spreadsheets.values.get({
-            spreadsheetId: sheetId,
-            range: `${sheetName}!A:A`,
-        });
-        const totalRows = lastRowResponse.data.values ? lastRowResponse.data.values.length : 0;
-        if (totalRows <= 1) {
-            console.log(`Нет данных для очистки в таблице ${sheetName}`);
-            return { success: true, message: 'Нет данных для очистки' };
-        }
+        try {
+            // 1. Получаем метаданные листа
+            const spreadsheet = await sheets.spreadsheets.get({
+                spreadsheetId: sheetId,
+                fields: 'sheets(properties(sheetId,title))'
+            });
+            const sheet = spreadsheet.data.sheets.find(s => s.properties.title === sheetName);
+            if (!sheet) {
+                console.log(`Лист "${sheetName}" не найден`);
+                continue;
+            }
+            const sheetIdValue = sheet.properties.sheetId;
 
-        // 2. Получаем метаданные листа
-        const spreadsheet = await sheets.spreadsheets.get({
-            spreadsheetId: sheetId,
-            fields: 'sheets(properties(sheetId,title))'
-        });
-        const sheet = spreadsheet.data.sheets.find(s => s.properties.title === sheetName);
-        if (!sheet) {
-            throw new Error(`Лист "${sheetName}" не найден`);
-        }
-        const sheetIdValue = sheet.properties.sheetId;
-
-        // 3. Получаем заголовки
-        const headersResponse = await sheets.spreadsheets.get({
-            spreadsheetId: sheetId,
-            ranges: [`${sheetName}!A1:I1`],
-            includeGridData: true
-        });
-        const headerRow = headersResponse.data.sheets?.[0]?.data?.[0]?.rowData?.[0];
-
-        // 4. Обрабатываем данные порциями до первого блока новых данных
-        const now = new Date();
-        const thresholdDate = new Date(now.setDate(now.getDate() - daysThreshold));
-        const rowsToKeep = [];
-        let currentGroup = [];
-        let hasDataBeforeGroup = false;
-        let firstRecentBatchIndex = -1;
-
-        for (let startRow = 1; startRow < totalRows && !stopProcessing; startRow += batchSize) {
-            const endRow = Math.min(startRow + batchSize, totalRows);
-            const range = `${sheetName}!A${startRow + 1}:I${endRow + 1}`;
-
-            // Добавляем задержку между запросами
-            if (startRow > 1) await new Promise(resolve => setTimeout(resolve, 500));
-
+            // 2. Получаем все данные с форматированием
             const response = await sheets.spreadsheets.get({
                 spreadsheetId: sheetId,
-                ranges: [range],
+                ranges: [`${sheetName}!A1:I`],
                 includeGridData: true
             });
 
             const gridData = response.data.sheets?.[0]?.data?.[0]?.rowData || [];
-            processedRows += gridData.length;
-            let batchHasOldData = false;
+            if (gridData.length <= 1) {
+                console.log(`Нет данных для очистки в таблице ${sheetName}`);
+                continue;
+            }
 
-            for (const row of gridData) {
-                const isEmptyRow = !row.values || row.values.every(cell =>
-                    !cell.formattedValue || cell.formattedValue.trim() === ''
-                );
+            // 3. Фильтруем данные и сохраняем пустые строки
+            const now = new Date();
+            const thresholdDate = new Date(now.setDate(now.getDate() - daysThreshold));
+            const rowsToKeep = [];
+            const headerRow = gridData[0];
+            let lastRequestHadData = false;
+
+            for (let i = 1; i < gridData.length; i++) {
+                const row = gridData[i];
+
+                // Проверяем, является ли строка пустой (разделителем)
+                const isEmptyRow = !row.values || row.values.every(cell => !cell || !cell.formattedValue);
 
                 if (isEmptyRow) {
-                    if (currentGroup.length > 0 || hasDataBeforeGroup) {
-                        rowsToKeep.push(...currentGroup);
-                        currentGroup = [];
-                        rowsToKeep.push({ values: Array(9).fill({ userEnteredValue: { stringValue: '' } }) });
-                        hasDataBeforeGroup = true;
+                    // Сохраняем пустую строку только если предыдущий запрос содержал данные
+                    if (lastRequestHadData) {
+                        rowsToKeep.push(row);
+                        lastRequestHadData = false;
                     }
                     continue;
                 }
 
-                const dateCell = row.values?.[8];
+                const dateCell = row.values?.[8]; // Колонка I (индекс 8)
+
                 if (!dateCell) {
-                    currentGroup.push(row);
-                    hasDataBeforeGroup = true;
-                    batchHasOldData = true;
+                    rowsToKeep.push(row);
+                    lastRequestHadData = true;
                     continue;
                 }
 
@@ -490,177 +656,169 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
                     dateValue = dateCell.effectiveValue?.numberValue
                         ? new Date((dateCell.effectiveValue.numberValue - 25569) * 86400 * 1000)
                         : new Date(dateCell.formattedValue);
-                } catch (e) {
-                    console.warn('Не удалось распознать дату, сохраняем строку', dateCell);
-                    currentGroup.push(row);
-                    hasDataBeforeGroup = true;
-                    batchHasOldData = true;
+                } catch {
+                    rowsToKeep.push(row);
+                    lastRequestHadData = true;
                     continue;
                 }
 
                 if (dateValue >= thresholdDate) {
-                    currentGroup.push(row);
-                    hasDataBeforeGroup = true;
-                } else {
-                    deletedRows++;
-                    batchHasOldData = true;
+                    rowsToKeep.push(row);
+                    lastRequestHadData = true;
                 }
             }
 
-            if (!batchHasOldData && firstRecentBatchIndex === -1) {
-                firstRecentBatchIndex = startRow;
-                console.log(`Обнаружены только новые данные (начиная со строки ${startRow}), прекращаем обработку.`);
-                stopProcessing = true;
-            }
-        }
+            console.log(`Очистка таблицы ${sheetName} завершена. Сохранено строк: ${rowsToKeep.length}`);
 
-        if (currentGroup.length > 0) {
-            rowsToKeep.push(...currentGroup);
-        }
-
-        console.log(`Обработано строк: ${processedRows}, удалено строк: ${deletedRows}`);
-
-        // 5. Если все данные новые, пропускаем обновление
-        if (firstRecentBatchIndex === 1 && deletedRows === 0) {
-            console.log(`Все данные в таблице ${sheetName} новые, изменений не требуется.`);
-            return { success: true, message: 'Все данные новые, изменений не требуется' };
-        }
-
-        // 6. Получаем необработанные данные (новые) с сохранением формул
-        let unprocessedRows = [];
-        if (stopProcessing && firstRecentBatchIndex > 0) {
-            const unprocessedRange = `${sheetName}!A${firstRecentBatchIndex + 1}:I${totalRows}`;
-            const unprocessedResponse = await sheets.spreadsheets.get({
-                spreadsheetId: sheetId,
-                ranges: [unprocessedRange],
-                includeGridData: true
-            });
-
-            unprocessedRows = unprocessedResponse.data.sheets?.[0]?.data?.[0]?.rowData || [];
-        }
-
-        // 7. Подготавливаем запросы для обновления
-        const requests = [];
-
-        // Добавляем заголовки
-        if (headerRow) {
-            requests.push({
-                updateCells: {
-                    range: {
-                        sheetId: sheetIdValue,
-                        startRowIndex: 0,
-                        endRowIndex: 1,
-                        startColumnIndex: 0,
-                        endColumnIndex: 9
-                    },
-                    rows: [headerRow],
-                    fields: 'userEnteredValue,userEnteredFormat'
-                }
-            });
-        }
-
-        // Очищаем всю таблицу (кроме заголовков)
-        requests.push({
-            updateCells: {
-                range: {
-                    sheetId: sheetIdValue,
-                    startRowIndex: 1,
-                    endRowIndex: Math.max(totalRows, rowsToKeep.length + unprocessedRows.length + 2),
-                    startColumnIndex: 0,
-                    endColumnIndex: 9
-                },
-                fields: 'userEnteredValue'
-            }
-        });
-
-        // Добавляем обработанные данные (без пустых строк в начале)
-        if (rowsToKeep.length > 0) {
-            let firstNonEmptyIndex = 0;
-            while (firstNonEmptyIndex < rowsToKeep.length) {
-                const row = rowsToKeep[firstNonEmptyIndex];
-                const isEmpty = !row.values || row.values.every(cell =>
-                    !cell.userEnteredValue ||
-                    (cell.userEnteredValue.stringValue && cell.userEnteredValue.stringValue.trim() === '')
-                );
-                if (!isEmpty) break;
-                firstNonEmptyIndex++;
-            }
-
-            const filteredRows = rowsToKeep.slice(firstNonEmptyIndex);
-            const processedEndRow = 1 + filteredRows.length;
-
-            requests.push({
-                updateCells: {
-                    range: {
-                        sheetId: sheetIdValue,
-                        startRowIndex: 1,
-                        endRowIndex: processedEndRow,
-                        startColumnIndex: 0,
-                        endColumnIndex: 9
-                    },
-                    rows: filteredRows,
-                    fields: 'userEnteredValue,userEnteredFormat'
-                }
-            });
-
-            // Добавляем необработанные данные после обработанных с одной пустой строкой
-            if (unprocessedRows.length > 0) {
-                // Добавляем пустую строку-разделитель
-                requests.push({
+            // 4. Подготавливаем запросы для обновления
+            const requests = [
+                // Очищаем лист
+                {
                     updateCells: {
                         range: {
                             sheetId: sheetIdValue,
-                            startRowIndex: processedEndRow,
-                            endRowIndex: processedEndRow + 1,
+                            startRowIndex: 1,
+                            endRowIndex: gridData.length,
                             startColumnIndex: 0,
                             endColumnIndex: 9
                         },
-                        rows: [{ values: Array(9).fill({ userEnteredValue: { stringValue: '' } }) }],
                         fields: 'userEnteredValue'
                     }
-                });
+                },
+                // Добавляем заголовки
+                {
+                    updateCells: {
+                        range: {
+                            sheetId: sheetIdValue,
+                            startRowIndex: 0,
+                            endRowIndex: 1,
+                            startColumnIndex: 0,
+                            endColumnIndex: 9
+                        },
+                        rows: [headerRow],
+                        fields: 'userEnteredValue,userEnteredFormat'
+                    }
+                }
+            ];
 
-                // Добавляем необработанные данные с сохранением формул изображений
+            // Добавляем форматирование для позиций со звездочкой и собираем строки для вставки
+            const rowsToInsert = [];
+            let currentRequestHasData = false;
+
+            rowsToKeep.forEach((row, index) => {
+                const isEmptyRow = !row.values || row.values.every(cell => !cell || !cell.formattedValue);
+
+                if (isEmptyRow) {
+                    // Добавляем пустую строку только если предыдущий блок содержал данные
+                    if (currentRequestHasData) {
+                        rowsToInsert.push(row);
+                        currentRequestHasData = false;
+                    }
+                } else {
+                    // Обычная строка с данными
+                    rowsToInsert.push(row);
+                    currentRequestHasData = true;
+
+                    // Проверяем форматирование для звездочки
+                    const positionCell = row.values?.[6]; // Колонка G (индекс 6)
+                    if (positionCell?.formattedValue?.includes('*')) {
+                        requests.push({
+                            repeatCell: {
+                                range: {
+                                    sheetId: sheetIdValue,
+                                    startRowIndex: rowsToInsert.length, // Учитываем заголовок
+                                    endRowIndex: rowsToInsert.length + 1,
+                                    startColumnIndex: 6,
+                                    endColumnIndex: 7
+                                },
+                                cell: {
+                                    userEnteredFormat: {
+                                        textFormat: {
+                                            foregroundColor: { red: 1, green: 0, blue: 0 }, // Красный
+                                            bold: true
+                                        }
+                                    }
+                                },
+                                fields: 'userEnteredFormat.textFormat'
+                            }
+                        });
+                    }
+                }
+            });
+
+            // Добавляем оставшиеся строки с данными и пустыми разделителями
+            if (rowsToInsert.length > 0) {
                 requests.push({
                     updateCells: {
                         range: {
                             sheetId: sheetIdValue,
-                            startRowIndex: processedEndRow + 1,
-                            endRowIndex: processedEndRow + 1 + unprocessedRows.length,
+                            startRowIndex: 1,
+                            endRowIndex: 1 + rowsToInsert.length,
                             startColumnIndex: 0,
                             endColumnIndex: 9
                         },
-                        rows: unprocessedRows,
+                        rows: rowsToInsert,
                         fields: 'userEnteredValue,userEnteredFormat'
                     }
                 });
             }
-        }
 
-        // 8. Выполняем обновление
-        await sheets.spreadsheets.batchUpdate({
-            spreadsheetId: sheetId,
-            requestBody: { requests }
-        });
+            // 5. Выполняем обновление
+            await sheets.spreadsheets.batchUpdate({
+                spreadsheetId: sheetId,
+                requestBody: { requests }
+            });
 
-        console.log(`Очистка таблицы ${sheetName} завершена. Сохранено строк: ${rowsToKeep.length + (unprocessedRows?.length || 0)}`);
-        return { success: true, message: `Данные старше ${daysThreshold} дней удалены` };
-    } catch (error) {
-        if (error.message.includes('Quota exceeded')) {
-            console.error('Превышена квота Google Sheets API. Попробуйте позже или увеличьте квоту.');
-            await new Promise(resolve => setTimeout(resolve, 60000)); // Пауза 60 секунд
-            return cleanupOldData(sheetId, sheetName, daysThreshold); // Рекурсивный вызов
+        } catch (error) {
+            console.error(`Ошибка обработки ${sheetName}:`, error.message);
+            if (error.message.includes('Quota exceeded')) {
+                await new Promise(resolve => setTimeout(resolve, 60000));
+                return cleanupOldData(sheetId, sheetNames, daysThreshold);
+            }
         }
-        console.error('Ошибка очистки старых данных:', error.message);
-        console.error('Stack trace:', error.stack);
-        throw error;
     }
 }
 
 
+async function cleanupAllUsers() {
+    if (appState.tasks.isCleanupRunning) return;
+    appState.tasks.isCleanupRunning = true;
+
+    console.log('\nЗапуск задачи очистки Google Sheets...');
+
+    const users = await UserModel.find({ spreadsheetId: { $exists: true } }).lean();
+    const totalUsers = users.length;
+    let processedUsers = 0;
+
+    try {
+        for (const user of users) {
+            console.log(`\nОбработка пользователя ${user.email} (${processedUsers + 1}/${totalUsers})`);
+
+            try {
+                await cleanupOldData(user.spreadsheetId, ['Бренд', 'Артикул'], 7);
+                processedUsers++;
+
+                // Добавляем задержку между пользователями
+                if (processedUsers < totalUsers) {
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                }
+            } catch (error) {
+                console.error(`\nОшибка очистки данных для пользователя ${user.email}:`, error.message);
+            }
+        }
+
+        console.log(`\nЗадача очистки завершена. Обработано пользователей: ${processedUsers}/${totalUsers}\n`);
+    } catch (error) {
+        console.error('\nОшибка в задаче очистки Google Sheets:', error);
+    } finally {
+        appState.tasks.isCleanupRunning = false;
+    }
+}
+
 module.exports = {
     createSpreadsheetForUser,
     addDataToSheet,
-    cleanupOldData,
+    // cleanupOldData,
+    cleanupAllUsers,
     exportAllDataToSheet
 };
