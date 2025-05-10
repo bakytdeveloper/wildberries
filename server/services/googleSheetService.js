@@ -437,7 +437,7 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
         });
         const headerRow = headersResponse.data.sheets?.[0]?.data?.[0]?.rowData?.[0];
 
-        // 4. Обрабатываем данные порциями
+        // 4. Обрабатываем данные порциями до первого блока новых данных
         const now = new Date();
         const thresholdDate = new Date(now.setDate(now.getDate() - daysThreshold));
         const rowsToKeep = [];
@@ -448,6 +448,9 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
         for (let startRow = 1; startRow < totalRows && !stopProcessing; startRow += batchSize) {
             const endRow = Math.min(startRow + batchSize, totalRows);
             const range = `${sheetName}!A${startRow + 1}:I${endRow + 1}`;
+
+            // Добавляем задержку между запросами
+            if (startRow > 1) await new Promise(resolve => setTimeout(resolve, 500));
 
             const response = await sheets.spreadsheets.get({
                 spreadsheetId: sheetId,
@@ -517,23 +520,27 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
 
         console.log(`Обработано строк: ${processedRows}, удалено строк: ${deletedRows}`);
 
-        // 5. Подготавливаем запросы для обновления таблицы
-        const requests = [];
+        // 5. Если все данные новые, пропускаем обновление
+        if (firstRecentBatchIndex === 1 && deletedRows === 0) {
+            console.log(`Все данные в таблице ${sheetName} новые, изменений не требуется.`);
+            return { success: true, message: 'Все данные новые, изменений не требуется' };
+        }
 
-        // Очищаем только обработанную часть листа
-        const clearEndRow = stopProcessing ? firstRecentBatchIndex : totalRows;
-        requests.push({
-            updateCells: {
-                range: {
-                    sheetId: sheetIdValue,
-                    startRowIndex: 1,
-                    endRowIndex: clearEndRow,
-                    startColumnIndex: 0,
-                    endColumnIndex: 9
-                },
-                fields: 'userEnteredValue'
-            }
-        });
+        // 6. Получаем необработанные данные (новые) с сохранением формул
+        let unprocessedRows = [];
+        if (stopProcessing && firstRecentBatchIndex > 0) {
+            const unprocessedRange = `${sheetName}!A${firstRecentBatchIndex + 1}:I${totalRows}`;
+            const unprocessedResponse = await sheets.spreadsheets.get({
+                spreadsheetId: sheetId,
+                ranges: [unprocessedRange],
+                includeGridData: true
+            });
+
+            unprocessedRows = unprocessedResponse.data.sheets?.[0]?.data?.[0]?.rowData || [];
+        }
+
+        // 7. Подготавливаем запросы для обновления
+        const requests = [];
 
         // Добавляем заголовки
         if (headerRow) {
@@ -552,7 +559,21 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
             });
         }
 
-        // Добавляем оставшиеся строки (без пустых строк в начале)
+        // Очищаем всю таблицу (кроме заголовков)
+        requests.push({
+            updateCells: {
+                range: {
+                    sheetId: sheetIdValue,
+                    startRowIndex: 1,
+                    endRowIndex: Math.max(totalRows, rowsToKeep.length + unprocessedRows.length + 2),
+                    startColumnIndex: 0,
+                    endColumnIndex: 9
+                },
+                fields: 'userEnteredValue'
+            }
+        });
+
+        // Добавляем обработанные данные (без пустых строк в начале)
         if (rowsToKeep.length > 0) {
             let firstNonEmptyIndex = 0;
             while (firstNonEmptyIndex < rowsToKeep.length) {
@@ -566,14 +587,14 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
             }
 
             const filteredRows = rowsToKeep.slice(firstNonEmptyIndex);
-            const updateEndRow = 1 + filteredRows.length;
+            const processedEndRow = 1 + filteredRows.length;
 
             requests.push({
                 updateCells: {
                     range: {
                         sheetId: sheetIdValue,
                         startRowIndex: 1,
-                        endRowIndex: updateEndRow,
+                        endRowIndex: processedEndRow,
                         startColumnIndex: 0,
                         endColumnIndex: 9
                     },
@@ -582,45 +603,54 @@ async function cleanupOldData(sheetId, sheetName, daysThreshold = 7) {
                 }
             });
 
-            // Если есть необработанные данные, копируем их с помощью values.update
-            if (stopProcessing && firstRecentBatchIndex > 0) {
-                const unprocessedRange = `${sheetName}!A${firstRecentBatchIndex + 1}:I${totalRows}`;
-                const unprocessedResponse = await sheets.spreadsheets.values.get({
-                    spreadsheetId: sheetId,
-                    range: unprocessedRange,
+            // Добавляем необработанные данные после обработанных с одной пустой строкой
+            if (unprocessedRows.length > 0) {
+                // Добавляем пустую строку-разделитель
+                requests.push({
+                    updateCells: {
+                        range: {
+                            sheetId: sheetIdValue,
+                            startRowIndex: processedEndRow,
+                            endRowIndex: processedEndRow + 1,
+                            startColumnIndex: 0,
+                            endColumnIndex: 9
+                        },
+                        rows: [{ values: Array(9).fill({ userEnteredValue: { stringValue: '' } }) }],
+                        fields: 'userEnteredValue'
+                    }
                 });
 
-                if (unprocessedResponse.data.values && unprocessedResponse.data.values.length > 0) {
-                    requests.push({
-                        updateCells: {
-                            range: {
-                                sheetId: sheetIdValue,
-                                startRowIndex: updateEndRow,
-                                endRowIndex: updateEndRow + unprocessedResponse.data.values.length,
-                                startColumnIndex: 0,
-                                endColumnIndex: 9
-                            },
-                            rows: unprocessedResponse.data.values.map(row => ({
-                                values: row.map(value => ({
-                                    userEnteredValue: { stringValue: String(value) }
-                                }))
-                            })),
-                            fields: 'userEnteredValue'
-                        }
-                    });
-                }
+                // Добавляем необработанные данные с сохранением формул изображений
+                requests.push({
+                    updateCells: {
+                        range: {
+                            sheetId: sheetIdValue,
+                            startRowIndex: processedEndRow + 1,
+                            endRowIndex: processedEndRow + 1 + unprocessedRows.length,
+                            startColumnIndex: 0,
+                            endColumnIndex: 9
+                        },
+                        rows: unprocessedRows,
+                        fields: 'userEnteredValue,userEnteredFormat'
+                    }
+                });
             }
         }
 
-        // Выполняем обновление
+        // 8. Выполняем обновление
         await sheets.spreadsheets.batchUpdate({
             spreadsheetId: sheetId,
             requestBody: { requests }
         });
 
-        console.log(`Очистка таблицы ${sheetName} завершена. Сохранено строк: ${rowsToKeep.length}`);
+        console.log(`Очистка таблицы ${sheetName} завершена. Сохранено строк: ${rowsToKeep.length + (unprocessedRows?.length || 0)}`);
         return { success: true, message: `Данные старше ${daysThreshold} дней удалены` };
     } catch (error) {
+        if (error.message.includes('Quota exceeded')) {
+            console.error('Превышена квота Google Sheets API. Попробуйте позже или увеличьте квоту.');
+            await new Promise(resolve => setTimeout(resolve, 60000)); // Пауза 60 секунд
+            return cleanupOldData(sheetId, sheetName, daysThreshold); // Рекурсивный вызов
+        }
         console.error('Ошибка очистки старых данных:', error.message);
         console.error('Stack trace:', error.stack);
         throw error;

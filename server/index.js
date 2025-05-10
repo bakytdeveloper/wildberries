@@ -87,11 +87,9 @@ const connectWithRetry = () => {
 
 // Задача очистки Google Sheets (каждый день в 02:00)
 // cron.schedule('*/5 * * * *', async () => {
-cron.schedule('45 1 * * *', async () => {
-    if (appState.tasks.isCleanupRunning) {
-        console.log('Очистка уже выполняется, пропускаем...');
-        return;
-    }
+cron.schedule('0 18 * * *', async () => {
+// cron.schedule('45 1 * * *', async () => {
+    if (appState.tasks.isCleanupRunning) return;
 
     try {
         appState.tasks.isCleanupRunning = true;
@@ -104,23 +102,22 @@ cron.schedule('45 1 * * *', async () => {
         for (const user of users) {
             try {
                 console.log(`Обработка пользователя ${user.email} (${processedUsers + 1}/${totalUsers})`);
+
+                // Добавляем задержку между пользователями
+                if (processedUsers > 0) await new Promise(resolve => setTimeout(resolve, 5000));
+
                 await cleanupOldData(user.spreadsheetId, 'Бренд', 7);
                 await cleanupOldData(user.spreadsheetId, 'Артикул', 7);
                 processedUsers++;
-
-                // Пауза между пользователями
-                await new Promise(resolve => setTimeout(resolve, 1000));
             } catch (error) {
                 console.error(`Ошибка очистки данных для пользователя ${user.email}:`, error.message);
+                // При ошибке квоты прерываем выполнение
+                if (error.message.includes('Quota exceeded')) break;
             }
         }
 
         console.log(`Задача очистки завершена. Обработано пользователей: ${processedUsers}/${totalUsers}`);
     } catch (error) {
-        if (error.message.includes('JavaScript heap out of memory')) {
-            console.error('Ошибка памяти - перезапускаем процесс');
-            process.exit(1); // PM2 автоматически перезапустит
-        }
         console.error('Ошибка в задаче очистки Google Sheets:', error);
     } finally {
         appState.tasks.isCleanupRunning = false;
