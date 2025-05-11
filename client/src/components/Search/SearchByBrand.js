@@ -59,7 +59,7 @@ function SearchByBrand() {
         city: 'г.Москва'
     });
     const [showDeleteByParamsModal, setShowDeleteByParamsModal] = useState(false);
-
+    const [showExportConfirmation, setShowExportConfirmation] = useState(false);
 
 
     useEffect(() => {
@@ -717,8 +717,56 @@ function SearchByBrand() {
         }
     }, [isAuthenticated, API_HOST]);
 
-    const handleExportAllToGoogleSheet = async () => {
+    // const handleExportAllToGoogleSheet = async () => {
+    //
+    //     if (isExportingAll) return;
+    //     setIsExportingAll(true);
+    //     setShowExportModal(true);
+    //     setExportProgress('Подготовка всех данных для выгрузки...');
+    //
+    //     try {
+    //         const token = sessionStorage.getItem('token');
+    //         setExportProgress('Расстановка данных в Google Таблицу...');
+    //
+    //         const response = await axios.post(`${API_HOST}/api/queries/export-all`, {}, {
+    //             headers: {
+    //                 'Authorization': `Bearer ${token}`,
+    //                 'Content-Type': 'application/json'
+    //             }
+    //         });
+    //
+    //         setExportProgress('Выгрузка данных...');
+    //
+    //         Toastify({
+    //             text: 'Все данные успешно выгружены в Google Таблицу',
+    //             duration: 3000,
+    //             gravity: 'top',
+    //             position: 'right',
+    //             style: { background: '#00cc00' }
+    //         }).showToast();
+    //
+    //         // Открываем таблицу после выгрузки
+    //         // handleOpenGoogleSheet();
+    //     } catch (error) {
+    //         console.error('Ошибка выгрузки всех данных:', error);
+    //         Toastify({
+    //             text: 'Ошибка выгрузки всех данных',
+    //             duration: 3000,
+    //             gravity: 'top',
+    //             position: 'right',
+    //             style: { background: '#ff0000' }
+    //         }).showToast();
+    //     } finally {
+    //         setIsExportingAll(false);
+    //         setShowExportModal(false);
+    //     }
+    // };
 
+    const handleExportAllToGoogleSheet = () => {
+        setShowExportConfirmation(true);
+    };
+
+    const handleExportAllToGoogleSheetConfirmed = async () => {
         if (isExportingAll) return;
         setIsExportingAll(true);
         setShowExportModal(true);
@@ -745,8 +793,6 @@ function SearchByBrand() {
                 style: { background: '#00cc00' }
             }).showToast();
 
-            // Открываем таблицу после выгрузки
-            // handleOpenGoogleSheet();
         } catch (error) {
             console.error('Ошибка выгрузки всех данных:', error);
             Toastify({
@@ -1468,9 +1514,9 @@ function SearchByBrand() {
                                                                                 <td className="td_table td_table_page" onClick={() => handleProductClick(tableQuery, page, position)}>
                                                                                     {product.log?.promoPosition ? (
                                                                                         <span>
-                                                    {product.log.promoPosition > 100 ? product.log.promoPosition + 100 : product.log.promoPosition}
+                                                                                    {product.log.promoPosition > 100 ? product.log.promoPosition + 100 : product.log.promoPosition}
                                                                                             <sup style={{ color: 'red', fontWeight: 'bold', marginLeft: '3px' }}>*</sup>
-                                               </span>
+                                                                                        </span>
                                                                                     ) : (
                                                                                         (page - 1 > 0 ? `${page}${position < 10 ? '0' + position : position}` : position)
                                                                                     )}
@@ -1607,6 +1653,33 @@ function SearchByBrand() {
                         ) : (
                             'Удалить'
                         )}
+                    </Button>
+                </Modal.Footer>
+
+            </Modal>
+            <Modal show={showExportConfirmation} onHide={() => setShowExportConfirmation(false)} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Подтверждение выгрузки</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Alert variant="warning">
+                        Внимание! Выгрузка всех данных перезапишет вашу Google Таблицу.<br/>
+                        Все текущие данные в таблице будут заменены на данные с этой страницы.
+                    </Alert>
+                    <p>Вы уверены, что хотите продолжить?</p>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowExportConfirmation(false)}>
+                        Отмена
+                    </Button>
+                    <Button
+                        variant="primary"
+                        onClick={() => {
+                            setShowExportConfirmation(false);
+                            handleExportAllToGoogleSheetConfirmed();
+                        }}
+                    >
+                        Подтвердить выгрузку
                     </Button>
                 </Modal.Footer>
             </Modal>

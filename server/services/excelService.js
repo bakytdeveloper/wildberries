@@ -254,6 +254,17 @@ const generateExcelForUser = async (userId) => {
                     .jpeg({ quality: 80 })
                     .toBuffer();
 
+                // // ОПТИМИЗИРОВАЛ КАРТИНКИ< ЕСЛИ БУДЕТ ПРОБЛЕМА С ПАМЯТЬЮ НА
+                // // VPS , ТО НУЖНО БУДЕТ ИСПОЛЬЗОВАТЬ ЭТОТ УЧАСТОК КОДА
+                // const optimizedImage = await sharp(buffer)
+                //     .resize(100, 100, {
+                //         fit: 'inside',
+                //         withoutEnlargement: true
+                //     })
+                //     .jpeg({ quality: 70 })
+                //     .toBuffer();
+
+
                 // Кэшируем
                 if (imageCache.size < CONFIG.IMAGE.MAX_CACHE) {
                     imageCache.set(imageUrl, optimizedImage);

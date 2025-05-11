@@ -58,7 +58,7 @@ function SearchByArticle() {
         city: 'г.Москва'
     });
     const [showDeleteByParamsModal, setShowDeleteByParamsModal] = useState(false);
-
+    const [showExportConfirmation, setShowExportConfirmation] = useState(false);
 
     // Добавить эффект для скрытия меню:
     useEffect(() => {
@@ -732,23 +732,27 @@ function SearchByArticle() {
         }
     }, [isAuthenticated, API_HOST]);
 
-    const handleExportAllToGoogleSheet = async () => {
+    const handleExportAllToGoogleSheet = () => {
+        setShowExportConfirmation(true);
+    };
 
+    const handleExportAllToGoogleSheetConfirmed = async () => {
         if (isExportingAll) return;
         setIsExportingAll(true);
         setShowExportModal(true);
         setExportProgress('Подготовка всех данных для выгрузки...');
 
-
         try {
             const token = sessionStorage.getItem('token');
             setExportProgress('Расстановка данных в Google Таблицу...');
+
             const response = await axios.post(`${API_HOST}/api/article/export-all`, {}, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             });
+
             setExportProgress('Выгрузка данных...');
 
             Toastify({
@@ -759,8 +763,6 @@ function SearchByArticle() {
                 style: { background: '#00cc00' }
             }).showToast();
 
-            // Открываем таблицу после выгрузки
-            // handleOpenGoogleSheet();
         } catch (error) {
             console.error('Ошибка выгрузки всех данных:', error);
             Toastify({
@@ -1208,25 +1210,25 @@ function SearchByArticle() {
                                     </div>
 
                                     <div className="right-controls-exports-sheets">
-                                    <Button
-                                        className="controls_primary controls_primary_info upload_to_google"
-                                        variant="success"
-                                        onClick={handleExportAllToGoogleSheet}
-                                        title="Выгрузить все данные в Google Таблицу"
-                                    >
-                                        {isExportingAll ? (
-                                            <Spinner
-                                                as="span"
-                                                animation="border"
-                                                size="sm"
-                                                role="status"
-                                                aria-hidden="true"
-                                                style={{ width: '1rem', height: '1rem' }}
-                                            />
-                                        ) : (
-                                            'Выгрузить в Google'
-                                        )}
-                                    </Button>
+                                        <Button
+                                            className="controls_primary controls_primary_info upload_to_google"
+                                            variant="success"
+                                            onClick={handleExportAllToGoogleSheet}
+                                            title="Выгрузить все данные в Google Таблицу"
+                                        >
+                                            {isExportingAll ? (
+                                                <Spinner
+                                                    as="span"
+                                                    animation="border"
+                                                    size="sm"
+                                                    role="status"
+                                                    aria-hidden="true"
+                                                    style={{ width: '1rem', height: '1rem' }}
+                                                />
+                                            ) : (
+                                                'Выгрузить в Google'
+                                            )}
+                                        </Button>
                                     <Button
                                         className="controls_primary controls_primary_success"
                                         variant="success"
@@ -1619,6 +1621,32 @@ function SearchByArticle() {
                         ) : (
                             'Удалить'
                         )}
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+            <Modal show={showExportConfirmation} onHide={() => setShowExportConfirmation(false)} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Подтверждение выгрузки</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Alert variant="warning">
+                        Внимание! Выгрузка всех данных перезапишет вашу Google Таблицу.<br/>
+                        Все текущие данные в таблице будут заменены на данные с этой страницы.
+                    </Alert>
+                    <p>Вы уверены, что хотите продолжить?</p>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowExportConfirmation(false)}>
+                        Отмена
+                    </Button>
+                    <Button
+                        variant="primary"
+                        onClick={() => {
+                            setShowExportConfirmation(false);
+                            handleExportAllToGoogleSheetConfirmed();
+                        }}
+                    >
+                        Подтвердить выгрузку
                     </Button>
                 </Modal.Footer>
             </Modal>
