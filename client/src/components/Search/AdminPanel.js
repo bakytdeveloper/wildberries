@@ -254,34 +254,41 @@ const AdminPanel = ({ API_HOST }) => {
     return (
         <div className="container">
             <div className="logout-container">
-                <Button
-                    className="admin-panel-logout-container"
-                    variant="danger"
-                    onClick={handleLogout}
-                >
-                    Выход
-                </Button>
-
+                <div className="logout-container-search-sort">
                 <h2 className="query-form-title">Админ панель</h2>
-                <div className="query-form-search-and-toggle" >
-                    <Form.Control
-                        type="text"
-                        placeholder="Поиск по имени"
-                        value={searchTerm}
-                        onChange={handleSearchChange}
-                        style={{ maxWidth: '300px' }}
-                    />
+               {/*<div className="logout-container-search-sort">*/}
 
-                    <ToggleButton
-                        type="checkbox"
-                        variant={sortBySubscription ? 'primary' : 'outline-primary'}
-                        checked={sortBySubscription}
-                        value="1"
-                        onClick={toggleSortBySubscription}
-                    >
-                        {sortBySubscription ? 'Обычный порядок' : 'Сортировать по подписке'}
-                    </ToggleButton>
-                </div>
+                   <Button
+                       className="admin-panel-logout-container"
+                       variant="danger"
+                       onClick={handleLogout}
+                   >
+                       Выход
+                   </Button>
+                   <div className="query-form-search-and-toggle" >
+
+                       <Form.Control
+                           className="admin-panel-search-container"
+                           type="text"
+                           placeholder="Поиск по имени"
+                           value={searchTerm}
+                           onChange={handleSearchChange}
+                           // style={{ maxWidth: '300px' }}
+                       />
+
+                       <ToggleButton
+                           className="admin-panel-sort-container"
+                           type="checkbox"
+                           variant={sortBySubscription ? 'outline-primary' : 'outline-primary'}
+                           checked={sortBySubscription}
+                           value="1"
+                           onClick={toggleSortBySubscription}
+                       >
+                           {sortBySubscription ? 'Обычный порядок' : 'Сортировать по подписке'}
+                       </ToggleButton>
+                   </div>
+
+               </div>
             </div>
             <table id="productsTable">
                 <thead>

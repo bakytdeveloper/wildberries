@@ -190,7 +190,7 @@ header {
 
 .query-form-title {
     text-align: center;
-    margin-bottom: 25px;
+    /*margin-bottom: 25px;*/
     color: var(--text-color);
 }
 
@@ -833,6 +833,26 @@ tr:hover {
     color: #0d6efd;
 }
 
+.logout-container-search-sort {
+    display: inline-block;
+    margin-top: 0;
+    width: 100%;
+}
+
+.admin-panel-logout-container {
+    margin-top: 0;
+    margin-left: 0;
+    background: none!important;
+    color: red !important;
+    border: 1px solid red !important;
+    text-align: center!important;
+    padding: 0 4px!important;
+}
+
+.admin-panel-search-container {
+    max-width: 300px;
+}
+
 @media (max-width: 768px) {
 
     html, body, #root {
@@ -1187,6 +1207,33 @@ tr:hover {
         border-radius: 2px!important;
         margin-left: 3px!important;
         font-size: 14px!important;
+    }
+
+    .logout-container-search-sort {
+        position: fixed;
+        width: 89%;
+    }
+
+    .admin-panel-sort-container {
+        font-size: 12px!important;
+        padding: 2px 4px !important;
+        max-width: 40%;
+    }
+    .admin-panel-logout-container {
+        font-size: 12px!important;
+        padding: 0 5px!important;
+        margin-left: 83%!important;
+        background: none!important;
+        color: red !important;
+        border-color: red !important;
+    }
+
+    #productsTable {
+        margin-top: 150px;
+    }
+
+    .admin-panel-search-container {
+        max-width: 52%;
     }
 
 }
