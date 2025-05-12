@@ -208,7 +208,7 @@ header {
     font-weight: bold!important;
     border-color: var( --exit-button-border-color)!important;
     cursor: pointer;
-    z-index: 999999;
+    z-index: 3;
 }
 
 
