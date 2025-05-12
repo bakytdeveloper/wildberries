@@ -20,6 +20,36 @@ const AdminPanel = ({ API_HOST }) => {
     const [amountError, setAmountError] = useState('');
 
     useEffect(() => {
+        // Проверка токена при монтировании
+        checkToken();
+
+        // Обработчик для кнопок назад/вперед в браузере
+        const handlePopState = () => {
+            checkToken();
+        };
+
+        // Обработчик для закрытия/перезагрузки страницы
+        const handleBeforeUnload = () => {
+            sessionStorage.removeItem('token');
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, []);
+
+    const checkToken = () => {
+        const token = sessionStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/';
+        }
+    };
+
+    useEffect(() => {
         document.body.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
     }, [theme]);
