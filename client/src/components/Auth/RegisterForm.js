@@ -22,8 +22,7 @@ const RegisterForm = ({ API_HOST, setIsAuthenticated, setShowProfile, setShowReg
 
             Toastify({
                 text: `Здравствуйте, ${username}!
-                     Вы успешно зарегистрированы.
-           Ссылки на ваши таблицы отправлена на Вашу эл.почту.`,
+                     Вы успешно зарегистрированы.`,
                 duration: 4000,
                 gravity: 'top',
                 position: 'right',

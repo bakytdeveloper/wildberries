@@ -33,5 +33,22 @@ const getCurrentUser = async (req, res) => {
     }
 };
 
+const getUserSpreadsheet = async (req, res) => {
+    try {
+        const userId = req.user?.userId || req.userId;
+        const user = await UserModel.findById(userId);
 
-module.exports = { getUserProfile, getCurrentUser };
+        if (!user) {
+            return res.status(404).json({ message: 'Пользователь не найден' });
+        }
+
+        // Если у пользователя нет таблицы, возвращаем null
+        res.json({ spreadsheetId: user.spreadsheetId || null });
+    } catch (error) {
+        console.error('Error getting user spreadsheet:', error);
+        res.status(500).json({ error: 'Ошибка получения Google Таблицы' });
+    }
+};
+
+
+module.exports = { getUserProfile, getCurrentUser, getUserSpreadsheet };

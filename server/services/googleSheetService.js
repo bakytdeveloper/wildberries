@@ -77,6 +77,12 @@ async function getLastRow(sheetId, sheetName) {
 async function addDataToSheet(sheetId, sheetName, data, hasStar = false) {
     const sheets = getSheetsInstance();
     try {
+
+        // Если sheetId не предоставлен (первая выгрузка), создаем новую таблицу
+        if (!sheetId) {
+            throw new Error('Spreadsheet not found, will create new one');
+        }
+
         // 1. Сначала получаем метаданные таблицы, чтобы узнать sheetId
         const spreadsheet = await sheets.spreadsheets.get({
             spreadsheetId: sheetId,
@@ -227,6 +233,14 @@ async function addDataToSheet(sheetId, sheetName, data, hasStar = false) {
         return response.data;
     } catch (error) {
         console.error('Ошибка добавления данных в лист:', error);
+
+        // Если ошибка связана с отсутствием таблицы, создаем новую
+        if (error.message.includes('Spreadsheet not found')) {
+            const newSpreadsheetId = await createSpreadsheetForUser(req.user.email);
+            // Повторяем попытку добавления данных в новую таблицу
+            return addDataToSheet(newSpreadsheetId, sheetName, data, hasStar);
+        }
+
         throw error;
     }
 }
@@ -234,6 +248,11 @@ async function addDataToSheet(sheetId, sheetName, data, hasStar = false) {
 async function exportAllDataToSheet(sheetId, queries, isBrandQuery = true) {
     const sheets = getSheetsInstance();
     try {
+        // Если sheetId не предоставлен (первая выгрузка), создаем новую таблицу
+        if (!sheetId) {
+            throw new Error('Spreadsheet not found, will create new one');
+        }
+
         const targetSheetName = isBrandQuery ? 'Бренд' : 'Артикул';
 
         // Очищаем лист перед добавлением новых данных
@@ -367,6 +386,14 @@ async function exportAllDataToSheet(sheetId, queries, isBrandQuery = true) {
         return { message: 'Все данные успешно выгружены' };
     } catch (error) {
         console.error('Ошибка выгрузки всех данных:', error);
+
+        // Если ошибка связана с отсутствием таблицы, создаем новую
+        if (error.message.includes('Spreadsheet not found')) {
+            const newSpreadsheetId = await createSpreadsheetForUser(req.user.email);
+            // Повторяем попытку выгрузки данных в новую таблицу
+            return exportAllDataToSheet(newSpreadsheetId, queries, isBrandQuery);
+        }
+
         throw error;
     }
 }

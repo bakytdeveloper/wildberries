@@ -40,9 +40,9 @@ const registerUser = async (req, res) => {
             trialEndDate: trialEndDate
         };
 
-        // Создание Google Таблицы для пользователя
-        const spreadsheetId = await createSpreadsheetForUser(email);
-        newUser.spreadsheetId = spreadsheetId;
+        // // Создание Google Таблицы для пользователя
+        // const spreadsheetId = await createSpreadsheetForUser(email);
+        // newUser.spreadsheetId = spreadsheetId;
 
         await newUser.save();
 

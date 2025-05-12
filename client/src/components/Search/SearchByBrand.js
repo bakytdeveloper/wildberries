@@ -603,12 +603,13 @@ function SearchByBrand() {
                 const url = `https://docs.google.com/spreadsheets/d/${response.data.spreadsheetId}`;
                 window.open(url, '_blank');
             } else {
+                // Предлагаем создать таблицу при первой выгрузке
                 Toastify({
-                    text: 'Google Таблица не найдена',
+                    text: 'Google Таблица будет создана при первой выгрузке данных',
                     duration: 3000,
                     gravity: 'top',
                     position: 'right',
-                    style: { background: '#ff0000' }
+                    style: { background: '#ff9800' }
                 }).showToast();
             }
         } catch (error) {

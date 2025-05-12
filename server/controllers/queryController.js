@@ -10,6 +10,7 @@ const { UserModel } = require('../models/userModel');
 const { addDataToSheet } = require('../services/googleSheetService');
 const path = require('path');
 const mongoose = require('mongoose');
+const {createSpreadsheetForUser} = require("../services/googleSheetService");
 
 // Получение всех запросов
 const getQueries = async (req, res) => {
@@ -93,9 +94,18 @@ const exportToGoogleSheet = async (req, res) => {
             return res.status(404).json({ error: 'Запрос не найден' });
         }
         const user = await UserModel.findById(userId);
-        if (!user || !user.spreadsheetId) {
-            return res.status(404).json({ error: 'Пользователь или Google Таблица не найдены' });
+        if (!user) {
+            return res.status(404).json({ error: 'Пользователь не найден' });
         }
+
+        // Если у пользователя нет таблицы, создаем ее
+        if (!user.spreadsheetId) {
+            const spreadsheetId = await createSpreadsheetForUser(user.email);
+            user.spreadsheetId = spreadsheetId;
+            await user.save();
+        }
+
+
         const data = query.productTables.flatMap((table) =>
             table.products.map((product) => {
                 const position = product?.page && product.page > 1
@@ -133,8 +143,16 @@ const exportAllToGoogleSheet = async (req, res) => {
         const queries = await QueryModel.find({ userId }).populate('productTables.products');
         const user = await UserModel.findById(userId);
 
-        if (!user || !user.spreadsheetId) {
-            return res.status(404).json({ error: 'Пользователь или Google Таблица не найдены' });
+
+        if (!user) {
+            return res.status(404).json({ error: 'Пользователь не найден' });
+        }
+
+        // Если у пользователя нет таблицы, создаем ее
+        if (!user.spreadsheetId) {
+            const spreadsheetId = await createSpreadsheetForUser(user.email);
+            user.spreadsheetId = spreadsheetId;
+            await user.save();
         }
 
         const result = await exportAllDataToSheet(user.spreadsheetId, queries, true);
