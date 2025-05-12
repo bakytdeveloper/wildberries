@@ -195,8 +195,9 @@ header {
 }
 
 .exit-button {
+    display: block!important;
     position: absolute;
-    top: 15px;
+    top: 35px;
     right: 20px;
     padding: 0 3px!important;
     color: var(--exit-button-color)!important;
@@ -206,7 +207,10 @@ header {
     font-size: 12px !important;
     font-weight: bold!important;
     border-color: var( --exit-button-border-color)!important;
+    cursor: pointer;
+    z-index: 999999;
 }
+
 
 .exit-button:hover {
     background: #b82c04 !important;
@@ -853,6 +857,10 @@ tr:hover {
     max-width: 300px;
 }
 
+.right-controls-search{
+    margin-top: 45px;
+}
+
 @media (max-width: 768px) {
 
     html, body, #root {
@@ -1084,7 +1092,7 @@ tr:hover {
     }
 
     .exit-button {
-        position: static;
+        /*position: static;*/
         margin-top: 0;
         margin-bottom: 15px;
         margin-left: 84%;
@@ -1242,6 +1250,10 @@ tr:hover {
 
     .admin-panel-search-container {
         max-width: 52%;
+    }
+
+    .input-group {
+        margin-top: 35px;
     }
 
 }
