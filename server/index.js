@@ -91,7 +91,7 @@ const connectWithRetry = () => {
 
 
 // Задача удаления старых данных (каждый день в 03:00)
-cron.schedule('0 3 * * *', async () => {
+cron.schedule('0 2 * * *', async () => {
     if (appState.tasks.isDataRemovalRunning) {
         console.log('Предыдущая задача удаления старых данных еще выполняется, пропускаем...');
         return;
@@ -128,8 +128,24 @@ cron.schedule('0 3 * * *', async () => {
     }
 });
 
+
+// Проверка подписок (каждый день в 6 часов утра)
+cron.schedule('0 6 * * *', async () => {
+    if (appState.tasks.isSubscriptionCheckRunning) return;
+
+    try {
+        appState.tasks.isSubscriptionCheckRunning = true;
+        console.log('Запуск проверки фактических подписок...');
+        await checkSubscriptions();
+    } catch (error) {
+        console.error('Ошибка при проверке подписок:', error);
+    } finally {
+        appState.tasks.isSubscriptionCheckRunning = false;
+    }
+});
+
 // Задача проверки пробных периодов (каждые день в 5 часов утра)
-cron.schedule('0 5 * * *', async () => {
+cron.schedule('0 7 * * *', async () => {
     if (appState.tasks.isTrialCheckRunning) {
         console.log('Предыдущая проверка пробных периодов еще выполняется, пропускаем...');
         return;
@@ -147,24 +163,8 @@ cron.schedule('0 5 * * *', async () => {
     }
 });
 
-// Проверка подписок (каждый день в 6 часов утра)
-cron.schedule('0 6 * * *', async () => {
-    if (appState.tasks.isSubscriptionCheckRunning) return;
-
-    try {
-        appState.tasks.isSubscriptionCheckRunning = true;
-        console.log('Запуск проверки фактических подписок...');
-        await checkSubscriptions();
-    } catch (error) {
-        console.error('Ошибка при проверке подписок:', error);
-    } finally {
-        appState.tasks.isSubscriptionCheckRunning = false;
-    }
-});
-
-
 // Задача проверки и очистки битых ссылок (каждый день в 7:00 утра)
-cron.schedule('0 7 * * *', async () => {
+cron.schedule('0 22 * * *', async () => {
     try {
         console.log('Запуск задачи проверки и очистки битых ссылок...');
         await cleanupBrokenLinks();
@@ -173,6 +173,8 @@ cron.schedule('0 7 * * *', async () => {
         console.error('Ошибка в задаче очистки битых ссылок:', error);
     }
 });
+
+
 
 const startServer = () => {
     // Первоначальная проверка пробных периодов при запуске сервера
