@@ -334,7 +334,8 @@ const AdminPanel = ({ API_HOST }) => {
                             </Button>
                         </td>
                         <td className="td_table">
-                            <Button variant="info" onClick={() => handleSubscriptionClick(user._id)}>
+                            <Button
+                                variant="info" onClick={() => handleSubscriptionClick(user._id)}>
                                 Подписка
                             </Button>
                         </td>

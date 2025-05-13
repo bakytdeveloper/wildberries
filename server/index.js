@@ -74,6 +74,7 @@ const connectWithRetry = () => {
 };
 
 // Добавляем новую задачу для AutoQueryService (каждые 4 часа)
+// То есть выполняется автозапуск поискавика и выгрузки данных в гугл таблицу
 // cron.schedule('*/5 * * * *', async () => {
     cron.schedule('0 */4 * * *', async () => {
 // cron.schedule('0 0,8,12,16,20 * * *', async () => {
@@ -90,7 +91,7 @@ const connectWithRetry = () => {
 // cron.schedule('40 1 * * *', cleanupAllUsers);
 
 
-// Задача удаления старых данных (каждый день в 03:00)
+// Задача удаления старых данных (каждый день в 02:00)
 cron.schedule('0 2 * * *', async () => {
     if (appState.tasks.isDataRemovalRunning) {
         console.log('Предыдущая задача удаления старых данных еще выполняется, пропускаем...');
@@ -144,7 +145,7 @@ cron.schedule('0 6 * * *', async () => {
     }
 });
 
-// Задача проверки пробных периодов (каждые день в 5 часов утра)
+// Задача проверки пробных периодов (каждые день в 7 часов утра)
 cron.schedule('0 7 * * *', async () => {
     if (appState.tasks.isTrialCheckRunning) {
         console.log('Предыдущая проверка пробных периодов еще выполняется, пропускаем...');

@@ -75,8 +75,10 @@
 }
 
 #root {
-    background-color: var(--background-color) !important;
+    /*background-color: var(--background-color) !important;*/
     color: var(--text-color);
+
+    padding-top: 20px;
 }
 
 html, body {
@@ -172,6 +174,8 @@ header {
     background-color: var(--background-color);
     box-shadow: 0 4px 8px var(--shadow-color);
     border-radius: 8px;
+    overflow-x: auto;
+    overflow-y: auto;
 }
 
 .auth-form {
