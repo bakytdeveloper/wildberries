@@ -866,6 +866,11 @@ tr:hover {
     margin-top: 45px;
 }
 
+.td_table_search {
+    width: auto;
+}
+
+
 @media (max-width: 768px) {
 
     html, body, #root {
