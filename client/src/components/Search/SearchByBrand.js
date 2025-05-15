@@ -631,6 +631,10 @@ function SearchByBrand() {
                 const token = sessionStorage.getItem('token');
                 if (!token) return;
 
+                // Проверяем, было ли уже показано уведомление
+                const notificationShown = sessionStorage.getItem('subscriptionNotificationShown');
+                if (notificationShown) return;
+
                 const response = await axios.get(`${API_HOST}/api/user/me`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
@@ -668,7 +672,9 @@ function SearchByBrand() {
                                 position: "right",
                                 style: { background: "#ff9800" }
                             }).showToast();
-                        }, 4000);
+                            // Помечаем, что уведомление было показано
+                            sessionStorage.setItem('subscriptionNotificationShown', 'true');
+                        }, 5000); // Задержка 5 секунд
                     }
                 }
 
@@ -678,33 +684,45 @@ function SearchByBrand() {
                     const daysLeft = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
 
                     if (daysLeft <= 3 && daysLeft > 0) {
-                        Toastify({
-                            text: `Подписка закончится через ${daysLeft} ${daysLeft === 1 ? 'день' : 'дня'}. Продлите её.`,
-                            duration: 5000,
-                            gravity: "top",
-                            position: "right",
-                            style: { background: "#ff9800" }
-                        }).showToast();
+                        setTimeout(() => {
+                            Toastify({
+                                text: `Подписка закончится через ${daysLeft} ${daysLeft === 1 ? 'день' : 'дня'}. Продлите её.`,
+                                duration: 5000,
+                                gravity: "top",
+                                position: "right",
+                                style: { background: "#ff9800" }
+                            }).showToast();
+                            // Помечаем, что уведомление было показано
+                            sessionStorage.setItem('subscriptionNotificationShown', 'true');
+                        }, 5000); // Задержка 5 секунд
                     } else if (daysLeft <= 0) {
-                        Toastify({
-                            text: "Подписка закончилась. Продлите её.",
-                            duration: 5000,
-                            gravity: "top",
-                            position: "right",
-                            style: { background: "#f44336" }
-                        }).showToast();
+                        setTimeout(() => {
+                            Toastify({
+                                text: "Подписка закончилась. Продлите её.",
+                                duration: 5000,
+                                gravity: "top",
+                                position: "right",
+                                style: { background: "#f44336" }
+                            }).showToast();
+                            // Помечаем, что уведомление было показано
+                            sessionStorage.setItem('subscriptionNotificationShown', 'true');
+                        }, 5000); // Задержка 5 секунд
                     }
                 }
 
                 // Проверка блокировки
                 if (user.isBlocked) {
-                    Toastify({
-                        text: "Аккаунт заблокирован. Оформите подписку.",
-                        duration: 3000,
-                        gravity: "top",
-                        position: "right",
-                        style: { background: "#f44336" }
-                    }).showToast();
+                    setTimeout(() => {
+                        Toastify({
+                            text: "Аккаунт заблокирован. Оформите подписку.",
+                            duration: 3000,
+                            gravity: "top",
+                            position: "right",
+                            style: { background: "#f44336" }
+                        }).showToast();
+                        // Помечаем, что уведомление было показано
+                        sessionStorage.setItem('subscriptionNotificationShown', 'true');
+                    }, 5000); // Задержка 5 секунд
                 }
             } catch (error) {
                 console.error('Ошибка при проверке статуса подписки:', error);
@@ -713,55 +731,9 @@ function SearchByBrand() {
 
         if (isAuthenticated) {
             checkSubscriptionStatus();
-            const interval = setInterval(checkSubscriptionStatus, 60 * 60 * 1000); // Проверка каждый час
-            return () => clearInterval(interval);
+            // Убираем интервал, так как проверка нужна только один раз
         }
     }, [isAuthenticated, API_HOST]);
-
-    // const handleExportAllToGoogleSheet = async () => {
-    //
-    //     if (isExportingAll) return;
-    //     setIsExportingAll(true);
-    //     setShowExportModal(true);
-    //     setExportProgress('Подготовка всех данных для выгрузки...');
-    //
-    //     try {
-    //         const token = sessionStorage.getItem('token');
-    //         setExportProgress('Расстановка данных в Google Таблицу...');
-    //
-    //         const response = await axios.post(`${API_HOST}/api/queries/export-all`, {}, {
-    //             headers: {
-    //                 'Authorization': `Bearer ${token}`,
-    //                 'Content-Type': 'application/json'
-    //             }
-    //         });
-    //
-    //         setExportProgress('Выгрузка данных...');
-    //
-    //         Toastify({
-    //             text: 'Все данные успешно выгружены в Google Таблицу',
-    //             duration: 3000,
-    //             gravity: 'top',
-    //             position: 'right',
-    //             style: { background: '#00cc00' }
-    //         }).showToast();
-    //
-    //         // Открываем таблицу после выгрузки
-    //         // handleOpenGoogleSheet();
-    //     } catch (error) {
-    //         console.error('Ошибка выгрузки всех данных:', error);
-    //         Toastify({
-    //             text: 'Ошибка выгрузки всех данных',
-    //             duration: 3000,
-    //             gravity: 'top',
-    //             position: 'right',
-    //             style: { background: '#ff0000' }
-    //         }).showToast();
-    //     } finally {
-    //         setIsExportingAll(false);
-    //         setShowExportModal(false);
-    //     }
-    // };
 
     const handleExportAllToGoogleSheet = () => {
         setShowExportConfirmation(true);

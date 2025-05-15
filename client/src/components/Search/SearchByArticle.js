@@ -647,6 +647,10 @@ function SearchByArticle() {
                 const token = sessionStorage.getItem('token');
                 if (!token) return;
 
+                // Проверяем, было ли уже показано уведомление
+                const notificationShown = sessionStorage.getItem('subscriptionNotificationShown');
+                if (notificationShown) return;
+
                 const response = await axios.get(`${API_HOST}/api/user/me`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
@@ -684,7 +688,9 @@ function SearchByArticle() {
                                 position: "right",
                                 style: { background: "#ff9800" }
                             }).showToast();
-                        }, 4000);
+                            // Помечаем, что уведомление было показано
+                            sessionStorage.setItem('subscriptionNotificationShown', 'true');
+                        }, 5000); // Задержка 5 секунд
                     }
                 }
 
@@ -694,33 +700,45 @@ function SearchByArticle() {
                     const daysLeft = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
 
                     if (daysLeft <= 3 && daysLeft > 0) {
-                        Toastify({
-                            text: `Подписка закончится через ${daysLeft} ${daysLeft === 1 ? 'день' : 'дня'}. Продлите её.`,
-                            duration: 5000,
-                            gravity: "top",
-                            position: "right",
-                            style: { background: "#ff9800" }
-                        }).showToast();
+                        setTimeout(() => {
+                            Toastify({
+                                text: `Подписка закончится через ${daysLeft} ${daysLeft === 1 ? 'день' : 'дня'}. Продлите её.`,
+                                duration: 5000,
+                                gravity: "top",
+                                position: "right",
+                                style: { background: "#ff9800" }
+                            }).showToast();
+                            // Помечаем, что уведомление было показано
+                            sessionStorage.setItem('subscriptionNotificationShown', 'true');
+                        }, 5000); // Задержка 5 секунд
                     } else if (daysLeft <= 0) {
-                        Toastify({
-                            text: "Подписка закончилась. Продлите её.",
-                            duration: 5000,
-                            gravity: "top",
-                            position: "right",
-                            style: { background: "#f44336" }
-                        }).showToast();
+                        setTimeout(() => {
+                            Toastify({
+                                text: "Подписка закончилась. Продлите её.",
+                                duration: 5000,
+                                gravity: "top",
+                                position: "right",
+                                style: { background: "#f44336" }
+                            }).showToast();
+                            // Помечаем, что уведомление было показано
+                            sessionStorage.setItem('subscriptionNotificationShown', 'true');
+                        }, 5000); // Задержка 5 секунд
                     }
                 }
 
                 // Проверка блокировки
                 if (user.isBlocked) {
-                    Toastify({
-                        text: "Аккаунт заблокирован. Оформите подписку.",
-                        duration: 3000,
-                        gravity: "top",
-                        position: "right",
-                        style: { background: "#f44336" }
-                    }).showToast();
+                    setTimeout(() => {
+                        Toastify({
+                            text: "Аккаунт заблокирован. Оформите подписку.",
+                            duration: 3000,
+                            gravity: "top",
+                            position: "right",
+                            style: { background: "#f44336" }
+                        }).showToast();
+                        // Помечаем, что уведомление было показано
+                        sessionStorage.setItem('subscriptionNotificationShown', 'true');
+                    }, 5000); // Задержка 5 секунд
                 }
             } catch (error) {
                 console.error('Ошибка при проверке статуса подписки:', error);
@@ -729,11 +747,11 @@ function SearchByArticle() {
 
         if (isAuthenticated) {
             checkSubscriptionStatus();
-            const interval = setInterval(checkSubscriptionStatus, 60 * 60 * 1000); // Проверка каждый час
-            return () => clearInterval(interval);
+            // Убираем интервал, так как проверка нужна только один раз
         }
     }, [isAuthenticated, API_HOST]);
 
+    
     const handleExportAllToGoogleSheet = () => {
         setShowExportConfirmation(true);
     };
