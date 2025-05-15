@@ -290,65 +290,68 @@ const AdminPanel = ({ API_HOST }) => {
 
                </div>
             </div>
-            <table id="productsTable">
-                <thead>
-                <tr>
-                    <th className="th_table">№</th>
-                    <th className="th_table">Имя</th>
-                    <th className="th_table">Email</th>
-                    <th className="th_table">Дата регистрации</th>
-                    <th className="th_table">Статус</th>
-                    <th className="th_table">Блокировки/Разблокировки</th>
-                    <th className="th_table">Подписка до</th>
-                    <th className="th_table">Разрешение</th>
-                    <th className="th_table">Подписка</th>
-                    <th className="th_table">Удаление</th>
-                </tr>
-                </thead>
-                <tbody>
-                {filteredUsers.map((user, i) => (
-                    <tr key={user._id}>
-                        <td className="td_table">{i + 1}</td>
-                        <td className="td_table">{user.username}</td>
-                        <td className="td_table">{user.email}</td>
-                        <td className="td_table">{new Date(user.createdAt).toLocaleString()}</td>
-                        <td className="td_table">{user.isBlocked ? <span style={{color:"red"}}>Заблокирован</span> : <span style={{color:"green", fontWeight:"bold"}}>Активен</span>}</td>
-                        <td className="td_table">
-                            {user.isBlocked
-                                ? new Date(user.blockedAt).toLocaleString()
-                                : user.unblockedAt
-                                    ? new Date(user.unblockedAt).toLocaleString()
-                                    : 'Нет данных'}
-                        </td>
-                        <td className="td_table">
-                            {user.subscription?.subscriptionEndDate
-                                ? new Date(user.subscription.subscriptionEndDate).toLocaleDateString()
-                                : 'Нет подписки'}
-                        </td>
-                        <td className="td_table">
-                            <Button
-                                variant={user.isBlocked ? 'success' : 'primary'}
-                                onClick={() => toggleBlockUser(user._id)}
-                            >
-                                {user.isBlocked ? 'Разблокировать' : 'Заблокировать'}
-                            </Button>
-                        </td>
-                        <td className="td_table">
-                            <Button
-                                className="td_table_search"
-                                variant="info" onClick={() => handleSubscriptionClick(user._id)}>
-                                Подписка
-                            </Button>
-                        </td>
-                        <td className="td_table">
-                            <Button variant="danger" onClick={() => handleDeleteClick(user._id)}>
-                                Удалить
-                            </Button>
-                        </td>
+            <div className="admin-table-container">
+                <table id="productsTable">
+                    <thead>
+                    <tr>
+                        <th className="th_table">№</th>
+                        <th className="th_table">Имя</th>
+                        <th className="th_table">Email</th>
+                        <th className="th_table">Дата регистрации</th>
+                        <th className="th_table">Статус</th>
+                        <th className="th_table">Блокировки/Разблокировки</th>
+                        <th className="th_table">Подписка до</th>
+                        <th className="th_table">Разрешение</th>
+                        <th className="th_table">Подписка</th>
+                        <th className="th_table">Удаление</th>
                     </tr>
-                ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                    {filteredUsers.map((user, i) => (
+                        <tr key={user._id}>
+                            <td className="td_table">{i + 1}</td>
+                            <td className="td_table">{user.username}</td>
+                            <td className="td_table">{user.email}</td>
+                            <td className="td_table">{new Date(user.createdAt).toLocaleString()}</td>
+                            <td className="td_table">{user.isBlocked ? <span style={{color:"red"}}>Заблокирован</span> : <span style={{color:"green", fontWeight:"bold"}}>Активен</span>}</td>
+                            <td className="td_table">
+                                {user.isBlocked
+                                    ? new Date(user.blockedAt).toLocaleString()
+                                    : user.unblockedAt
+                                        ? new Date(user.unblockedAt).toLocaleString()
+                                        : 'Нет данных'}
+                            </td>
+                            <td className="td_table">
+                                {user.subscription?.subscriptionEndDate
+                                    ? new Date(user.subscription.subscriptionEndDate).toLocaleDateString()
+                                    : 'Нет подписки'}
+                            </td>
+                            <td className="td_table">
+                                <Button
+                                    variant={user.isBlocked ? 'success' : 'primary'}
+                                    onClick={() => toggleBlockUser(user._id)}
+                                >
+                                    {user.isBlocked ? 'Разблокировать' : 'Заблокировать'}
+                                </Button>
+                            </td>
+                            <td className="td_table">
+                                <Button
+                                    className="td_table_search"
+                                    variant="info" onClick={() => handleSubscriptionClick(user._id)}>
+                                    Подписка
+                                </Button>
+                            </td>
+                            <td className="td_table">
+                                <Button variant="danger" onClick={() => handleDeleteClick(user._id)}>
+                                    Удалить
+                                </Button>
+                            </td>
+                        </tr>
+                    ))}
+                    </tbody>
+                </table>
+            </div>
+
 
             {/* Модальное окно удаления */}
             <Modal show={showDeleteModal} onHide={() => !isDeleting && setShowDeleteModal(false)}>

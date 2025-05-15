@@ -1315,6 +1315,40 @@ tr:hover {
 
 
 
+.admin-table-container {
+    max-height: calc(98vh - 250px); /* Высота контейнера с учетом других элементов */
+    overflow-y: auto; /* Вертикальный скролл */
+    margin-top: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+/* Для мобильных устройств */
+@media (max-width: 768px) {
+    .admin-table-container {
+        max-height: calc(110vh - 300px); /* Больше места для мобильных устройств */
+        margin-top: 100px; /* Учитываем фиксированный заголовок */
+    }
+
+    #productsTable {
+        margin-top: 0; /* Убираем предыдущий отступ */
+    }
+}
+
+
+#productsTable {
+    width: 100%;
+    border-collapse: collapse;
+    position: relative;
+}
+
+#productsTable thead th {
+    position: sticky;
+    top: -2px;
+    background-color: var(--table-header-background);
+    z-index: 10;
+}
+
 
 
 
