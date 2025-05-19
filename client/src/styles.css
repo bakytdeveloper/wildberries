@@ -916,6 +916,15 @@ tr:hover {
         width: 50%;
     }
 
+    #password {
+        margin-top: -30px;
+        margin-bottom: 20px;
+    }
+
+    .FaEye-button {
+        margin-top: -30px;
+    }
+
     #password.form-control {
         width: 20% !important;
     }
