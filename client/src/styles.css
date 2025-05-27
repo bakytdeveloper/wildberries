@@ -427,6 +427,7 @@ header {
 .controls_primary_warning {
     background: #1e8a06 !important;
     border-color: #1e8a06!important;
+    color: white!important;
 
 }
 .controls_primary_warning:hover {
@@ -827,6 +828,7 @@ tr:hover {
 .controls_primary_info_google_sheet {
     width: 45%;
     padding: 0!important;
+    color: white!important;
 }
 
 .controls_primary_info_delete_request {
