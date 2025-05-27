@@ -868,6 +868,7 @@ tr:hover {
 
 .right-controls-search{
     margin-top: 45px;
+    display: inline-flex;
 }
 
 .td_table_search {
