@@ -1536,15 +1536,15 @@ tr:hover {
         width: 100%;
         position: static;
         margin-top: 10px;
-        gap: 3px; /* Еще меньше на мобильных */
+        gap: 6px; /* Еще меньше на мобильных */
     }
 
     .right-controls-search,
     .right-controls-exports-sheets,
     .open-sheet-and-delete-request {
         flex-direction: row;
-        gap: 3px; /* Еще меньше на мобильных */
-        margin-bottom: 3px;
+        gap: 6px; /* Еще меньше на мобильных */
+        margin-bottom: 7px;
     }
 
     .right-controls .btn {
