@@ -415,7 +415,8 @@ header {
     margin-left: 10px;
     border-radius: 2px !important;
     background: #0056b3 !important;
-    color: white !important;
+    color: white;
+    margin-bottom: 10px;
 }
 
 .controls_primary:hover {
