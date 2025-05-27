@@ -428,7 +428,7 @@ header {
     position: sticky;
     top: 100px; /* Отступ от верха */
     align-self: flex-start; /* Для flex-контейнера */
-    gap: 10px;
+    gap: 4px;
 }
 
 .controls-search-bar .search {
@@ -495,11 +495,11 @@ header {
 }
 
 .controls_primary {
-    margin-left: 10px;
+    margin-left: 0;
     border-radius: 2px !important;
     background: #0056b3 !important;
     color: white;
-    margin-bottom: 10px;
+    margin-bottom: 4px;
 }
 
 .controls_primary:hover {
@@ -1036,6 +1036,13 @@ tr:hover {
         font-size: 14px!important;
     }
 
+    .controls_primary_search {
+        border-radius: 14px!important;
+        font-size: 14px!important;
+        margin-right: 3px!important;
+        margin-left: 3px!important;
+    }
+
 
     .controls_primary_info {
         width: 47%;
@@ -1475,8 +1482,9 @@ tr:hover {
 .open-sheet-and-delete-request {
     display: flex;
     justify-content: space-between;
-    gap: 10px;
+    gap: 5px;
     width: 100%;
+    margin-bottom: 5px; /* Уменьшили отступ снизу */
 }
 
 /* Общие стили для всех кнопок в right-controls */
@@ -1487,13 +1495,15 @@ tr:hover {
     overflow: hidden;
     text-overflow: ellipsis;
     font-size: 14px;
-    padding: 6px 8px;
+    padding: 4px 6px; /* Уменьшили padding */
+    margin: 0; /* Убрали margin */
 }
 
 /* Специфичные стили для кнопок */
 .controls_success {
     flex: none;
     width: auto;
+    padding: 4px 8px !important; /* Уменьшили padding */
 }
 
 .controls_primary_search {
@@ -1526,23 +1536,26 @@ tr:hover {
         width: 100%;
         position: static;
         margin-top: 10px;
+        gap: 3px; /* Еще меньше на мобильных */
     }
 
     .right-controls-search,
     .right-controls-exports-sheets,
     .open-sheet-and-delete-request {
         flex-direction: row;
-        gap: 5px;
+        gap: 3px; /* Еще меньше на мобильных */
+        margin-bottom: 3px;
     }
 
     .right-controls .btn {
         font-size: 12px;
-        padding: 5px;
+        padding: 3px 4px; /* Еще меньше на мобильных */
     }
 
     /* Специфичные настройки для мобильных */
     .controls_success {
         width: auto;
+        padding: 3px 5px !important; /* Еще меньше на мобильных */
     }
 
     .controls_primary_info_google_sheet {
