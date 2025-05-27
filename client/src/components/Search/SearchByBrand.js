@@ -1210,7 +1210,7 @@ function SearchByBrand() {
                                            onClick={addRequestForm}
                                            disabled={requestForms.length >= 15}
                                        >
-                                           Добавить запрос
+                                           {windowWidth < 768 ? '+ Запрос' : 'Добавить запрос'}
                                        </Button>
                                        <Button className="controls_primary controls_primary_search" onClick={fetchProducts} disabled={isRequesting}>Поиск</Button>
                                        <Button className="controls_primary controls_primary_warning"  variant="warning" onClick={handleSearchAllQueries}>Все запросы</Button>

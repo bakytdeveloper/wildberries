@@ -1,4 +1,4 @@
-:root {
+root {
     --background-color: #ffffff;
     --text-color: #333333;
     --border-color: #dddddd;
@@ -171,7 +171,7 @@ header {
 .container {
     max-width: 95%;
     margin: 22px auto 11px;
-    padding: 20px;
+    padding: 20px 40px!important;
     background-color: var(--background-color);
     box-shadow: 0 4px 8px var(--shadow-color);
     border-radius: 8px;
@@ -890,7 +890,7 @@ tr:hover {
 
     .container {
         margin-top: 32px;
-        padding: 5px;
+        padding: 7px!important;
         box-shadow: 4px 4px 4px 4px var(--shadow-color);
         overflow-x: auto;
         overflow-y: auto;
@@ -971,17 +971,19 @@ tr:hover {
 
 
     .buttons-sheets {
-        margin-left: 9%;
+        /*margin-left: 22% !important;*/
+        margin: 3px 18%!important;
     }
 
     .upload-requests {
         font-size: 15px;
-        padding: 7px 10px;
+        padding: 3px 5px;
+        /*margin-left: 12px;*/
     }
 
     .upload-to-google-spreadsheet {
-        font-size: 15px!important;
-        padding: 7px 10px!important;
+        font-size: 15px;
+        padding: 3px 5px;
     }
 
 
@@ -990,12 +992,13 @@ tr:hover {
     }
 
     .accordion {
-        height: 270px;
+        height: 620px;
     }
 
     .top-section {
         flex-direction: column;
         gap: 10px;
+        /*margin-bottom: 200px;*/
     }
 
     .form-control {
@@ -1004,6 +1007,10 @@ tr:hover {
 
     .left-forms, .right-controls {
         width: 100%;
+    }
+
+    .left-forms {
+        margin-bottom: -25px!important;
     }
 
     .InputGroupForm {
@@ -1127,8 +1134,9 @@ tr:hover {
         justify-content: space-between;
         max-height: 30px;
         padding: 0 5px!important;
-        margin-top: -5px;
-        margin-left: 71%;
+        margin-top: 60px;
+        margin-left: 5%;
+        font-size: 12px;
     }
 
     .query-form-title {
@@ -1222,7 +1230,9 @@ tr:hover {
         padding-right: 10px!important;
     }
     .controls {
+        margin-top: -25px;
         padding: 2px;
+        /*height: 200px;*/
     }
 
 
@@ -1366,3 +1376,98 @@ tr:hover {
 
 
 
+/* Общие стили для right-controls */
+.right-controls {
+    width: 35%;
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 100px;
+    align-self: flex-start;
+    gap: 10px;
+}
+
+/* Стили для всех строк с кнопками */
+.right-controls-search,
+.right-controls-exports-sheets,
+.open-sheet-and-delete-request {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+}
+
+/* Общие стили для всех кнопок в right-controls */
+.right-controls .btn {
+    flex: 1; /* Равномерное распределение пространства */
+    min-width: 0; /* Позволяет кнопкам сжиматься */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 14px;
+    padding: 6px 8px;
+}
+
+/* Специфичные стили для кнопок */
+.controls_success {
+    flex: none;
+    width: auto;
+}
+
+.controls_primary_search {
+    flex: 1;
+}
+
+.controls_primary_warning {
+    flex: 1;
+}
+
+.upload_to_google {
+    flex: 1;
+}
+
+.controls_primary_success {
+    flex: 1;
+}
+
+.controls_primary_info_google_sheet {
+    flex: 1;
+}
+
+.controls_primary_info_delete_request {
+    flex: 1;
+}
+
+/* Адаптация для мобильных устройств */
+@media (max-width: 768px) {
+    .right-controls {
+        width: 100%;
+        position: static;
+        margin-top: 10px;
+    }
+
+    .right-controls-search,
+    .right-controls-exports-sheets,
+    .open-sheet-and-delete-request {
+        flex-direction: row;
+        gap: 5px;
+    }
+
+    .right-controls .btn {
+        font-size: 12px;
+        padding: 5px;
+    }
+
+    /* Специфичные настройки для мобильных */
+    .controls_success {
+        width: auto;
+    }
+
+    .controls_primary_info_google_sheet {
+        font-size: 12px !important;
+    }
+
+    .controls_primary_info_delete_request {
+        font-size: 12px !important;
+    }
+}

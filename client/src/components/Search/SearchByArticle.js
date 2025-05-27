@@ -1221,13 +1221,13 @@ function SearchByArticle() {
                             <div className="right-controls">
                                 <div className="controls">
                                     <div className="right-controls-search">
-                                    <Button
-                                        className="controls_success"
-                                        onClick={addRequestForm}
-                                        disabled={requestForms.length >= 15}
-                                    >
-                                        Добавить запрос
-                                    </Button>
+                                        <Button
+                                            className="controls_success"
+                                            onClick={addRequestForm}
+                                            disabled={requestForms.length >= 15}
+                                        >
+                                            {windowWidth < 768 ? '+ Запрос' : 'Добавить запрос'}
+                                        </Button>
                                     <Button className="controls_primary controls_primary_search" onClick={fetchProductsByArticle} disabled={isRequesting}>Поиск</Button>
                                     <Button className="controls_primary controls_primary_warning"  variant="warning" onClick={handleSearchAllQueries}>Все запросы</Button>
                                     </div>
