@@ -1597,23 +1597,35 @@ function SearchByArticle() {
                     <Form>
                         <Form.Group className="mb-3">
                             <Form.Label>Запрос</Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="query"
-                                value={deleteForm.query}
-                                onChange={handleDeleteByParamsChange}
+                            <Typeahead
+                                id="delete-query-typeahead"
+                                labelKey="label"
+                                onChange={(selected) => setDeleteForm(prev => ({
+                                    ...prev,
+                                    query: selected.length > 0 ? selected[0].label : ''
+                                }))}
+                                options={suggestions}
                                 placeholder="Введите запрос для удаления"
+                                selected={deleteForm.query ? [{ label: deleteForm.query }] : []}
+                                allowNew
                             />
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>Артикул</Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="article"
-                                value={deleteForm.article}
-                                onChange={handleDeleteByParamsChange}
+
+                            <Typeahead
+                                id="delete-article-typeahead"
+                                labelKey="label"
+                                onChange={(selected) => setDeleteForm(prev => ({
+                                    ...prev,
+                                    article: selected.length > 0 ? selected[0].label : ''
+                                }))}
+                                options={articleSuggestions}
                                 placeholder="Введите артикул для удаления"
+                                selected={deleteForm.article ? [{ label: deleteForm.article }] : []}
+                                allowNew
                             />
+
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>Город</Form.Label>

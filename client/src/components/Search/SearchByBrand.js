@@ -1582,22 +1582,32 @@ function SearchByBrand() {
                     <Form>
                         <Form.Group className="mb-3">
                             <Form.Label>Запрос</Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="query"
-                                value={deleteForm.query}
-                                onChange={handleDeleteByParamsChange}
+                            <Typeahead
+                                id="delete-query-typeahead"
+                                labelKey="label"
+                                onChange={(selected) => setDeleteForm(prev => ({
+                                    ...prev,
+                                    query: selected.length > 0 ? selected[0].label : ''
+                                }))}
+                                options={suggestions}
                                 placeholder="Введите запрос для удаления"
+                                selected={deleteForm.query ? [{ label: deleteForm.query }] : []}
+                                allowNew
                             />
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>Бренд</Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="brand"
-                                value={deleteForm.brand}
-                                onChange={handleDeleteByParamsChange}
+                            <Typeahead
+                                id="delete-brand-typeahead"
+                                labelKey="label"
+                                onChange={(selected) => setDeleteForm(prev => ({
+                                    ...prev,
+                                    brand: selected.length > 0 ? selected[0].label : ''
+                                }))}
+                                options={brandSuggestions}
                                 placeholder="Введите бренд для удаления"
+                                selected={deleteForm.brand ? [{ label: deleteForm.brand }] : []}
+                                allowNew
                             />
                         </Form.Group>
                         <Form.Group className="mb-3">
@@ -1621,10 +1631,12 @@ function SearchByBrand() {
                     <Button variant="secondary" onClick={() => setShowDeleteByParamsModal(false)}>
                         Отмена
                     </Button>
-                    <Button variant="danger"
-                            disabled={isDeleting}
-                            style={{ minWidth: '85px' }}
-                            onClick={handleDeleteByParamsSubmit}>
+                    <Button
+                        variant="danger"
+                        disabled={isDeleting}
+                        style={{ minWidth: '85px' }}
+                        onClick={handleDeleteByParamsSubmit}
+                    >
                         {isDeleting ? (
                             <Spinner
                                 as="span"
@@ -1638,7 +1650,6 @@ function SearchByBrand() {
                         )}
                     </Button>
                 </Modal.Footer>
-
             </Modal>
             <Modal show={showExportConfirmation} onHide={() => setShowExportConfirmation(false)} centered>
                 <Modal.Header closeButton>
