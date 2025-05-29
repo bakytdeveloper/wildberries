@@ -1207,13 +1207,14 @@ function SearchByBrand() {
                                    <div className="right-controls-search">
                                        <Button
                                            className="controls_success"
+                                           disabled={isRequesting}
                                            onClick={addRequestForm}
                                            disabled={requestForms.length >= 15}
                                        >
                                            {windowWidth < 768 ? '+ Запрос' : 'Добавить запрос'}
                                        </Button>
                                        <Button className="controls_primary controls_primary_search" onClick={fetchProducts} disabled={isRequesting}>Поиск</Button>
-                                       <Button className="controls_primary controls_primary_warning"  variant="warning" onClick={handleSearchAllQueries}>Все запросы</Button>
+                                       <Button className="controls_primary controls_primary_warning"  variant="warning" onClick={handleSearchAllQueries} disabled={isRequesting}>Все запросы</Button>
 
                                    </div>
                                    <div className="right-controls-exports-sheets">
@@ -1222,6 +1223,7 @@ function SearchByBrand() {
                                            variant="success"
                                            onClick={handleExportAllToGoogleSheet}
                                            title="Выгрузить все данные в Google Таблицу"
+                                           disabled={isRequesting}
                                        >
                                            {isExportingAll ? (
                                                <Spinner
@@ -1231,6 +1233,7 @@ function SearchByBrand() {
                                                    role="status"
                                                    aria-hidden="true"
                                                    style={{ width: '1rem', height: '1rem' }}
+                                                   disabled={isRequesting}
                                                />
                                            ) : (
                                                'Выгрузить в Google'
@@ -1244,6 +1247,7 @@ function SearchByBrand() {
                                            onClick={() => handleExportToExcelClick('all')}
                                            disabled={isExporting}
                                            title="Выгрузить все данные в Excel"
+                                           disabled={isRequesting}
                                        >
                                            {isExporting ? (
                                                <Spinner
@@ -1253,6 +1257,7 @@ function SearchByBrand() {
                                                    role="status"
                                                    aria-hidden="true"
                                                    style={{ width: '1rem', height: '1rem' }}
+                                                   disabled={isRequesting}
                                                />
                                            ) : (
                                                'Выгрузить в Excel'
@@ -1266,6 +1271,7 @@ function SearchByBrand() {
                                         variant="info"
                                         onClick={handleOpenGoogleSheet}
                                         title="Открыть мою Google Таблицу"
+                                        disabled={isRequesting}
                                     >
                                        Открыть Google таблицу
                                     </Button>
@@ -1274,6 +1280,7 @@ function SearchByBrand() {
                                         variant="danger"
                                         onClick={() => setShowDeleteByParamsModal(true)}
                                         title="Удалить запросы по параметрам"
+                                        disabled={isRequesting}
                                     >
                                         Удалить запрос
                                     </Button>

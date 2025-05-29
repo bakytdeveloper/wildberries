@@ -305,8 +305,10 @@ header {
 
 .controls_primary_danger {
     position: absolute;
-    top: 15px;
+    margin-top: 35px;
     margin-bottom: 7px!important;
+    padding: 3px 6px!important;
+    border: 1px solid darkblue!important;
 }
 
 .auth-form h2 {
