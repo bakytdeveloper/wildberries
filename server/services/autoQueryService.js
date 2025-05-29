@@ -277,7 +277,7 @@ class AutoQueryService {
             });
 
             await newQuery.save();
-            await UserModel.findByIdAndUpdate(userId, { $addToSet: { queries: newQuery._id } });
+            await UserModel.findByIdAndUpdate(userId, { $push: { queries: newQuery._id } });
 
         } catch (error) {
             console.error('Ошибка выполнения бренд-запросов:', error);
@@ -322,7 +322,7 @@ class AutoQueryService {
             });
 
             await newQuery.save();
-            await UserModel.findByIdAndUpdate(userId, { $addToSet: { queries: newQuery._id } });
+            await UserModel.findByIdAndUpdate(userId, { $push: { queries: newQuery._id } });
 
         } catch (error) {
             console.error('Ошибка выполнения артикул-запросов:', error);
