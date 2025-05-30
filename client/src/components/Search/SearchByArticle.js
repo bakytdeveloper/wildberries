@@ -1079,7 +1079,8 @@ function SearchByArticle() {
     return (
         <div className="article-page">
             <header>
-                <h1>Позиции товаров на <img className="header-logoWb" src="https://static-basket-01.wbbasket.ru/vol2/site/i/v3/header/logoWb.svg" /></h1>
+                <h1>Позиции товаров</h1>
+                {/*<h1>Позиции товаров на <img className="header-logoWb" src="https://static-basket-01.wbbasket.ru/vol2/site/i/v3/header/logoWb.svg" /></h1>*/}
             </header>
             <div className={`page-link ${!isAuthenticated || showRegisterForm || showForgotPasswordForm ? 'hidden' : ''}`}>
                 <nav>
