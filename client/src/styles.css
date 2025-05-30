@@ -26,7 +26,7 @@ root {
     --color-theme-background: #eeeefa;
     --color-theme-hover-background:  #dcdcfc;
     --color-theme-hover-background:  #dcdcfc;
-    --header-background-color: #af4dee, #f886e0;
+    --header-background-color: #0442e0, #86d8f8;
 
     --exit-button-background: #d5d9d9;
     --exit-button-color: #0a0000;
@@ -64,7 +64,7 @@ root {
     --color-theme-background: #292929;
     --color-theme-hover-background: #3c3c3c;
     --header-box-shadow-background:  0;
-    --header-background-color: #f684f1, #250143;
+    --header-background-color: #0442e0, #250143;
 
     --exit-button-color: #ffffff;
     --exit-button-border-color: #ffffff;
@@ -107,7 +107,7 @@ root {
     --color-theme-background: #eeeefa;
     --color-theme-hover-background:  #dcdcfc;
     --color-theme-hover-background:  #dcdcfc;
-    --header-background-color: #af4dee, #f886e0;
+    --header-background-color: #041292, #07a9ea;
 
     --exit-button-background: #d5d9d9;
     --exit-button-color: #0a0000;
@@ -145,7 +145,7 @@ root {
     --color-theme-background: #292929;
     --color-theme-hover-background: #3c3c3c;
     --header-box-shadow-background:  0;
-    --header-background-color: #f684f1, #250143;
+    --header-background-color: #848ff6, #250143;
 
     --exit-button-color: #ffffff;
     --exit-button-border-color: #ffffff;

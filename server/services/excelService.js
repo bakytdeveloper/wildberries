@@ -5,15 +5,17 @@ const path = require('path');
 const { QueryArticleModel } = require("../models/queryArticleModel");
 const { QueryModel } = require("../models/queryModel");
 const imageCache = new Map();
+const retry = require('async-retry');
 
 // Конфигурация
 const CONFIG = {
     IMAGE: {
-        TIMEOUT: 5000,
-        RETRIES: 2,
+        TIMEOUT: 10000, // Увеличили таймаут
+        RETRIES: 3, // Увеличили количество попыток
         SIZE: { width: 30, height: 30 },
-        CONCURRENCY: 10,
-        MAX_CACHE: 50
+        CONCURRENCY: 5, // Уменьшили параллелизм для уменьшения нагрузки
+        MAX_CACHE: 100,
+        DELAY_BETWEEN_RETRIES: 1000 // Задержка между попытками
     },
     DATABASE: {
         TIMEOUT: 30000,
@@ -21,7 +23,8 @@ const CONFIG = {
     },
     TEMP_DIR: './temp_exports',
     CLEANUP_INTERVAL: 3600000, // 1 час
-    MAX_ROWS_PER_SHEET: 1000000
+    MAX_ROWS_PER_SHEET: 1000000,
+    IMAGE_DOWNLOAD_TIMEOUT: 15000 // Общий таймаут для загрузки изображения
 };
 
 // Создаем директорию для временных файлов
@@ -64,22 +67,44 @@ const downloadImage = async (url) => {
 
     if (imageCache.has(url)) return imageCache.get(url);
 
-    for (let attempt = 1; attempt <= CONFIG.IMAGE.RETRIES; attempt++) {
-        try {
-            const response = await axios.get(url, {
-                responseType: 'arraybuffer',
-                timeout: CONFIG.IMAGE.TIMEOUT
-            });
-            const buffer = Buffer.from(response.data, 'binary');
-            imageCache.set(url, buffer);
-            return buffer;
-        } catch (error) {
-            if (attempt === CONFIG.IMAGE.RETRIES) {
-                console.error(`Ошибка загрузки изображения после ${CONFIG.IMAGE.RETRIES} попыток: ${url}`);
-                return null;
+    try {
+        return await retry(
+            async (bail, attempt) => {
+                try {
+                    const controller = new AbortController();
+                    const timeout = setTimeout(() => controller.abort(), CONFIG.IMAGE.TIMEOUT);
+
+                    const response = await axios.get(url, {
+                        responseType: 'arraybuffer',
+                        signal: controller.signal,
+                        timeout: CONFIG.IMAGE.TIMEOUT
+                    });
+
+                    clearTimeout(timeout);
+                    const buffer = Buffer.from(response.data, 'binary');
+                    imageCache.set(url, buffer);
+                    return buffer;
+                } catch (error) {
+                    if (error.code === 'ECONNABORTED' || error.response?.status >= 400) {
+                        throw error; // Пробуем снова
+                    } else {
+                        bail(error); // Неповторимая ошибка
+                        return null;
+                    }
+                }
+            },
+            {
+                retries: CONFIG.IMAGE.RETRIES,
+                minTimeout: CONFIG.IMAGE.DELAY_BETWEEN_RETRIES,
+                maxTimeout: CONFIG.IMAGE.DELAY_BETWEEN_RETRIES * 2,
+                onRetry: (error, attempt) => {
+                    console.log(`Попытка ${attempt} загрузки изображения ${url}: ${error.message}`);
+                }
             }
-            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-        }
+        );
+    } catch (error) {
+        console.error(`Окончательная ошибка загрузки изображения ${url}: ${error.message}`);
+        return null;
     }
 };
 
@@ -213,7 +238,7 @@ const generateExcelForUser = async (userId) => {
                 width: [30, 15, 12, 15, 15, 50, 10, 12, 12][i]
             }));
         });
-        
+
         // Загрузка данных
         const [brandQueries, articleQueries] = await Promise.all([
             QueryModel.find({ userId }).lean().populate('productTables.products'),
@@ -236,34 +261,25 @@ const generateExcelForUser = async (userId) => {
                     return imageCache.get(imageUrl);
                 }
 
-                // Загружаем изображение
-                const response = await axios.get(imageUrl, {
-                    responseType: 'arraybuffer',
-                    timeout: CONFIG.IMAGE.TIMEOUT
-                });
+                // Загружаем изображение с таймаутом
+                const imageBuffer = await Promise.race([
+                    downloadImage(imageUrl),
+                    new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error('Timeout exceeded')), CONFIG.IMAGE_DOWNLOAD_TIMEOUT)
+                    )
+                ]);
 
-                const buffer = Buffer.from(response.data, 'binary');
+                if (!imageBuffer) return null;
 
                 // Оптимизируем изображение
                 const sharp = require('sharp');
-                const optimizedImage = await sharp(buffer)
+                const optimizedImage = await sharp(imageBuffer)
                     .resize(150, 150, {
                         fit: 'inside',
                         withoutEnlargement: true
                     })
                     .jpeg({ quality: 80 })
                     .toBuffer();
-
-                // // ОПТИМИЗИРОВАЛ КАРТИНКИ< ЕСЛИ БУДЕТ ПРОБЛЕМА С ПАМЯТЬЮ НА
-                // // VPS , ТО НУЖНО БУДЕТ ИСПОЛЬЗОВАТЬ ЭТОТ УЧАСТОК КОДА
-                // const optimizedImage = await sharp(buffer)
-                //     .resize(100, 100, {
-                //         fit: 'inside',
-                //         withoutEnlargement: true
-                //     })
-                //     .jpeg({ quality: 70 })
-                //     .toBuffer();
-
 
                 // Кэшируем
                 if (imageCache.size < CONFIG.IMAGE.MAX_CACHE) {
@@ -272,7 +288,7 @@ const generateExcelForUser = async (userId) => {
 
                 return optimizedImage;
             } catch (error) {
-                console.error(`Ошибка загрузки изображения ${imageUrl}:`, error.message);
+                console.error(`Ошибка обработки изображения ${imageUrl}:`, error.message);
                 return null;
             }
         };
@@ -303,6 +319,7 @@ const generateExcelForUser = async (userId) => {
         const processData = async (queries, sheet, isBrandSheet) => {
             let previousQuery = null;
             const imageTasks = [];
+            const failedImages = new Set();
 
             for (const query of queries) {
                 // Добавляем пустую строку между разными запросами
@@ -352,9 +369,12 @@ const generateExcelForUser = async (userId) => {
                             row.getCell(7).font = { bold: true, color: { argb: 'FFFF0000' } };
                         }
 
-                        // Добавляем задачу на обработку изображения
-                        if (product?.imageUrl) {
-                            imageTasks.push(addImageToCell(sheet, row.number, product.imageUrl));
+                        // Добавляем задачу на обработку изображения, если оно не в списке неудачных
+                        if (product?.imageUrl && !failedImages.has(product.imageUrl)) {
+                            const task = addImageToCell(sheet, row.number, product.imageUrl)
+                                .catch(() => failedImages.add(product.imageUrl));
+
+                            imageTasks.push(task);
 
                             // Ограничиваем количество параллельных задач
                             if (imageTasks.length >= CONFIG.IMAGE.CONCURRENCY) {
@@ -392,6 +412,7 @@ const generateExcelForUser = async (userId) => {
 
         return tempXlsxPath;
     } catch (error) {
+        console.error('Ошибка при генерации Excel:', error);
         if (fs.existsSync(tempXlsxPath)) {
             fs.unlinkSync(tempXlsxPath);
         }

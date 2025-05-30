@@ -1080,7 +1080,6 @@ function SearchByArticle() {
         <div className="article-page">
             <header>
                 <h1>Позиции товаров</h1>
-                {/*<h1>Позиции товаров на <img className="header-logoWb" src="https://static-basket-01.wbbasket.ru/vol2/site/i/v3/header/logoWb.svg" /></h1>*/}
             </header>
             <div className={`page-link ${!isAuthenticated || showRegisterForm || showForgotPasswordForm ? 'hidden' : ''}`}>
                 <nav>
@@ -1114,7 +1113,7 @@ function SearchByArticle() {
                             <Button className="controls_primary controls_primary_danger" variant="danger" onClick={handleResetForms}>Сбросить</Button>
                         )}
                         <Button variant="danger" className="exit-button" onClick={handleLogout}>Выйти</Button>
-                        <h3 className="query-form-title">Страница поиска по описанию и артикулу товара</h3>
+                        <h3 className="query-form-title">Поиска по описанию и артикулу товара</h3>
                         <div className="top-section">
                             <div className="left-forms">
                                 {showInitialForm && (
