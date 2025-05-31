@@ -113,7 +113,7 @@ root {
     --exit-button-color: #0a0000;
     --exit-button-border-color: #0a0000;
 
-    --search-text-background: #f1f136;
+    --search-text-background: #f1f146;
     --search-text-color: black;
 }
 
@@ -145,7 +145,7 @@ root {
     --color-theme-background: #292929;
     --color-theme-hover-background: #3c3c3c;
     --header-box-shadow-background:  0;
-    --header-background-color: #848ff6, #250143;
+    --header-background-color: #6f7cfa, #010186;
 
     --exit-button-color: #ffffff;
     --exit-button-border-color: #ffffff;
