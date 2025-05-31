@@ -87,7 +87,7 @@ root {
     --button-background: #0056b3;
     --button-hover-background: #3575f6;
     --button-text-color: #ffffff;
-    --table-header-background: #bf70ef;
+    --table-header-background: #1b30ee;
     --table-header-text-color: #ffffff;
     --table-row-even-background: #f5f5f5;
     --table-row-hover-background: #eeeeee;
@@ -145,7 +145,7 @@ root {
     --color-theme-background: #292929;
     --color-theme-hover-background: #3c3c3c;
     --header-box-shadow-background:  0;
-    --header-background-color: #6f7cfa, #010186;
+    --header-background-color: #6f7cfa, #03035b;
 
     --exit-button-color: #ffffff;
     --exit-button-border-color: #ffffff;
