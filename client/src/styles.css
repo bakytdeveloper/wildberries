@@ -300,15 +300,20 @@ header {
 
 
 .exit-button:hover {
-    background: #b82c04 !important;
+    background: #b4b5b7 !important;
 }
 
 .controls_primary_danger {
     position: absolute;
     margin-top: 35px;
-    margin-bottom: 7px!important;
-    padding: 3px 6px!important;
+    margin-bottom: 7px;
+    /*padding: 3px 6px!important;*/
     border: 1px solid darkblue!important;
+}
+
+.controls_primary_danger_reset {
+    padding: 0 5px!important;
+    font-size: 13px!important;
 }
 
 .auth-form h2 {
@@ -405,13 +410,13 @@ header {
 .top-section {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    /*align-items: center;*/
     margin-bottom: 20px;
 }
 
 .left-forms {
     width: 55%;
-    margin-top: 30px;
+    margin-top: 44px;
 }
 
 .star-mark {
@@ -959,6 +964,10 @@ tr:hover {
     width: auto;
 }
 
+/*.left-forms {*/
+/*    margin-top: 0;*/
+/*}*/
+
 
 @media (max-width: 768px) {
 
@@ -1062,14 +1071,12 @@ tr:hover {
 
 
     .buttons-sheets {
-        /*margin-left: 22% !important;*/
         margin: 3px 18%!important;
     }
 
     .upload-requests {
         font-size: 15px;
         padding: 3px 5px;
-        /*margin-left: 12px;*/
     }
 
     .upload-to-google-spreadsheet {
@@ -1089,7 +1096,6 @@ tr:hover {
     .top-section {
         flex-direction: column;
         gap: 10px;
-        /*margin-bottom: 200px;*/
     }
 
     .form-control {
@@ -1101,6 +1107,7 @@ tr:hover {
     }
 
     .left-forms {
+        margin-top: 33px;
         margin-bottom: -25px!important;
     }
 
@@ -1223,9 +1230,9 @@ tr:hover {
 
     .controls_primary_danger {
         justify-content: space-between;
-        max-height: 30px;
+        max-height: 27px;
         padding: 0 5px!important;
-        margin-top: 60px;
+        margin-top: 47px;
         margin-left: 5%;
         font-size: 12px;
     }
@@ -1534,6 +1541,11 @@ tr:hover {
 
 /* Адаптация для мобильных устройств */
 @media (max-width: 768px) {
+
+    .input-group {
+        margin-top: 0;
+    }
+
     .right-controls {
         width: 100%;
         position: static;

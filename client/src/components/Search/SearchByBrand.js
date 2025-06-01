@@ -1093,7 +1093,7 @@ function SearchByBrand() {
                 ) : showProfile ? (
                     <div className="query-form">
                         {showResetButton && (
-                            <Button className="controls_primary controls_primary_danger" variant="danger" onClick={handleResetForms}>Сбросить</Button>
+                            <Button className="controls_primary controls_primary_danger controls_primary_danger_reset" variant="danger" onClick={handleResetForms}>Сбросить</Button>
                         )}
                         <Button variant="danger" className="exit-button" onClick={handleLogout}>Выйти</Button>
                         <h3 className="query-form-title">Поиска по описанию и бренду товара</h3>
