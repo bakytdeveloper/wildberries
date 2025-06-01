@@ -718,6 +718,7 @@ tr:hover {
 .td_table {
     text-align: center;
     padding: 2px;
+    font-size: 14px;
 }
 
 .td_table_article {
@@ -740,6 +741,11 @@ tr:hover {
     display: flex;
     width: 100%;
     align-items: center;
+}
+
+.td_table_block {
+    font-size: 13px!important;
+    padding: 0 3px!important;
 }
 
 .accordion_body_table {
@@ -962,11 +968,9 @@ tr:hover {
 
 .td_table_search {
     width: auto;
+    font-size: 13px!important;
+    padding: 0 3px!important;
 }
-
-/*.left-forms {*/
-/*    margin-top: 0;*/
-/*}*/
 
 
 @media (max-width: 768px) {

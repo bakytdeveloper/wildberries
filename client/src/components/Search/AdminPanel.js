@@ -256,7 +256,6 @@ const AdminPanel = ({ API_HOST }) => {
             <div className="logout-container">
                 <div className="logout-container-search-sort">
                 <h2 className="query-form-title">Админ панель</h2>
-               {/*<div className="logout-container-search-sort">*/}
 
                    <Button
                        className="admin-panel-logout-container"
@@ -273,7 +272,6 @@ const AdminPanel = ({ API_HOST }) => {
                            placeholder="Поиск по имени"
                            value={searchTerm}
                            onChange={handleSearchChange}
-                           // style={{ maxWidth: '300px' }}
                        />
 
                        <ToggleButton
@@ -328,6 +326,7 @@ const AdminPanel = ({ API_HOST }) => {
                             </td>
                             <td className="td_table">
                                 <Button
+                                    className="td_table_block"
                                     variant={user.isBlocked ? 'success' : 'primary'}
                                     onClick={() => toggleBlockUser(user._id)}
                                 >
@@ -342,7 +341,11 @@ const AdminPanel = ({ API_HOST }) => {
                                 </Button>
                             </td>
                             <td className="td_table">
-                                <Button variant="danger" onClick={() => handleDeleteClick(user._id)}>
+                                <Button
+                                    className="td_table_search"
+                                    variant="danger"
+                                    onClick={() => handleDeleteClick(user._id)}
+                                >
                                     Удалить
                                 </Button>
                             </td>
