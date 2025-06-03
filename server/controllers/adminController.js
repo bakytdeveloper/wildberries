@@ -159,19 +159,61 @@ const checkSubscriptions = async () => {
 // Функция отправки напоминания (можно использовать transporter из otpService.js)
 const sendPaymentReminder = async (user) => {
     try {
-        const endDate = user.subscription.subscriptionEndDate.toLocaleDateString();
+        const endDate = user.subscription.subscriptionEndDate.toLocaleDateString('ru-RU', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+
         const message = {
             from: process.env.SMTP_FROM,
             to: user.email,
-            subject: 'Напоминание об подписки',
+            subject: '❗ Ваша подписка скоро закончится',
             html: `
-                <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                    <p>Ваша подписка истекает ${endDate}.</p>
-                    <p>Пожалуйста, продлите подписку, чтобы продолжить пользоваться сервисом без ограничений.</p>
-                    <p style="margin-top: 20px;">С уважением,<br>Команда сервиса</p>
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                    <div style="text-align: center; margin-bottom: 25px;">
+                        <h2 style="color: #2c3e50;">Уважаемый ${user.name || 'пользователь'}!</h2>
+                    </div>
+                    
+                    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+                        <p style="margin: 0; font-size: 16px; color: #2c3e50;">
+                            <strong>Срок действия вашей подписки истекает ${endDate}.</strong>
+                        </p>
+                    </div>
+                    
+                    <p style="font-size: 15px; line-height: 1.6; color: #34495e;">
+                        Чтобы продолжить пользоваться всеми возможностями сервиса без ограничений, необходимо продлить подписку.
+                    </p>
+                    
+                    <p style="font-size: 15px; line-height: 1.6; color: #34495e;">
+                        <strong>Обратите внимание:</strong> если подписка не будет продлена в течение 3 дней после окончания, ваш аккаунт будет временно заблокирован.
+                    </p>
+                                        
+                    <p style="font-size: 14px; color: #7f8c8d; border-top: 1px solid #eee; padding-top: 15px; margin-top: 25px;">
+                        Если у вас возникли вопросы, вы всегда можете обратиться к администратору 
+                    </p>
+                    
+                    <div style="margin-top: 30px; text-align: center; color: #7f8c8d; font-size: 13px;">
+                        <p>С уважением,<br>Команда ${process.env.APP_NAME || 'нашего сервиса'}</p>
+                    </div>
                 </div>
             `,
-            text: `Ваша подписка истекает ${endDate}. Пожалуйста, продлите подписку, чтобы продолжить пользоваться сервисом без ограничений.`
+            text: `
+                    Уважаемый ${user.name || 'пользователь'}!
+                    
+                    Срок действия вашей подписки истекает ${endDate}.
+                    
+                    Чтобы продолжить пользоваться всеми возможностями сервиса без ограничений, необходимо продлить подписку.
+                    
+                    Обратите внимание: если подписка не будет продлена в течение 3 дней после окончания, ваш аккаунт будет временно заблокирован.
+                    
+                    Продлить подписку
+                    
+                    Если у вас возникли вопросы, вы всегда можете обратиться к администратору сайта
+                    
+                    С уважением,
+                    Команда ${process.env.APP_NAME || 'нашего сервиса'}
+                                `
         };
 
         await transporter.sendMail(message);

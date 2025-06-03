@@ -88,9 +88,6 @@ const connectWithRetry = () => {
 });
 
 
-// cron.schedule('40 1 * * *', cleanupAllUsers);
-
-
 // Задача удаления старых данных (каждый день в 02:00)
 // cron.schedule('*/7 * * * *', async () => {
 cron.schedule('0 2 * * *', async () => {
@@ -132,6 +129,7 @@ cron.schedule('0 2 * * *', async () => {
 
 
 // Проверка подписок (каждый день в 6 часов утра)
+// cron.schedule('33 * * * *', async () => {
 cron.schedule('0 6 * * *', async () => {
     if (appState.tasks.isSubscriptionCheckRunning) return;
 

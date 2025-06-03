@@ -5,46 +5,76 @@ import axios from 'axios';
 
 const ForgotPasswordForm = ({ API_HOST, setShowForgotPasswordForm }) => {
     const [email, setEmail] = useState('');
-    const [otp, setOtp] = useState('');
-    const [showOtpInput, setShowOtpInput] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleForgotPassword = async (e) => {
         e.preventDefault();
+        setIsLoading(true);
+
         try {
             const response = await axios.post(`${API_HOST}/api/auth/forgot-password`, { email });
-            Toastify({ text: 'Пароль сброшен, проверьте ваш email', duration: 3000, gravity: 'top', position: 'right', style: { background: '#00cc00' } }).showToast();
-        } catch (error) {
-            Toastify({ text: 'Ошибка сброса пароля', duration: 3000, gravity: 'top', position: 'right', style: { background: '#ff0000' } }).showToast();
-        }
-    };
 
-    const handleSendOtp = async () => {
-        try {
-            const response = await axios.post(`${API_HOST}/api/auth/send-otp`, { email });
-            if (response.status === 200) {
-                setShowOtpInput(true);
-                Toastify({ text: 'OTP отправлен на ваш email', duration: 3000, gravity: 'top', position: 'right', style: { background: '#00cc00' } }).showToast();
-            }
+            Toastify({
+                text: 'Новый пароль отправлен на ваш email. Проверьте почту.',
+                duration: 5000,
+                gravity: 'top',
+                position: 'right',
+                style: { background: '#00cc00' }
+            }).showToast();
+
+            // После успешной отправки возвращаемся на форму логина
+            setTimeout(() => {
+                setShowForgotPasswordForm(false);
+            }, 2000);
+
         } catch (error) {
-            Toastify({ text: 'Ошибка отправки OTP', duration: 3000, gravity: 'top', position: 'right', style: { background: '#ff0000' } }).showToast();
+            console.error('Ошибка сброса пароля:', error);
+
+            const errorMessage = error.response?.data?.message ||
+                'Ошибка при отправке нового пароля. Пожалуйста, попробуйте позже.';
+
+            Toastify({
+                text: errorMessage,
+                duration: 5000,
+                gravity: 'top',
+                position: 'right',
+                style: { background: '#ff0000' }
+            }).showToast();
+        } finally {
+            setIsLoading(false);
         }
     };
 
     return (
         <Form onSubmit={handleForgotPassword} className="auth-form">
             <h2>Восстановление пароля</h2>
-            <Form.Group controlId="email">
+            <Form.Group controlId="email" className="mb-3">
                 <Form.Label>Email</Form.Label>
-                <Form.Control type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <Form.Control
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder="Введите ваш email"
+                />
             </Form.Group>
-            {showOtpInput && (
-                <Form.Group controlId="otp">
-                    <Form.Label>OTP</Form.Label>
-                    <Form.Control type="text" value={otp} onChange={(e) => setOtp(e.target.value)} required />
-                </Form.Group>
-            )}
-            <Button type="submit">Обновить пароль</Button>
-            <Button variant="link" onClick={() => setShowForgotPasswordForm(false)}>Авторизация</Button>
+
+            <Button
+                type="submit"
+                variant="primary"
+                disabled={isLoading}
+                className="w-100 mb-3"
+            >
+                {isLoading ? 'Отправка...' : 'Отправить новый пароль'}
+            </Button>
+
+            <Button
+                variant="link"
+                onClick={() => setShowForgotPasswordForm(false)}
+                className="w-100"
+            >
+                Вернуться к авторизации
+            </Button>
         </Form>
     );
 };

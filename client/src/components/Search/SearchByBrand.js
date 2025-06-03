@@ -998,10 +998,10 @@ function SearchByBrand() {
         );
     };
 
-    const handleDeleteByParamsChange = (e) => {
-        const { name, value } = e.target;
-        setDeleteForm(prev => ({ ...prev, [name]: value }));
-    };
+    // const handleDeleteByParamsChange = (e) => {
+    //     const { name, value } = e.target;
+    //     setDeleteForm(prev => ({ ...prev, [name]: value }));
+    // };
 
 
     const handleDeleteByParamsSubmit = async () => {
